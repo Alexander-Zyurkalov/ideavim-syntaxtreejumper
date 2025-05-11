@@ -1,23 +1,17 @@
-package com.zyurkalov.ideavim.syntaxtreejumper;
-import com.github.weisj.jsvg.ca;
+package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
-public class SameLevelElementsNavigator {
-
-    public enum Direction {
-        BACKWARD,
-        FORWARD,
-    }
+public class SameLevelElementsNavigator implements Navigator {
 
     private final PsiFile psiFile;
     private final Direction direction;
@@ -27,16 +21,13 @@ public class SameLevelElementsNavigator {
         this.direction = direction;
     }
 
+    @Override
     public Optional<Offsets> findNextObjectsOffsets(Offsets initialOffsets) {
 
         PsiElement initialElement;
         boolean isOnlyCaretButNoSelection = initialOffsets.leftOffset() >= initialOffsets.rightOffset() - 1;
         if (isOnlyCaretButNoSelection) {
             initialElement = psiFile.findElementAt(initialOffsets.leftOffset());
-            Optional<Offsets> nextSubWordOffsets = findNextSubWord(initialOffsets.leftOffset(), initialElement);
-            if ( nextSubWordOffsets.isPresent() ) {
-                return nextSubWordOffsets;
-            }
         }
         else {
             PsiElement initElementAtLeft = psiFile.findElementAt(initialOffsets.leftOffset());
@@ -59,26 +50,6 @@ public class SameLevelElementsNavigator {
 
         TextRange nextElementTextRange = nextElement.getTextRange();
         return Optional.of(new Offsets(nextElementTextRange.getStartOffset(), nextElementTextRange.getEndOffset()));
-    }
-
-    public static Optional<Offsets> findNextSubWord(int position, PsiElement lowestLevelElement) {
-        if (lowestLevelElement == null)
-            return Optional.empty();
-        String elementText = lowestLevelElement.getText();
-        int strPosition = position - lowestLevelElement.getTextOffset();
-        boolean IsPrevCharUpperCase = Character.isUpperCase(elementText.charAt(0));
-        List<Integer> caseSwitchers = new ArrayList<>();
-        for (int i = 1; i < elementText.length(); i++) {
-            boolean isCurCharUpperCase = Character.isUpperCase(elementText.charAt(i));
-            if (isCurCharUpperCase != IsPrevCharUpperCase) {
-                caseSwitchers.add(1);
-            }
-            else {
-                caseSwitchers.set(caseSwitchers.size() - 1, caseSwitchers.getLast() + 1);
-            }
-
-        }
-        return Optional.empty();
     }
 
     private @NotNull PsiElement findParentElementIfInitialElementsAreAtEdgesOrChoseOne(PsiElement initElementAtLeft, PsiElement initElementAtRight) {
