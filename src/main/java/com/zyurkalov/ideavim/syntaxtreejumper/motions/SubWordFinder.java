@@ -103,4 +103,10 @@ public record SubWordFinder(Direction direction) {
                     elementText.length() - nextWordStart);
         };
     }
+
+    public static boolean areThereSubwords(String elementText) {
+        var finder = new SubWordFinder(Direction.FORWARD);
+        var offsets = finder.findNext(new Offsets(0, 0), elementText);
+        return offsets.leftOffset() == 0 && offsets.rightOffset() < elementText.length();
+    }
 }
