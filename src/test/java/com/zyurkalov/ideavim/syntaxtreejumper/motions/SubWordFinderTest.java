@@ -9,8 +9,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.stream.Stream;
 
-public class SubWordNavigationTest {
-    public SubWordNavigationTest() {
+public class SubWordFinderTest {
+    public SubWordFinderTest() {
     }
 
     record SubWordTestCase(
@@ -67,9 +67,9 @@ public class SubWordNavigationTest {
 
     @ParameterizedTest
     @MethodSource("nextSubWordTestCase")
-    void testFindNextSubWord(SubWordTestCase testCase) {
-        SubWordNavigation subWordNavigation = new SubWordNavigation(testCase.direction());
-        Offsets offsets = subWordNavigation.findNextSubWord(testCase.startPosition(), testCase.text());
+    void testFindNext(SubWordTestCase testCase) {
+        SubWordFinder subWordFinder = new SubWordFinder(testCase.direction());
+        Offsets offsets = subWordFinder.findNext(testCase.startPosition(), testCase.text());
         Assertions.assertEquals(testCase.expectedOffsets(), offsets, testCase.explanation());
     }
 }
