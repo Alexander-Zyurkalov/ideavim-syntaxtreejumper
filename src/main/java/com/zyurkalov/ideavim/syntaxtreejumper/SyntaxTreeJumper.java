@@ -5,6 +5,7 @@ import com.maddyhome.idea.vim.command.MappingMode;
 import com.maddyhome.idea.vim.extension.VimExtension;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SubWordMotionHandler;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.SyntaxNodeTreeHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -62,6 +63,41 @@ public class SyntaxTreeJumper implements VimExtension {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-S-n>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElement),
+                true);
+
+
+        String commandExpandSelection = "<Plug>ExpandSelection";
+        String commandShrinkSelection = "<Plug>ShrinkSelection";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, (psiFile, direction) ->
+                        SyntaxNodeTreeHandler.createExpandHandler(psiFile)),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, (psiFile, direction) ->
+                        SyntaxNodeTreeHandler.createShrinkHandler(psiFile)),
+                false);
+
+// Map the default key bindings (Alt-o and Alt-i like in Helix)
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-o>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
+                true);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-i>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
                 true);
     }
 
