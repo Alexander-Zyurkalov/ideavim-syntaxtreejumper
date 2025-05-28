@@ -11,18 +11,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class SameLevelElementsNavigator implements Navigator {
+public class SameLevelElementsMotionHandler implements MotionHandler {
 
     private final PsiFile psiFile;
     private final Direction direction;
 
-    public SameLevelElementsNavigator(PsiFile psiFile, Direction direction) {
+    public SameLevelElementsMotionHandler(PsiFile psiFile, Direction direction) {
         this.psiFile = psiFile;
         this.direction = direction;
     }
 
     @Override
-    public Optional<Offsets> findNextObjectsOffsets(Offsets initialOffsets) {
+    public Optional<Offsets> findNext(Offsets initialOffsets) {
 
         PsiElement initialElement;
         boolean isOnlyCaretButNoSelection = initialOffsets.leftOffset() >= initialOffsets.rightOffset() - 1;

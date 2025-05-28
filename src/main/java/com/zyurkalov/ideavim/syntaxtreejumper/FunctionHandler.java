@@ -15,7 +15,7 @@ import com.maddyhome.idea.vim.extension.ExtensionHandler;
 import com.maddyhome.idea.vim.newapi.IjVimEditorKt;
 import com.maddyhome.idea.vim.state.mode.Mode;
 import com.maddyhome.idea.vim.state.mode.SelectionType;
-import com.zyurkalov.ideavim.syntaxtreejumper.motions.Navigator;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.MotionHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -27,9 +27,9 @@ import java.util.function.Function;
 public class FunctionHandler implements ExtensionHandler {
 
     private final Direction direction;
-    private final BiFunction<PsiFile, Direction, Navigator> navigatorFactory;
+    private final BiFunction<PsiFile, Direction, MotionHandler> navigatorFactory;
 
-    public FunctionHandler(Direction direction,  BiFunction<PsiFile, Direction, Navigator> navigatorFactory) {
+    public FunctionHandler(Direction direction,  BiFunction<PsiFile, Direction, MotionHandler> navigatorFactory) {
         this.direction = direction;
         this.navigatorFactory = navigatorFactory;
     }
@@ -60,7 +60,7 @@ public class FunctionHandler implements ExtensionHandler {
             }
 
             var initialOffsets = new Offsets(startSelectionOffset, endSelectionOffset);
-            navigator.findNextObjectsOffsets(initialOffsets).ifPresent((offsets) -> {
+            navigator.findNext(initialOffsets).ifPresent((offsets) -> {
                 caret.setSelection(offsets.leftOffset(), offsets.rightOffset());
                 caret.moveToOffset(offsets.leftOffset());
             });

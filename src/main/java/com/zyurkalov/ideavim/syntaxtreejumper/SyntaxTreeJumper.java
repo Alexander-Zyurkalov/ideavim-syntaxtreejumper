@@ -3,8 +3,8 @@ package com.zyurkalov.ideavim.syntaxtreejumper;
 import com.maddyhome.idea.vim.api.VimInjectorKt;
 import com.maddyhome.idea.vim.command.MappingMode;
 import com.maddyhome.idea.vim.extension.VimExtension;
-import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsNavigator;
-import com.zyurkalov.ideavim.syntaxtreejumper.motions.SubWordNavigator;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsMotionHandler;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.SubWordMotionHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -28,25 +28,25 @@ public class SyntaxTreeJumper implements VimExtension {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElement),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, SameLevelElementsNavigator::new),
+                new FunctionHandler(Direction.FORWARD, SameLevelElementsMotionHandler::new),
                 false);
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElement),
                 getOwner(),
-                new FunctionHandler(Direction.BACKWARD, SameLevelElementsNavigator::new),
+                new FunctionHandler(Direction.BACKWARD, SameLevelElementsMotionHandler::new),
                 false);
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-w>"),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, SubWordNavigator::new),
+                new FunctionHandler(Direction.FORWARD, SubWordMotionHandler::new),
                 false);
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-S-w>"),
                 getOwner(),
-                new FunctionHandler(Direction.BACKWARD, SubWordNavigator::new),
+                new FunctionHandler(Direction.BACKWARD, SubWordMotionHandler::new),
                 false);
 
         // Map the default key bindings to the <Plug> mappings

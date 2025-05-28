@@ -7,20 +7,20 @@ import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 
 import java.util.Optional;
 
-public class SubWordNavigator implements Navigator {
+public class SubWordMotionHandler implements MotionHandler {
 
     private final PsiFile psiFile;
     private final Direction direction;
-    private final SubWordNavigation navigation;
+    private final SubWordFinder navigation;
 
-    public SubWordNavigator(PsiFile psiFile, Direction direction) {
+    public SubWordMotionHandler(PsiFile psiFile, Direction direction) {
         this.psiFile = psiFile;
         this.direction = direction;
-        this.navigation = new SubWordNavigation(direction);
+        this.navigation = new SubWordFinder(direction);
     }
 
     @Override
-    public Optional<Offsets> findNextObjectsOffsets(Offsets initialOffsets) {
+    public Optional<Offsets> findNext(Offsets initialOffsets) {
         PsiElement elementAtLeft = psiFile.findElementAt(initialOffsets.leftOffset());
         if (elementAtLeft == null) {
             return Optional.empty();
@@ -38,7 +38,7 @@ public class SubWordNavigator implements Navigator {
                 case Direction.FORWARD ->  initialOffsets.rightOffset();
                 case Direction.BACKWARD -> initialOffsets.leftOffset() - 1;
             };
-            return findNextObjectsOffsets(new Offsets(startOffset, startOffset ));
+            return findNext(new Offsets(startOffset, startOffset ));
         }
 
         return Optional.of(nextSubWordOffsets);
@@ -51,7 +51,7 @@ public class SubWordNavigator implements Navigator {
         int relativeRightTextPosition = initialOffsets.rightOffset() - leftElementBorder;
 
         Offsets relativeOffset = new Offsets(relativeLeftTextPosition, relativeRightTextPosition);
-        Offsets newRelativeOffset = navigation.findNextSubWord(relativeOffset, elementAtLeft.getText());
+        Offsets newRelativeOffset = navigation.findNext(relativeOffset, elementAtLeft.getText());
 
         return new Offsets(newRelativeOffset.leftOffset() + leftElementBorder,
                 newRelativeOffset.rightOffset() + leftElementBorder);

@@ -4,6 +4,6 @@ import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 
 import java.util.Optional;
 
-public interface Navigator {
-    Optional<Offsets> findNextObjectsOffsets(Offsets initialOffsets);
+public interface MotionHandler {
+    Optional<Offsets> findNext(Offsets initialOffsets);
 }

@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public record SubWordNavigation(Direction direction) {
+public record SubWordFinder(Direction direction) {
 
-    class BorderFinder {
+    class BoundaryFinder {
         private final String str;
         Map<Integer, Integer> memoization;
         List<Function<Integer, Integer>> delimiters;
@@ -25,7 +25,7 @@ public record SubWordNavigation(Direction direction) {
                     ? position + 1 : position;
         }
 
-        BorderFinder(String str) {
+        BoundaryFinder(String str) {
             this.str = str;
             this.delimiters = new ArrayList<>();
             if (direction == Direction.FORWARD) {
@@ -72,7 +72,7 @@ public record SubWordNavigation(Direction direction) {
         }
     }
 
-    public Offsets findNextSubWord(Offsets strPosition, String elementText) {
+    public Offsets findNext(Offsets strPosition, String elementText) {
         if (elementText == null) {
             return strPosition;
         }
@@ -87,7 +87,7 @@ public record SubWordNavigation(Direction direction) {
             }
         }
 
-        var finder = new BorderFinder(elementText);
+        var finder = new BoundaryFinder(elementText);
         int nextWordStart = finder.findBorder(strPosition.leftOffset());
         if (strPosition.leftOffset() == strPosition.rightOffset() || nextWordStart == elementText.length()) {
             nextWordStart = strPosition.leftOffset();
