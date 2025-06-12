@@ -43,8 +43,8 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
             }
         }
         if (initialElement != null && initialElement.getChildren().length == 0 &&
-            ( initialElement.getTextRange().getStartOffset() != initialOffsets.leftOffset() ||
-                initialElement.getTextRange().getEndOffset() != initialOffsets.rightOffset() )) {
+                (initialElement.getTextRange().getStartOffset() != initialOffsets.leftOffset() ||
+                        initialElement.getTextRange().getEndOffset() != initialOffsets.rightOffset())) {
             Optional<Offsets> subWordOffset = findNextSubWord(initialOffsets, initialElement);
             if (subWordOffset.isPresent()) {
                 return subWordOffset;
@@ -65,14 +65,6 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
         return Optional.of(new Offsets(nextElementTextRange.getStartOffset(), nextElementTextRange.getEndOffset()));
     }
 
-    private boolean movedInAccordanceWithDirection(Offsets subWordOffset, Offsets initialOffsets) {
-        return switch (direction) {
-            case FORWARD -> subWordOffset.leftOffset() > initialOffsets.leftOffset() &&
-                    subWordOffset.rightOffset() > initialOffsets.rightOffset();
-            case BACKWARD -> subWordOffset.leftOffset() < initialOffsets.leftOffset() &&
-                    subWordOffset.rightOffset() <= initialOffsets.rightOffset();
-        };
-    }
 
     private Optional<Offsets> findNextSubWord(Offsets initialOffsets, PsiElement initialElement) {
         int elementOffset = initialElement.getTextRange().getStartOffset();
@@ -110,8 +102,8 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
                         new Offsets(nextSubWordLocalOffset.leftOffset(), nextSubWordLocalOffset.leftOffset()),
                         initialElement.getText());
                 yield new Offsets(
-                    prevSubWord.leftOffset(),
-                    nextSubWordLocalOffset.rightOffset());
+                        prevSubWord.leftOffset(),
+                        nextSubWordLocalOffset.rightOffset());
             }
             case Direction.FORWARD -> {
                 var subWordOppositeDirection = new SubWordFinder(Direction.BACKWARD);
@@ -119,59 +111,59 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
                         new Offsets(nextSubWordLocalOffset.rightOffset() - 1, nextSubWordLocalOffset.rightOffset()),
                         initialElement.getText());
                 yield new Offsets(
-                    prevSubWord.rightOffset(),
-                    nextSubWordLocalOffset.rightOffset());
+                        prevSubWord.rightOffset(),
+                        nextSubWordLocalOffset.rightOffset());
             }
 
         };
     }
 
-        private @NotNull PsiElement findParentElementIfInitialElementsAreAtEdgesOrChooseOne (PsiElement
-        initElementAtLeft, PsiElement initElementAtRight){
-            PsiElement initialElement = initElementAtLeft;
-            PsiElement commonParent = PsiTreeUtil.findCommonParent(initElementAtLeft, initElementAtRight);
-            if (commonParent == null) {
-                return initialElement;
-            }
-            boolean areOurElementsAtTheEdges =
-                    commonParent.getTextRange().getStartOffset() == initElementAtLeft.getTextRange().getStartOffset() &&
-                            commonParent.getTextRange().getEndOffset() == initElementAtRight.getTextRange().getEndOffset();
-            if (areOurElementsAtTheEdges) {
-                initialElement = commonParent;
-            } else {
-                initialElement = switch (direction) {
-                    case BACKWARD -> initElementAtLeft;
-                    case FORWARD -> initElementAtRight;
-                };
-            }
+    private @NotNull PsiElement findParentElementIfInitialElementsAreAtEdgesOrChooseOne(
+                                                    PsiElement initElementAtLeft, PsiElement initElementAtRight) {
+        PsiElement initialElement = initElementAtLeft;
+        PsiElement commonParent = PsiTreeUtil.findCommonParent(initElementAtLeft, initElementAtRight);
+        if (commonParent == null) {
             return initialElement;
         }
-
-        private @Nullable PsiElement replaceWithParentIfParentEqualsTheElement (PsiElement initialElement){
-            if (initialElement == null) {
-                return null;
-            }
-            PsiElement parent = initialElement.getParent();
-            while (parent != null && parent.getText().equals(initialElement.getText())) {
-                initialElement = parent;
-                parent = initialElement.getParent();
-            }
-            return initialElement;
+        boolean areOurElementsAtTheEdges =
+                commonParent.getTextRange().getStartOffset() == initElementAtLeft.getTextRange().getStartOffset() &&
+                        commonParent.getTextRange().getEndOffset() == initElementAtRight.getTextRange().getEndOffset();
+        if (areOurElementsAtTheEdges) {
+            initialElement = commonParent;
+        } else {
+            initialElement = switch (direction) {
+                case BACKWARD -> initElementAtLeft;
+                case FORWARD -> initElementAtRight;
+            };
         }
-
-        private @Nullable PsiElement findNextNoneEmptyElement (PsiElement initialElement){
-            if (initialElement == null) {
-                return null;
-            }
-            PsiElement nextElement = initialElement;
-            do {
-                nextElement = switch (direction) {
-                    case BACKWARD -> PsiTreeUtil.skipSiblingsBackward(nextElement, PsiWhiteSpace.class);
-                    case FORWARD -> PsiTreeUtil.skipSiblingsForward(nextElement, PsiWhiteSpace.class);
-                };
-            } while (nextElement != null && nextElement.getText().isEmpty());
-            return nextElement;
-        }
-
-
+        return initialElement;
     }
+
+    private @Nullable PsiElement replaceWithParentIfParentEqualsTheElement(PsiElement initialElement) {
+        if (initialElement == null) {
+            return null;
+        }
+        PsiElement parent = initialElement.getParent();
+        while (parent != null && parent.getText().equals(initialElement.getText())) {
+            initialElement = parent;
+            parent = initialElement.getParent();
+        }
+        return initialElement;
+    }
+
+    private @Nullable PsiElement findNextNoneEmptyElement(PsiElement initialElement) {
+        if (initialElement == null) {
+            return null;
+        }
+        PsiElement nextElement = initialElement;
+        do {
+            nextElement = switch (direction) {
+                case BACKWARD -> PsiTreeUtil.skipSiblingsBackward(nextElement, PsiWhiteSpace.class);
+                case FORWARD -> PsiTreeUtil.skipSiblingsForward(nextElement, PsiWhiteSpace.class);
+            };
+        } while (nextElement != null && nextElement.getText().isEmpty());
+        return nextElement;
+    }
+
+
+}
