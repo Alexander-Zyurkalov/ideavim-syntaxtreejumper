@@ -29,7 +29,7 @@ public class FunctionHandler implements ExtensionHandler {
     private final Direction direction;
     private final BiFunction<PsiFile, Direction, MotionHandler> navigatorFactory;
 
-    public FunctionHandler(Direction direction,  BiFunction<PsiFile, Direction, MotionHandler> navigatorFactory) {
+    public FunctionHandler(Direction direction, BiFunction<PsiFile, Direction, MotionHandler> navigatorFactory) {
         this.direction = direction;
         this.navigatorFactory = navigatorFactory;
     }
@@ -47,7 +47,7 @@ public class FunctionHandler implements ExtensionHandler {
         PsiFile psiFile = PsiManager.getInstance(editor.getProject()).findFile(file);
         if (psiFile == null) return;
 
-        var navigator = navigatorFactory.apply(psiFile, direction);
+        MotionHandler navigator = navigatorFactory.apply(psiFile, direction);
         List<LogicalPosition> caretPositions = new ArrayList<>(); // to scroll to the first or the last position
         List<Caret> carets = editor.getCaretModel().getAllCarets();
         for (Caret caret : carets) {

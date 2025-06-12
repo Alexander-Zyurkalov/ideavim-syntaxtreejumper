@@ -153,30 +153,6 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
         return commonParent;
     }
 
-    /**
-     * Finds the next meaningful parent to expand to
-     */
-    private @Nullable PsiElement findNextMeaningfulParent(PsiElement element, Offsets currentSelection) {
-        PsiElement parent = element.getParent();
-
-        while (parent != null) {
-            TextRange parentRange = parent.getTextRange();
-
-            // Skip parents that have the same text range (whitespace-only wrappers, etc.)
-            if (parentRange.getStartOffset() < currentSelection.leftOffset() ||
-                    parentRange.getEndOffset() > currentSelection.rightOffset()) {
-
-                // Skip whitespace-only parents
-                if (!isWhitespaceOnly(parent)) {
-                    return parent;
-                }
-            }
-
-            parent = parent.getParent();
-        }
-
-        return null;
-    }
 
     /**
      * Finds the largest meaningful child that fits within the current selection

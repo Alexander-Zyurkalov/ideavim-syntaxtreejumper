@@ -10,7 +10,6 @@ import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -185,29 +184,6 @@ class SyntaxNodeTreeHandlerTest {
     @MethodSource("edgeCaseTestCases")
     void testEdgeCases(HelixSelectionTestData testData) {
         runHelixSelectionTest(testData);
-    }
-
-    @Test
-    void whereIsTheText() {
-        int[] a = new int[10];
-        for (int i = 0; i < 10; i++) {
-            a[i] = 2 * i;
-        }
-        System.out.println("Test");
-
-        String javaCode = """
-                public class TestClass {
-                    void execute() {
-                        int[] a = new int[10];
-                        for (int i = 0; i < 10; i++) {
-                            a[i] = 2 * i;
-                        }
-                        System.out.println("Test");
-                    }
-                }
-                """;
-        assertEquals(13, javaCode.indexOf("TestClass"));
-
     }
 
     private void runHelixSelectionTest(HelixSelectionTestData testData) {
