@@ -102,22 +102,22 @@ class ArgumentMotionHandlerTest {
 
                 // Method declaration parameters
                 new ArgumentTestData(
-                        new Offsets(139, 142), // 'int' in method declaration
-                        "int",
-                        new Offsets(146, 154), // next parameter which is `String y`
+                        new Offsets(139, 144),
+                        "int x",
+                        new Offsets(146, 154),
                         "String y",
                         Direction.FORWARD,
-                        "Forward: method parameter type to name"
+                        "Forward: to the next param"
+                ),
+                new ArgumentTestData(
+                        new Offsets(146, 154),
+                        "String y",
+                        new Offsets(146, 154),
+                        "String y",
+                        Direction.FORWARD,
+                        "Forward: last param"
                 )
-//                new ArgumentTestData(
-//                        new Offsets(162, 168), // 'String' in method declaration
-//                        "String",
-//                        new Offsets(169, 170), // 'y' parameter name
-//                        "y",
-//                        Direction.FORWARD,
-//                        "Forward: between method parameters"
-//                ),
-//
+
 //                // Lambda parameters
 //                new ArgumentTestData(
 //                        new Offsets(208, 209), // 'x' in lambda
