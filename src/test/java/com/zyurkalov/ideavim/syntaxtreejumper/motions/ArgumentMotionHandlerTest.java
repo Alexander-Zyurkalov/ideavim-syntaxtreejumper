@@ -72,23 +72,23 @@ class ArgumentMotionHandlerTest {
                         "b",
                         Direction.FORWARD,
                         "Forward: first to second argument in method call"
+                ),
+                new ArgumentTestData(
+                        new Offsets(70, 71), // 'b' selected
+                        "b",
+                        new Offsets(73, 74), // select 'c'
+                        "c",
+                        Direction.FORWARD,
+                        "Forward: second to third argument in method call"
+                ),
+                new ArgumentTestData(
+                        new Offsets(73, 74), // 'c' selected (last argument)
+                        "c",
+                        new Offsets(73, 74), // stay at 'c'
+                        "c",
+                        Direction.FORWARD,
+                        "Forward: stay at last argument when at boundary"
                 )
-//                new ArgumentTestData(
-//                        new Offsets(98, 99), // 'b' selected
-//                        "b",
-//                        new Offsets(101, 102), // select 'c'
-//                        "c",
-//                        Direction.FORWARD,
-//                        "Forward: second to third argument in method call"
-//                ),
-//                new ArgumentTestData(
-//                        new Offsets(101, 102), // 'c' selected (last argument)
-//                        "c",
-//                        new Offsets(101, 102), // stay at 'c'
-//                        "c",
-//                        Direction.FORWARD,
-//                        "Forward: stay at last argument when at boundary"
-//                ),
 //
 //                // Constructor call arguments
 //                new ArgumentTestData(
