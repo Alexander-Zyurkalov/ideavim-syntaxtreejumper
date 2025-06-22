@@ -88,17 +88,17 @@ class ArgumentMotionHandlerTest {
                         "c",
                         Direction.FORWARD,
                         "Forward: stay at last argument when at boundary"
+                ),
+
+                // Constructor call arguments
+                new ArgumentTestData(
+                        new Offsets(109, 110), // 'd' in constructor
+                        "d",
+                        new Offsets(112, 113), // 'e' in constructor
+                        "e",
+                        Direction.FORWARD,
+                        "Forward: constructor argument navigation"
                 )
-//
-//                // Constructor call arguments
-//                new ArgumentTestData(
-//                        new Offsets(129, 130), // 'd' in constructor
-//                        "d",
-//                        new Offsets(132, 133), // 'e' in constructor
-//                        "e",
-//                        Direction.FORWARD,
-//                        "Forward: constructor argument navigation"
-//                ),
 //
 //                // Method declaration parameters
 //                new ArgumentTestData(
@@ -273,7 +273,7 @@ class ArgumentMotionHandlerTest {
                     void emptyMethod() {}
                 }
                 """;
-        System.out.println(javaCode.indexOf("method(a"));
+        System.out.println(javaCode.indexOf("Object(d"));
 
         // Verify test prerequisite - initial selection matches expected text (if any)
         if (!testData.initialText.isEmpty()) {
