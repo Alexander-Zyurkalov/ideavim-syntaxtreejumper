@@ -135,25 +135,25 @@ class ArgumentMotionHandlerTest {
         return Stream.of(
                 // Method call arguments - backward navigation
                 new ArgumentTestData(
-                        new Offsets(101, 102), // 'c' selected (third argument)
+                        new Offsets(73, 74), // 'c' selected (third argument)
                         "c",
-                        new Offsets(98, 99), // select 'b'
+                        new Offsets(70, 71), // select 'b'
                         "b",
                         Direction.BACKWARD,
                         "Backward: third to second argument in method call"
                 ),
                 new ArgumentTestData(
-                        new Offsets(98, 99), // 'b' selected
+                        new Offsets(70, 71), // 'b' selected
                         "b",
-                        new Offsets(95, 96), // select 'a'
+                        new Offsets(67, 68), // select 'a'
                         "a",
                         Direction.BACKWARD,
                         "Backward: second to first argument in method call"
                 ),
                 new ArgumentTestData(
-                        new Offsets(95, 96), // 'a' selected (first argument)
+                        new Offsets(67, 68), // 'a' selected (first argument)
                         "a",
-                        new Offsets(95, 96), // stay at 'a'
+                        new Offsets(67, 68), // stay at 'a'
                         "a",
                         Direction.BACKWARD,
                         "Backward: stay at first argument when at boundary"
@@ -161,9 +161,9 @@ class ArgumentMotionHandlerTest {
 
                 // Constructor call arguments
                 new ArgumentTestData(
-                        new Offsets(132, 133), // 'e' in constructor
+                        new Offsets(112, 113), // 'e' in constructor
                         "e",
-                        new Offsets(129, 130), // 'd' in constructor
+                        new Offsets(109, 110), // 'd' in constructor
                         "d",
                         Direction.BACKWARD,
                         "Backward: constructor argument navigation"
@@ -171,22 +171,22 @@ class ArgumentMotionHandlerTest {
 
                 // Method parameters
                 new ArgumentTestData(
-                        new Offsets(169, 170), // 'y' parameter name
-                        "y",
-                        new Offsets(162, 168), // 'String' parameter type
-                        "String",
+                        new Offsets(146, 154),
+                        "String y",
+                        new Offsets(139, 144),
+                        "int x",
                         Direction.BACKWARD,
-                        "Backward: method parameter name to type"
+                        "Backward: prev method parameter"
                 ),
 
                 // Lambda parameters
                 new ArgumentTestData(
-                        new Offsets(211, 212), // 'y' in lambda
-                        "y",
-                        new Offsets(208, 209), // 'x' in lambda
-                        "x",
+                        new Offsets(139, 144),
+                        "int x",
+                        new Offsets(139, 144),
+                        "int x",
                         Direction.BACKWARD,
-                        "Backward: lambda parameter navigation"
+                        "Backward: last parameter"
                 )
         );
     }
