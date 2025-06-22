@@ -98,17 +98,17 @@ class ArgumentMotionHandlerTest {
                         "e",
                         Direction.FORWARD,
                         "Forward: constructor argument navigation"
+                ),
+
+                // Method declaration parameters
+                new ArgumentTestData(
+                        new Offsets(139, 142), // 'int' in method declaration
+                        "int",
+                        new Offsets(146, 154), // next parameter which is `String y`
+                        "String y",
+                        Direction.FORWARD,
+                        "Forward: method parameter type to name"
                 )
-//
-//                // Method declaration parameters
-//                new ArgumentTestData(
-//                        new Offsets(155, 158), // 'int' in method declaration
-//                        "int",
-//                        new Offsets(159, 160), // 'x' parameter name
-//                        "x",
-//                        Direction.FORWARD,
-//                        "Forward: method parameter type to name"
-//                ),
 //                new ArgumentTestData(
 //                        new Offsets(162, 168), // 'String' in method declaration
 //                        "String",
@@ -273,7 +273,7 @@ class ArgumentMotionHandlerTest {
                     void emptyMethod() {}
                 }
                 """;
-        System.out.println(javaCode.indexOf("Object(d"));
+        System.out.println(javaCode.indexOf( "method(int x"));
 
         // Verify test prerequisite - initial selection matches expected text (if any)
         if (!testData.initialText.isEmpty()) {
