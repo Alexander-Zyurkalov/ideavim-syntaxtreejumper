@@ -3,6 +3,7 @@ package com.zyurkalov.ideavim.syntaxtreejumper;
 import com.maddyhome.idea.vim.api.VimInjectorKt;
 import com.maddyhome.idea.vim.command.MappingMode;
 import com.maddyhome.idea.vim.extension.VimExtension;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.ArgumentMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SubWordMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SyntaxNodeTreeHandler;
@@ -85,7 +86,7 @@ public class SyntaxTreeJumper implements VimExtension {
                         SyntaxNodeTreeHandler.createShrinkHandler(psiFile)),
                 false);
 
-// Map the default key bindings (Alt-o and Alt-i like in Helix)
+        // Map the default key bindings (Alt-o and Alt-i like in Helix)
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-o>"),
@@ -98,6 +99,39 @@ public class SyntaxTreeJumper implements VimExtension {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-i>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
+                true);
+
+        // Argument navigation handlers
+        String commandJumpToNextArgument = "<Plug>JumpToNextArgument";
+        String commandJumpToPrevArgument = "<Plug>JumpToPrevArgument";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextArgument),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, ArgumentMotionHandler::new),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevArgument),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, ArgumentMotionHandler::new),
+                false);
+
+        // Map the default key bindings for argument navigation (]a and [a)
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("]a"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextArgument),
+                true);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("[a"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevArgument),
                 true);
     }
 
