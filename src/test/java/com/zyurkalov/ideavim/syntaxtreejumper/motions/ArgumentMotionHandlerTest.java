@@ -116,17 +116,17 @@ class ArgumentMotionHandlerTest {
                         "String y",
                         Direction.FORWARD,
                         "Forward: last param"
-                )
+                ),
 
-//                // Lambda parameters
-//                new ArgumentTestData(
-//                        new Offsets(208, 209), // 'x' in lambda
-//                        "x",
-//                        new Offsets(211, 212), // 'y' in lambda
-//                        "y",
-//                        Direction.FORWARD,
-//                        "Forward: lambda parameter navigation"
-//                )
+                // Lambda parameters
+                new ArgumentTestData(
+                        new Offsets(274, 275), // 'x' in lambda
+                        "x",
+                        new Offsets(277, 278), // 'y' in lambda
+                        "y",
+                        Direction.FORWARD,
+                        "Forward: lambda parameter navigation"
+                )
         );
     }
 
@@ -273,7 +273,7 @@ class ArgumentMotionHandlerTest {
                     void emptyMethod() {}
                 }
                 """;
-        System.out.println(javaCode.indexOf( "method(int x"));
+        System.out.println(javaCode.indexOf("(x, y) ->"));
 
         // Verify test prerequisite - initial selection matches expected text (if any)
         if (!testData.initialText.isEmpty()) {
