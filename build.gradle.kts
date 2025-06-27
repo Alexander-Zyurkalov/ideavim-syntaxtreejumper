@@ -20,8 +20,6 @@ repositories {
     }
 }
 
-// Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
     intellijPlatform {
         create("IC", "2025.1.1.1")
@@ -30,13 +28,11 @@ dependencies {
         pluginVerifier()
         zipSigner()
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
-
-        // Add necessary plugin dependencies for compilation here, example:
-        // bundledPlugin("com.intellij.java")
     }
+
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
-    testImplementation ( "org.junit.jupiter:junit-jupiter-params:5.10.1" )
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.1")
     testImplementation("org.opentest4j:opentest4j:1.3.0")
     testRuntimeOnly("junit:junit:4.13.2")
 }
@@ -44,17 +40,33 @@ dependencies {
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "251"
+            untilBuild = "251.*"
         }
 
         changeNotes = """
-      Initial version
-    """.trimIndent()
+            Initial version with multi-language support:
+            - Java syntax tree navigation
+            - JavaScript/TypeScript support  
+            - Python syntax tree jumping
+            - Rust language support
+            - C/C++ syntax navigation
+        """.trimIndent()
+    }
+
+    pluginVerification {
+        ides {
+            // Test against multiple IDE types
+            ide("IC", "2025.1.4")     // IntelliJ IDEA Community
+            ide("IU", "2025.1.4")     // IntelliJ IDEA Ultimate
+            ide("PY", "2025.1.4")     // PyCharm Professional
+            ide("PC", "2025.1.4")     // PyCharm Community
+            ide("CL", "2025.1.4")     // CLion
+            ide("RR", "2025.1.4")     // RustRover
+        }
     }
 }
 
 tasks {
-    // Set the JVM compatibility versions
     withType<JavaCompile> {
         sourceCompatibility = "21"
         targetCompatibility = "21"
