@@ -7,6 +7,7 @@ import com.zyurkalov.ideavim.syntaxtreejumper.motions.ArgumentMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SubWordMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SyntaxNodeTreeHandler;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.JavaContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -109,14 +110,16 @@ public class SyntaxTreeJumper implements VimExtension {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextArgument),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, ArgumentMotionHandler::new),
+                new FunctionHandler(Direction.FORWARD,
+                        (psiFile, direction) -> new ArgumentMotionHandler(psiFile, direction, new JavaContext(direction))),
                 false);
 
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevArgument),
                 getOwner(),
-                new FunctionHandler(Direction.BACKWARD, ArgumentMotionHandler::new),
+                new FunctionHandler(Direction.BACKWARD,
+                        (psiFile, direction) -> new ArgumentMotionHandler(psiFile, direction, new JavaContext(direction))),
                 false);
 
         // Map the default key bindings for argument navigation (]a and [a)

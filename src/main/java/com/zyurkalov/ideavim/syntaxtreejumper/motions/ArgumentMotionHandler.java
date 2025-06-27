@@ -6,7 +6,6 @@ import com.intellij.psi.PsiFile;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.ArgumentContext;
-import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.JavaContext;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.LanguageContext;
 
 import java.util.List;
@@ -23,10 +22,12 @@ public class ArgumentMotionHandler extends MotionHandler {
     private final Direction direction;
     private final LanguageContext context;
 
-    public ArgumentMotionHandler(PsiFile psiFile, Direction direction) {
+
+    public ArgumentMotionHandler(PsiFile psiFile, Direction direction,
+                                LanguageContext context) {
         this.psiFile = psiFile;
         this.direction = direction;
-        this.context = new JavaContext(direction);
+        this.context = context;
     }
 
     @Override

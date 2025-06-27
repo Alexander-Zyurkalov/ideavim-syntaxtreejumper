@@ -8,6 +8,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.JavaContext;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,8 +28,7 @@ class ArgumentMotionHandlerTest {
     @BeforeEach
     public void setUp() throws Exception {
         IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-        TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = 
-                factory.createLightFixtureBuilder(getClass().getName());
+        TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getClass().getName());
         IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
         myFixture = factory.createCodeInsightFixture(fixture);
         myFixture.setUp();
@@ -39,14 +39,8 @@ class ArgumentMotionHandlerTest {
         myFixture.tearDown();
     }
 
-    record ArgumentTestData(
-            Offsets initialOffsets,
-            String initialText,
-            Offsets expectedOffsets,
-            String expectedText,
-            Direction direction,
-            String explanation
-    ) {
+    record ArgumentTestData(Offsets initialOffsets, String initialText, Offsets expectedOffsets, String expectedText,
+                            Direction direction, String explanation) {
         @Override
         public @NotNull String toString() {
             return explanation;
@@ -57,181 +51,73 @@ class ArgumentMotionHandlerTest {
     static Stream<ArgumentTestData> forwardNavigationTestCases() {
         return Stream.of(
                 // Method call arguments - forward navigation
-                new ArgumentTestData(
-                        new Offsets(67, 67), // cursor at 'a'
-                        "",
-                        new Offsets(70, 71), // select 'b'
-                        "b",
-                        Direction.FORWARD,
-                        "Forward: cursor to first argument in method call"
-                ),
-                new ArgumentTestData(
-                        new Offsets(67, 68), // 'a' selected
-                        "a",
-                        new Offsets(70, 71), // select 'b'
-                        "b",
-                        Direction.FORWARD,
-                        "Forward: first to second argument in method call"
-                ),
-                new ArgumentTestData(
-                        new Offsets(70, 71), // 'b' selected
-                        "b",
-                        new Offsets(73, 74), // select 'c'
-                        "c",
-                        Direction.FORWARD,
-                        "Forward: second to third argument in method call"
-                ),
-                new ArgumentTestData(
-                        new Offsets(73, 74), // 'c' selected (last argument)
-                        "c",
-                        new Offsets(73, 74), // stay at 'c'
-                        "c",
-                        Direction.FORWARD,
-                        "Forward: stay at last argument when at boundary"
-                ),
+                new ArgumentTestData(new Offsets(67, 67), // cursor at 'a'
+                        "", new Offsets(70, 71), // select 'b'
+                        "b", Direction.FORWARD, "Forward: cursor to first argument in method call"), new ArgumentTestData(new Offsets(67, 68), // 'a' selected
+                        "a", new Offsets(70, 71), // select 'b'
+                        "b", Direction.FORWARD, "Forward: first to second argument in method call"), new ArgumentTestData(new Offsets(70, 71), // 'b' selected
+                        "b", new Offsets(73, 74), // select 'c'
+                        "c", Direction.FORWARD, "Forward: second to third argument in method call"), new ArgumentTestData(new Offsets(73, 74), // 'c' selected (last argument)
+                        "c", new Offsets(73, 74), // stay at 'c'
+                        "c", Direction.FORWARD, "Forward: stay at last argument when at boundary"),
 
                 // Constructor call arguments
-                new ArgumentTestData(
-                        new Offsets(109, 110), // 'd' in constructor
-                        "d",
-                        new Offsets(112, 113), // 'e' in constructor
-                        "e",
-                        Direction.FORWARD,
-                        "Forward: constructor argument navigation"
-                ),
+                new ArgumentTestData(new Offsets(109, 110), // 'd' in constructor
+                        "d", new Offsets(112, 113), // 'e' in constructor
+                        "e", Direction.FORWARD, "Forward: constructor argument navigation"),
 
                 // Method declaration parameters
-                new ArgumentTestData(
-                        new Offsets(139, 144),
-                        "int x",
-                        new Offsets(146, 154),
-                        "String y",
-                        Direction.FORWARD,
-                        "Forward: to the next param"
-                ),
-                new ArgumentTestData(
-                        new Offsets(146, 154),
-                        "String y",
-                        new Offsets(146, 154),
-                        "String y",
-                        Direction.FORWARD,
-                        "Forward: last param"
-                ),
+                new ArgumentTestData(new Offsets(139, 144), "int x", new Offsets(146, 154), "String y", Direction.FORWARD, "Forward: to the next param"), new ArgumentTestData(new Offsets(146, 154), "String y", new Offsets(146, 154), "String y", Direction.FORWARD, "Forward: last param"),
 
                 // Lambda parameters
-                new ArgumentTestData(
-                        new Offsets(274, 275), // 'x' in lambda
-                        "x",
-                        new Offsets(277, 278), // 'y' in lambda
-                        "y",
-                        Direction.FORWARD,
-                        "Forward: lambda parameter navigation"
-                )
-        );
+                new ArgumentTestData(new Offsets(274, 275), // 'x' in lambda
+                        "x", new Offsets(277, 278), // 'y' in lambda
+                        "y", Direction.FORWARD, "Forward: lambda parameter navigation"));
     }
 
     // Backward navigation test cases
     static Stream<ArgumentTestData> backwardNavigationTestCases() {
         return Stream.of(
                 // Method call arguments - backward navigation
-                new ArgumentTestData(
-                        new Offsets(73, 74), // 'c' selected (third argument)
-                        "c",
-                        new Offsets(70, 71), // select 'b'
-                        "b",
-                        Direction.BACKWARD,
-                        "Backward: third to second argument in method call"
-                ),
-                new ArgumentTestData(
-                        new Offsets(70, 71), // 'b' selected
-                        "b",
-                        new Offsets(67, 68), // select 'a'
-                        "a",
-                        Direction.BACKWARD,
-                        "Backward: second to first argument in method call"
-                ),
-                new ArgumentTestData(
-                        new Offsets(67, 68), // 'a' selected (first argument)
-                        "a",
-                        new Offsets(67, 68), // stay at 'a'
-                        "a",
-                        Direction.BACKWARD,
-                        "Backward: stay at first argument when at boundary"
-                ),
+                new ArgumentTestData(new Offsets(73, 74), // 'c' selected (third argument)
+                        "c", new Offsets(70, 71), // select 'b'
+                        "b", Direction.BACKWARD, "Backward: third to second argument in method call"), new ArgumentTestData(new Offsets(70, 71), // 'b' selected
+                        "b", new Offsets(67, 68), // select 'a'
+                        "a", Direction.BACKWARD, "Backward: second to first argument in method call"), new ArgumentTestData(new Offsets(67, 68), // 'a' selected (first argument)
+                        "a", new Offsets(67, 68), // stay at 'a'
+                        "a", Direction.BACKWARD, "Backward: stay at first argument when at boundary"),
 
                 // Constructor call arguments
-                new ArgumentTestData(
-                        new Offsets(112, 113), // 'e' in constructor
-                        "e",
-                        new Offsets(109, 110), // 'd' in constructor
-                        "d",
-                        Direction.BACKWARD,
-                        "Backward: constructor argument navigation"
-                ),
+                new ArgumentTestData(new Offsets(112, 113), // 'e' in constructor
+                        "e", new Offsets(109, 110), // 'd' in constructor
+                        "d", Direction.BACKWARD, "Backward: constructor argument navigation"),
 
                 // Method parameters
-                new ArgumentTestData(
-                        new Offsets(146, 154),
-                        "String y",
-                        new Offsets(139, 144),
-                        "int x",
-                        Direction.BACKWARD,
-                        "Backward: prev method parameter"
-                ),
+                new ArgumentTestData(new Offsets(146, 154), "String y", new Offsets(139, 144), "int x", Direction.BACKWARD, "Backward: prev method parameter"),
 
                 // Lambda parameters
-                new ArgumentTestData(
-                        new Offsets(139, 144),
-                        "int x",
-                        new Offsets(139, 144),
-                        "int x",
-                        Direction.BACKWARD,
-                        "Backward: last parameter"
-                )
-        );
+                new ArgumentTestData(new Offsets(139, 144), "int x", new Offsets(139, 144), "int x", Direction.BACKWARD, "Backward: last parameter"));
     }
 
     // Edge cases and boundary conditions
     static Stream<ArgumentTestData> edgeCaseTestCases() {
         return Stream.of(
                 // Cursor between arguments
-                new ArgumentTestData(
-                        new Offsets(68, 69), // cursor at comma between 'a' and 'b'
-                        ",",
-                        new Offsets(70, 71), // jump to 'b'
-                        "b",
-                        Direction.FORWARD,
-                        "Edge case: cursor between arguments, forward to next"
-                ),
-                new ArgumentTestData(
-                        new Offsets(68, 69), // cursor at comma between 'a' and 'b'
-                        ",",
-                        new Offsets(67, 68), // jump to 'a'
-                        "a",
-                        Direction.BACKWARD,
-                        "Edge case: cursor between arguments, backward to previous"
-                ),
+                new ArgumentTestData(new Offsets(68, 69), // cursor at comma between 'a' and 'b'
+                        ",", new Offsets(70, 71), // jump to 'b'
+                        "b", Direction.FORWARD, "Edge case: cursor between arguments, forward to next"), new ArgumentTestData(new Offsets(68, 69), // cursor at comma between 'a' and 'b'
+                        ",", new Offsets(67, 68), // jump to 'a'
+                        "a", Direction.BACKWARD, "Edge case: cursor between arguments, backward to previous"),
 
                 // Empty argument list
-                new ArgumentTestData(
-                        new Offsets(218, 218), // cursor in empty parentheses
-                        "",
-                        new Offsets(218, 218), // stay in place
-                        "",
-                        Direction.FORWARD,
-                        "Edge case: empty argument list"
-                ),
+                new ArgumentTestData(new Offsets(218, 218), // cursor in empty parentheses
+                        "", new Offsets(218, 218), // stay in place
+                        "", Direction.FORWARD, "Edge case: empty argument list"),
 
                 // Complex expressions as arguments
-                new ArgumentTestData(
-                        new Offsets(335, 349), // 'obj.getValue()'
-                        "obj.getValue()",
-                        new Offsets(351, 366), // 'list.size() + 1'
-                        "list.size() + 1",
-                        Direction.FORWARD,
-                        "Edge case: complex expression arguments"
-                )
-        );
+                new ArgumentTestData(new Offsets(335, 349), // 'obj.getValue()'
+                        "obj.getValue()", new Offsets(351, 366), // 'list.size() + 1'
+                        "list.size() + 1", Direction.FORWARD, "Edge case: complex expression arguments"));
     }
 
     @ParameterizedTest
@@ -259,17 +145,17 @@ class ArgumentMotionHandlerTest {
                         method(a, b, c);
                         Object obj = new Object(d, e);
                     }
-                    
+                
                     void method(int x, String y) {
                         // Method with parameters
                     }
-                    
+                
                     void lambdaTest() {
                         BiFunction<String, String, String> func = (x, y) -> x + y;
                         emptyMethod();
                         complexMethod(obj.getValue(), list.size() + 1, "constant");
                     }
-                    
+                
                     void emptyMethod() {}
                 }
                 """;
@@ -277,21 +163,12 @@ class ArgumentMotionHandlerTest {
 
         // Verify test prerequisite - initial selection matches expected text (if any)
         if (!testData.initialText.isEmpty()) {
-            String actualInitialText = javaCode.substring(
-                    testData.initialOffsets.leftOffset(),
-                    testData.initialOffsets.rightOffset()
-            ).trim();
-            assertTrue(
-                    testData.initialText.equals(actualInitialText) ||
-                    testData.initialText.contains(actualInitialText) ||
-                    actualInitialText.contains(testData.initialText),
-                    "Test prerequisite failed: expected initial text '" + testData.initialText +
-                            "' but got '" + actualInitialText + "'"
-            );
+            String actualInitialText = javaCode.substring(testData.initialOffsets.leftOffset(), testData.initialOffsets.rightOffset()).trim();
+            assertTrue(testData.initialText.equals(actualInitialText) || testData.initialText.contains(actualInitialText) || actualInitialText.contains(testData.initialText), "Test prerequisite failed: expected initial text '" + testData.initialText + "' but got '" + actualInitialText + "'");
         }
 
         PsiFile javaFile = myFixture.configureByText("ArgumentTest.java", javaCode);
-        ArgumentMotionHandler handler = new ArgumentMotionHandler(javaFile, testData.direction);
+        ArgumentMotionHandler handler = new ArgumentMotionHandler(javaFile, testData.direction, new JavaContext(testData.direction));
 
         ApplicationManager.getApplication().runReadAction(() -> {
             Optional<Offsets> result = handler.findNext(testData.initialOffsets);
@@ -302,13 +179,9 @@ class ArgumentMotionHandlerTest {
 
             // Verify the selected text matches expectations (if expected text is not empty)
             if (!testData.expectedText.isEmpty()) {
-                String actualSelectedText = javaCode.substring(
-                        actualOffsets.leftOffset(),
-                        actualOffsets.rightOffset()
-                ).trim();
+                String actualSelectedText = javaCode.substring(actualOffsets.leftOffset(), actualOffsets.rightOffset()).trim();
 
-                assertEquals(testData.expectedText, actualSelectedText,
-                        "Selected text should match expected text for: " + testData.explanation);
+                assertEquals(testData.expectedText, actualSelectedText, "Selected text should match expected text for: " + testData.explanation);
             }
         });
     }
