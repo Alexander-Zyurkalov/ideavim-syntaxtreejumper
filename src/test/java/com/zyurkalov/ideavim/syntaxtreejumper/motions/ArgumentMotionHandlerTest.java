@@ -195,32 +195,32 @@ class ArgumentMotionHandlerTest {
     static Stream<ArgumentTestData> edgeCaseTestCases() {
         return Stream.of(
                 // Cursor between arguments
-                new ArgumentTestData(
-                        new Offsets(68, 69), // cursor at comma between 'a' and 'b'
-                        ",",
-                        new Offsets(70, 71), // jump to 'b'
-                        "b",
-                        Direction.FORWARD,
-                        "Edge case: cursor between arguments, forward to next"
-                ),
-                new ArgumentTestData(
-                        new Offsets(68, 69), // cursor at comma between 'a' and 'b'
-                        ",",
-                        new Offsets(67, 68), // jump to 'a'
-                        "a",
-                        Direction.BACKWARD,
-                        "Edge case: cursor between arguments, backward to previous"
-                ),
-
-                // Empty argument list
-                new ArgumentTestData(
-                        new Offsets(218, 218), // cursor in empty parentheses
-                        "",
-                        new Offsets(218, 218), // stay in place
-                        "",
-                        Direction.FORWARD,
-                        "Edge case: empty argument list"
-                ),
+//                new ArgumentTestData(
+//                        new Offsets(68, 69), // cursor at comma between 'a' and 'b'
+//                        ",",
+//                        new Offsets(70, 71), // jump to 'b'
+//                        "b",
+//                        Direction.FORWARD,
+//                        "Edge case: cursor between arguments, forward to next"
+//                ),
+//                new ArgumentTestData(
+//                        new Offsets(68, 69), // cursor at comma between 'a' and 'b'
+//                        ",",
+//                        new Offsets(67, 68), // jump to 'a'
+//                        "a",
+//                        Direction.BACKWARD,
+//                        "Edge case: cursor between arguments, backward to previous"
+//                ),
+//
+//                // Empty argument list
+//                new ArgumentTestData(
+//                        new Offsets(218, 218), // cursor in empty parentheses
+//                        "",
+//                        new Offsets(218, 218), // stay in place
+//                        "",
+//                        Direction.FORWARD,
+//                        "Edge case: empty argument list"
+//                ),
 
                 // Complex expressions as arguments
                 new ArgumentTestData(

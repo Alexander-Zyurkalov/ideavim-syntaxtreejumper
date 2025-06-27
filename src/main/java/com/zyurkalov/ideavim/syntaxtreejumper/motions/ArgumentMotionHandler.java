@@ -15,7 +15,7 @@ import java.util.Optional;
  * Supports jumping to next/previous arguments in method calls, constructor calls,
  * method parameters, and lambda parameters.
  */
-public class ArgumentMotionHandler implements MotionHandler {
+public class ArgumentMotionHandler extends MotionHandler {
 
     private final PsiFile psiFile;
     private final Direction direction;
@@ -27,7 +27,11 @@ public class ArgumentMotionHandler implements MotionHandler {
 
     @Override
     public Optional<Offsets> findNext(Offsets initialOffsets) {
-        PsiElement elementAtCursor = psiFile.findElementAt(initialOffsets.leftOffset());
+
+        PsiElement leftElement = psiFile.findElementAt(initialOffsets.leftOffset());
+        PsiElement rightElement = psiFile.findElementAt(initialOffsets.rightOffset() - 1);
+
+        PsiElement elementAtCursor = findSmallestCommonParent(leftElement, rightElement, initialOffsets);
         if (elementAtCursor == null) {
             return Optional.of(initialOffsets);
         }
@@ -59,7 +63,7 @@ public class ArgumentMotionHandler implements MotionHandler {
 
         // Don't move if we're already at the boundary and would wrap around
         if ((direction == Direction.FORWARD && currentIndex == arguments.size() - 1) ||
-            (direction == Direction.BACKWARD && currentIndex == 0)) {
+                (direction == Direction.BACKWARD && currentIndex == 0)) {
             return Optional.of(initialOffsets);
         }
 
@@ -129,10 +133,10 @@ public class ArgumentMotionHandler implements MotionHandler {
         for (int i = 0; i < arguments.size(); i++) {
             PsiElement arg = arguments.get(i);
             TextRange range = arg.getTextRange();
-            
+
             // Check if cursor is within this argument
-            if (initialOffsets.leftOffset() >= range.getStartOffset() && 
-                initialOffsets.rightOffset() <= range.getEndOffset()) {
+            if (initialOffsets.leftOffset() >= range.getStartOffset() &&
+                    initialOffsets.rightOffset() <= range.getEndOffset()) {
                 return i;
             }
         }
