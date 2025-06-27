@@ -23,7 +23,7 @@ public class JavaContext {
         PsiElement current = element;
 
         while (current != null) {
-            ArgumentContext context = createArgumentContext(current);
+            JavaArgumentContext context = createArgumentContext(current);
             if (context != null) {
                 return context;
             }
@@ -36,7 +36,7 @@ public class JavaContext {
                         grandParent instanceof PsiNewExpression ||
                         grandParent instanceof PsiMethod ||
                         grandParent instanceof PsiLambdaExpression) {
-                    return new ArgumentContext(parent);
+                    return new JavaArgumentContext(parent);
                 }
             }
 
@@ -46,13 +46,13 @@ public class JavaContext {
         return null;
     }
 
-    private ArgumentContext createArgumentContext(PsiElement element) {
+    private JavaArgumentContext createArgumentContext(PsiElement element) {
         return switch (element) {
-            case PsiMethodCallExpression methodCall -> new ArgumentContext(methodCall.getArgumentList());
+            case PsiMethodCallExpression methodCall -> new JavaArgumentContext(methodCall.getArgumentList());
             case PsiNewExpression newExpression when newExpression.getArgumentList() != null ->
-                    new ArgumentContext(newExpression.getArgumentList());
-            case PsiMethod method -> new ArgumentContext(method.getParameterList());
-            case PsiLambdaExpression lambda -> new ArgumentContext(lambda.getParameterList());
+                    new JavaArgumentContext(newExpression.getArgumentList());
+            case PsiMethod method -> new JavaArgumentContext(method.getParameterList());
+            case PsiLambdaExpression lambda -> new JavaArgumentContext(lambda.getParameterList());
             default -> null;
         };
     }

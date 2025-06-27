@@ -7,7 +7,6 @@ import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.ArgumentContext;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.JavaContext;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -76,27 +75,5 @@ public class ArgumentMotionHandler extends MotionHandler {
         return Optional.of(new Offsets(range.getStartOffset(), range.getEndOffset()));
     }
 
-    /**
-     * Finds the argument context (method call, constructor, etc.) that contains the cursor
-     */
-    private @Nullable ArgumentContext findArgumentContext(PsiElement element) {
-
-        return context.findArgumentContext(element);
-    }
-
-    /**
-     * Finds the index of the current argument based on cursor position
-     */
-    private int findCurrentArgumentIndex(List<PsiElement> arguments, Offsets initialOffsets) {
-        return context.findCurrentArgumentIndex(arguments, initialOffsets);
-    }
-
-    /**
-     * Finds the closest argument when cursor is not currently in an argument
-     */
-    private Optional<Offsets> findClosestArgument(List<PsiElement> arguments, Offsets initialOffsets) {
-
-        return context.findClosestArgument(arguments, initialOffsets);
-    }
 
 }
