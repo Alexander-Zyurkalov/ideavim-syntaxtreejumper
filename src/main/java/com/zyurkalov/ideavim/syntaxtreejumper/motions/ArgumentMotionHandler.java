@@ -132,7 +132,7 @@ public class ArgumentMotionHandler implements MotionHandler {
             
             // Check if cursor is within this argument
             if (initialOffsets.leftOffset() >= range.getStartOffset() && 
-                initialOffsets.leftOffset() <= range.getEndOffset()) {
+                initialOffsets.rightOffset() <= range.getEndOffset()) {
                 return i;
             }
         }
@@ -161,7 +161,7 @@ public class ArgumentMotionHandler implements MotionHandler {
                 // Find last argument before cursor
                 for (int i = arguments.size() - 1; i >= 0; i--) {
                     PsiElement arg = arguments.get(i);
-                    if (arg.getTextRange().getEndOffset() < initialOffsets.leftOffset()) {
+                    if (arg.getTextRange().getEndOffset() <= initialOffsets.leftOffset()) {
                         yield arg;
                     }
                 }

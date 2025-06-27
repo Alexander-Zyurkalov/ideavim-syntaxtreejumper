@@ -196,17 +196,17 @@ class ArgumentMotionHandlerTest {
         return Stream.of(
                 // Cursor between arguments
                 new ArgumentTestData(
-                        new Offsets(97, 97), // cursor at comma between 'a' and 'b'
-                        "",
-                        new Offsets(98, 99), // jump to 'b'
+                        new Offsets(68, 69), // cursor at comma between 'a' and 'b'
+                        ",",
+                        new Offsets(70, 71), // jump to 'b'
                         "b",
                         Direction.FORWARD,
                         "Edge case: cursor between arguments, forward to next"
                 ),
                 new ArgumentTestData(
-                        new Offsets(97, 97), // cursor at comma between 'a' and 'b'
-                        "",
-                        new Offsets(95, 96), // jump to 'a'
+                        new Offsets(68, 69), // cursor at comma between 'a' and 'b'
+                        ",",
+                        new Offsets(67, 68), // jump to 'a'
                         "a",
                         Direction.BACKWARD,
                         "Edge case: cursor between arguments, backward to previous"
@@ -224,7 +224,7 @@ class ArgumentMotionHandlerTest {
 
                 // Complex expressions as arguments
                 new ArgumentTestData(
-                        new Offsets(264, 275), // 'obj.getValue()' 
+                        new Offsets(264, 275), // 'obj.getValue()'
                         "obj.getValue()",
                         new Offsets(277, 291), // 'list.size() + 1'
                         "list.size() + 1",
