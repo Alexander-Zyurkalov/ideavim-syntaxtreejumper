@@ -1,5 +1,6 @@
 package com.zyurkalov.ideavim.syntaxtreejumper;
 
+import com.intellij.psi.PsiFile;
 import com.maddyhome.idea.vim.api.VimInjectorKt;
 import com.maddyhome.idea.vim.command.MappingMode;
 import com.maddyhome.idea.vim.extension.VimExtension;
@@ -8,7 +9,9 @@ import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsMotionHan
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SubWordMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SyntaxNodeTreeHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.JavaContext;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.LanguageContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
@@ -111,7 +114,7 @@ public class SyntaxTreeJumper implements VimExtension {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextArgument),
                 getOwner(),
                 new FunctionHandler(Direction.FORWARD,
-                        (psiFile, direction) -> new ArgumentMotionHandler(psiFile, direction, new JavaContext(direction))),
+                        (psiFile, direction) -> new ArgumentMotionHandler(psiFile, direction,  getContext(psiFile, direction))),
                 false);
 
         putExtensionHandlerMapping(
@@ -119,7 +122,7 @@ public class SyntaxTreeJumper implements VimExtension {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevArgument),
                 getOwner(),
                 new FunctionHandler(Direction.BACKWARD,
-                        (psiFile, direction) -> new ArgumentMotionHandler(psiFile, direction, new JavaContext(direction))),
+                        (psiFile, direction) -> new ArgumentMotionHandler(psiFile, direction, getContext(psiFile, direction))),
                 false);
 
         // Map the default key bindings for argument navigation (]a and [a)
@@ -138,4 +141,78 @@ public class SyntaxTreeJumper implements VimExtension {
                 true);
     }
 
+    /**
+     * Returns the appropriate LanguageContext based on the file type and available language support.
+     * Currently only supports Java files when the Java plugin is available.
+     *
+     * @param psiFile The PSI file to determine the language context for
+     * @param direction The direction of navigation
+     * @return JavaContext if the file is a Java file and Java support is available, null otherwise
+     */
+    private static @Nullable LanguageContext getContext(PsiFile psiFile, Direction direction) {
+        if (psiFile == null) {
+            return null;
+        }
+
+        // Check if this is a Java file
+        if (isJavaFile(psiFile)) {
+            // Check if Java plugin/support is available
+            if (isJavaPluginAvailable()) {
+                return new JavaContext(direction);
+            }
+        }
+
+        // TODO: Add support for other languages here
+        // if (isJavaScriptFile(psiFile) && isJavaScriptPluginAvailable()) {
+        //     return new JavaScriptContext(direction);
+        // }
+        // if (isPythonFile(psiFile) && isPythonPluginAvailable()) {
+        //     return new PythonContext(direction);
+        // }
+
+        return null;
+    }
+
+    /**
+     * Checks if the given PSI file is a Java file.
+     */
+    private static boolean isJavaFile(PsiFile psiFile) {
+        String fileName = psiFile.getName();
+        return fileName.endsWith(".java") ||
+               "JAVA".equals(psiFile.getFileType().getName()) ||
+               "Java".equals(psiFile.getLanguage().getID());
+    }
+
+    /**
+     * Checks if Java plugin/support is available in the current IDE.
+     */
+    private static boolean isJavaPluginAvailable() {
+        try {
+            // Try to load a Java-specific class to verify Java support is available
+            Class.forName("com.intellij.psi.PsiJavaFile");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Alternative implementation that also checks plugin manager
+     * (uncomment if you prefer this approach)
+     */
+    /*
+    private static boolean isJavaPluginAvailable() {
+        try {
+            // Check if Java classes are available
+            Class.forName("com.intellij.psi.PsiJavaFile");
+
+            // Also check if the Java plugin is enabled
+            PluginManager pluginManager = PluginManager.getInstance();
+            PluginId javaPluginId = PluginId.getId("com.intellij.java");
+            return pluginManager.isPluginEnabled(javaPluginId);
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+    */
 }

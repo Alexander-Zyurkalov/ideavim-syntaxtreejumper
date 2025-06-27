@@ -24,7 +24,7 @@ public class ArgumentMotionHandler extends MotionHandler {
 
 
     public ArgumentMotionHandler(PsiFile psiFile, Direction direction,
-                                LanguageContext context) {
+                                 LanguageContext context) {
         this.psiFile = psiFile;
         this.direction = direction;
         this.context = context;
@@ -32,6 +32,9 @@ public class ArgumentMotionHandler extends MotionHandler {
 
     @Override
     public Optional<Offsets> findNext(Offsets initialOffsets) {
+        if (this.context == null) {
+            return Optional.of(initialOffsets);
+        }
 
         PsiElement leftElement = psiFile.findElementAt(initialOffsets.leftOffset());
         PsiElement rightElement = psiFile.findElementAt(initialOffsets.rightOffset() - 1);
