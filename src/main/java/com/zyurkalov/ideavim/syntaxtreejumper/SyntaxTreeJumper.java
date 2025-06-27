@@ -10,6 +10,7 @@ import com.zyurkalov.ideavim.syntaxtreejumper.motions.SubWordMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SyntaxNodeTreeHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.JavaContext;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.LanguageContext;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.RustContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,11 +144,11 @@ public class SyntaxTreeJumper implements VimExtension {
 
     /**
      * Returns the appropriate LanguageContext based on the file type and available language support.
-     * Currently only supports Java files when the Java plugin is available.
+     * Currently, supports Java and Rust files when their respective plugins are available.
      *
      * @param psiFile The PSI file to determine the language context for
      * @param direction The direction of navigation
-     * @return JavaContext if the file is a Java file and Java support is available, null otherwise
+     * @return LanguageContext for the appropriate language, or null if not supported
      */
     private static @Nullable LanguageContext getContext(PsiFile psiFile, Direction direction) {
         if (psiFile == null) {
@@ -159,6 +160,14 @@ public class SyntaxTreeJumper implements VimExtension {
             // Check if Java plugin/support is available
             if (isJavaPluginAvailable()) {
                 return new JavaContext(direction);
+            }
+        }
+
+        // Check if this is a Rust file
+        if (isRustFile(psiFile)) {
+            // Check if Rust plugin/support is available
+            if (isRustPluginAvailable()) {
+                return new RustContext(direction);
             }
         }
 
@@ -184,6 +193,17 @@ public class SyntaxTreeJumper implements VimExtension {
     }
 
     /**
+     * Checks if the given PSI file is a Rust file.
+     */
+    private static boolean isRustFile(PsiFile psiFile) {
+        String fileName = psiFile.getName();
+        return fileName.endsWith(".rs") ||
+               "Rust".equals(psiFile.getFileType().getName()) ||
+               "Rust".equals(psiFile.getLanguage().getID()) ||
+               "RUST".equals(psiFile.getFileType().getName());
+    }
+
+    /**
      * Checks if Java plugin/support is available in the current IDE.
      */
     private static boolean isJavaPluginAvailable() {
@@ -197,22 +217,23 @@ public class SyntaxTreeJumper implements VimExtension {
     }
 
     /**
-     * Alternative implementation that also checks plugin manager
-     * (uncomment if you prefer this approach)
+     * Checks if Rust plugin/support is available in the current IDE.
      */
-    /*
-    private static boolean isJavaPluginAvailable() {
+    private static boolean isRustPluginAvailable() {
         try {
-            // Check if Java classes are available
-            Class.forName("com.intellij.psi.PsiJavaFile");
-
-            // Also check if the Java plugin is enabled
-            PluginManager pluginManager = PluginManager.getInstance();
-            PluginId javaPluginId = PluginId.getId("com.intellij.java");
-            return pluginManager.isPluginEnabled(javaPluginId);
+            // Try to load Rust-specific classes to verify Rust support is available
+            // The org.rust.lang plugin provides these classes
+            Class.forName("org.rust.lang.core.psi.RsFile");
+            return true;
         } catch (ClassNotFoundException e) {
-            return false;
+            // Fallback: try alternative Rust plugin class names
+            try {
+                Class.forName("org.rust.lang.RsFileType");
+                return true;
+            } catch (ClassNotFoundException e2) {
+                return false;
+            }
         }
     }
-    */
+
 }
