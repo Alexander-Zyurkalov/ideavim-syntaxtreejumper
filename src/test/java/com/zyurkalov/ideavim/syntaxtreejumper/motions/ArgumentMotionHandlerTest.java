@@ -214,9 +214,9 @@ class ArgumentMotionHandlerTest {
 
                 // Empty argument list
                 new ArgumentTestData(
-                        new Offsets(239, 239), // cursor in empty parentheses
+                        new Offsets(218, 218), // cursor in empty parentheses
                         "",
-                        new Offsets(239, 239), // stay in place
+                        new Offsets(218, 218), // stay in place
                         "",
                         Direction.FORWARD,
                         "Edge case: empty argument list"
@@ -224,9 +224,9 @@ class ArgumentMotionHandlerTest {
 
                 // Complex expressions as arguments
                 new ArgumentTestData(
-                        new Offsets(264, 275), // 'obj.getValue()'
+                        new Offsets(335, 349), // 'obj.getValue()'
                         "obj.getValue()",
-                        new Offsets(277, 291), // 'list.size() + 1'
+                        new Offsets(351, 366), // 'list.size() + 1'
                         "list.size() + 1",
                         Direction.FORWARD,
                         "Edge case: complex expression arguments"
@@ -273,7 +273,7 @@ class ArgumentMotionHandlerTest {
                     void emptyMethod() {}
                 }
                 """;
-        System.out.println(javaCode.indexOf("(x, y) ->"));
+        System.out.println(javaCode.indexOf("obj.getValue()"));
 
         // Verify test prerequisite - initial selection matches expected text (if any)
         if (!testData.initialText.isEmpty()) {
