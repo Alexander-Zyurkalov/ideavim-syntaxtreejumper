@@ -10,11 +10,9 @@ import java.util.List;
  */
 public class ArgumentContext {
     private final PsiElement argumentList;
-    private final ArgumentContextType type;
 
-    public ArgumentContext(PsiElement argumentList, ArgumentContextType type) {
+    public ArgumentContext(PsiElement argumentList) {
         this.argumentList = argumentList;
-        this.type = type;
     }
 
     public List<PsiElement> getArguments() {
@@ -35,7 +33,5 @@ public class ArgumentContext {
         return arguments;
     }
 
-    public ArgumentContextType getType() {
-        return type;
-    }
+
 }

@@ -23,44 +23,20 @@ public class JavaContext {
         PsiElement current = element;
 
         while (current != null) {
-            // Check for method calls
-            if (current instanceof PsiMethodCallExpression methodCall) {
-                PsiExpressionList argList = methodCall.getArgumentList();
-                return new ArgumentContext(argList, ArgumentContextType.METHOD_CALL);
-            }
-
-            // Check for constructor calls
-            if (current instanceof PsiNewExpression newExpression) {
-                PsiExpressionList argList = newExpression.getArgumentList();
-                if (argList != null) {
-                    return new ArgumentContext(argList,ArgumentContextType.CONSTRUCTOR_CALL);
-                }
-            }
-
-            // Check for method declarations
-            if (current instanceof PsiMethod method) {
-                PsiParameterList paramList = method.getParameterList();
-                return new ArgumentContext(paramList,ArgumentContextType.METHOD_DECLARATION);
-            }
-
-            // Check for lambda expressions
-            if (current instanceof PsiLambdaExpression lambda) {
-                PsiParameterList paramList = lambda.getParameterList();
-                return new ArgumentContext(paramList,ArgumentContextType.LAMBDA_PARAMETERS);
+            ArgumentContext context = createArgumentContext(current);
+            if (context != null) {
+                return context;
             }
 
             // Check if we're inside an argument list
             PsiElement parent = current.getParent();
             if (parent instanceof PsiExpressionList || parent instanceof PsiParameterList) {
                 PsiElement grandParent = parent.getParent();
-                if (grandParent instanceof PsiMethodCallExpression) {
-                    return new ArgumentContext((PsiExpressionList) parent,ArgumentContextType.METHOD_CALL);
-                } else if (grandParent instanceof PsiNewExpression) {
-                    return new ArgumentContext((PsiExpressionList) parent,ArgumentContextType.CONSTRUCTOR_CALL);
-                } else if (grandParent instanceof PsiMethod) {
-                    return new ArgumentContext((PsiParameterList) parent,ArgumentContextType.METHOD_DECLARATION);
-                } else if (grandParent instanceof PsiLambdaExpression) {
-                    return new ArgumentContext((PsiParameterList) parent,ArgumentContextType.LAMBDA_PARAMETERS);
+                if (grandParent instanceof PsiMethodCallExpression ||
+                        grandParent instanceof PsiNewExpression ||
+                        grandParent instanceof PsiMethod ||
+                        grandParent instanceof PsiLambdaExpression) {
+                    return new ArgumentContext(parent);
                 }
             }
 
@@ -68,6 +44,17 @@ public class JavaContext {
         }
 
         return null;
+    }
+
+    private ArgumentContext createArgumentContext(PsiElement element) {
+        return switch (element) {
+            case PsiMethodCallExpression methodCall -> new ArgumentContext(methodCall.getArgumentList());
+            case PsiNewExpression newExpression when newExpression.getArgumentList() != null ->
+                    new ArgumentContext(newExpression.getArgumentList());
+            case PsiMethod method -> new ArgumentContext(method.getParameterList());
+            case PsiLambdaExpression lambda -> new ArgumentContext(lambda.getParameterList());
+            default -> null;
+        };
     }
 
     /**
