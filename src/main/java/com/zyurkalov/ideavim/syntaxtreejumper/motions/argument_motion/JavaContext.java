@@ -1,4 +1,4 @@
-package com.zyurkalov.ideavim.syntaxtreejumper.motions;
+package com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -19,14 +19,14 @@ public class JavaContext {
     /**
      * Finds the argument context (method call, constructor, etc.) that contains the cursor
      */
-    @Nullable ArgumentContext findArgumentContext(PsiElement element) {
+    public @Nullable ArgumentContext findArgumentContext(PsiElement element) {
         PsiElement current = element;
 
         while (current != null) {
             // Check for method calls
             if (current instanceof PsiMethodCallExpression methodCall) {
                 PsiExpressionList argList = methodCall.getArgumentList();
-                return new ArgumentContext(argList,ArgumentContextType.METHOD_CALL);
+                return new ArgumentContext(argList, ArgumentContextType.METHOD_CALL);
             }
 
             // Check for constructor calls
@@ -73,7 +73,7 @@ public class JavaContext {
     /**
      * Finds the index of the current argument based on cursor position
      */
-    int findCurrentArgumentIndex(List<PsiElement> arguments, Offsets initialOffsets) {
+    public int findCurrentArgumentIndex(List<PsiElement> arguments, Offsets initialOffsets) {
         for (int i = 0; i < arguments.size(); i++) {
             PsiElement arg = arguments.get(i);
             TextRange range = arg.getTextRange();
@@ -90,7 +90,7 @@ public class JavaContext {
     /**
      * Finds the closest argument when cursor is not currently in an argument
      */
-    Optional<Offsets> findClosestArgument(List<PsiElement> arguments, Offsets initialOffsets) {
+    public Optional<Offsets> findClosestArgument(List<PsiElement> arguments, Offsets initialOffsets) {
         if (arguments.isEmpty()) {
             return Optional.of(initialOffsets);
         }

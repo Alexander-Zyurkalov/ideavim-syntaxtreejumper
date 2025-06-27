@@ -5,6 +5,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.ArgumentContext;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion.JavaContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;

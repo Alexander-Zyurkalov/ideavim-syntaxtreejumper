@@ -1,4 +1,4 @@
-package com.zyurkalov.ideavim.syntaxtreejumper.motions;
+package com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion;
 
 /**
  * Types of argument contexts

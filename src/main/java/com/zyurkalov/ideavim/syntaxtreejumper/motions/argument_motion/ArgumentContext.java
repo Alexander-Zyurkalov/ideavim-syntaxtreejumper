@@ -1,4 +1,4 @@
-package com.zyurkalov.ideavim.syntaxtreejumper.motions;
+package com.zyurkalov.ideavim.syntaxtreejumper.motions.argument_motion;
 
 import com.intellij.psi.*;
 
@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Context information about an argument list
  */
-class ArgumentContext {
+public class ArgumentContext {
     private final PsiElement argumentList;
     private final ArgumentContextType type;
 
