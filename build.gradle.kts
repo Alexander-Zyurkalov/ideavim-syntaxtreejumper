@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.zyurkalov"
-version = "1.0.10"
+version = "1.0.11"
 
 repositories {
     mavenCentral()
@@ -25,7 +25,7 @@ repositories {
 dependencies {
     intellijPlatform {
         create("IC", "2025.1.1.1")
-        plugins("IdeaVIM:2.24.0" )
+        plugins("IdeaVIM:2.26.0" )
         bundledPlugin("com.intellij.java")
         pluginVerifier()
         zipSigner()
