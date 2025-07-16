@@ -174,11 +174,13 @@ public class NumberedElementJumpHandler implements MotionHandler {
      */
     private List<PsiElement> getMeaningfulSiblings(PsiElement parent) {
         List<PsiElement> siblings = new ArrayList<>();
-        
+        int n = 1;
         for (PsiElement child : parent.getChildren()) {
             if (!(child instanceof PsiWhiteSpace) && 
                 !child.getText().trim().isEmpty()) {
                 siblings.add(child);
+                System.out.println(Integer.toString(n) + ": " + child.getText());
+                n++;
             }
         }
         

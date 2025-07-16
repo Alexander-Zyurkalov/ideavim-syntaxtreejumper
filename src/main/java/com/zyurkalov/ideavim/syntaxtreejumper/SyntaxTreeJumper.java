@@ -112,7 +112,7 @@ public class SyntaxTreeJumper implements VimExtension {
                     false);
 
             // Map Alt-j followed by the number
-            String keySequence = "<A-j>" + i;
+            String keySequence = "<A-;>" + i;
             putKeyMappingIfMissing(
                     EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                     VimInjectorKt.getInjector().getParser().parseKeys(keySequence),
