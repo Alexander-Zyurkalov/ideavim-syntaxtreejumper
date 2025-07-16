@@ -10,8 +10,23 @@
         <vimExtension implementation="com.zyurkalov.ideavim.syntaxtreejumper.SyntaxTreeJumper"/>
     </extensions>
 
+    <!-- Core platform dependencies -->
     <depends>com.intellij.modules.platform</depends>
     <depends>IdeaVIM</depends>
 
+    <!-- Language support dependencies (optional) -->
+    <depends optional="true" config-file="java-support.xml">com.intellij.java</depends>
+    <depends optional="true" config-file="javascript-support.xml">JavaScript</depends>
+    <depends optional="true" config-file="python-support.xml">com.intellij.modules.python</depends>
+    <depends optional="true" config-file="rust-support.xml">org.rust.lang</depends>
+    <depends optional="true" config-file="cpp-support.xml">com.intellij.modules.cidr.lang</depends>
 
+    <!-- Alternative approach: just declare optional dependencies without separate config files -->
+    <!--
+    <depends optional="true">com.intellij.java</depends>
+    <depends optional="true">JavaScript</depends>
+    <depends optional="true">com.intellij.modules.python</depends>
+    <depends optional="true">org.rust.lang</depends>
+    <depends optional="true">com.intellij.modules.cidr.lang</depends>
+    -->
 </idea-plugin>

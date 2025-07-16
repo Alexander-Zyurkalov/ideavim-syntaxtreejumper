@@ -7,7 +7,7 @@ import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 
 import java.util.Optional;
 
-public class SubWordMotionHandler implements MotionHandler {
+public class SubWordMotionHandler extends MotionHandler {
 
     private final PsiFile psiFile;
     private final Direction direction;

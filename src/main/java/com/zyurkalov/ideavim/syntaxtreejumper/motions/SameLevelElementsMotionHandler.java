@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class SameLevelElementsMotionHandler implements MotionHandler {
+public class SameLevelElementsMotionHandler extends MotionHandler {
 
     private final PsiFile psiFile;
     private final Direction direction;

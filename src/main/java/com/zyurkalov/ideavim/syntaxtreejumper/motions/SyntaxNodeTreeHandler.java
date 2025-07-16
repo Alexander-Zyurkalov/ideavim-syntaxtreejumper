@@ -4,7 +4,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +19,7 @@ import java.util.Optional;
  * Alt-o (EXPAND): Expands the current selection to encompass the parent syntax node
  * Alt-i (SHRINK): Shrinks the current selection to the largest child node that fits within the selection
  */
-public class SyntaxNodeTreeHandler implements MotionHandler {
+public class SyntaxNodeTreeHandler extends MotionHandler {
 
     public enum SyntaxNoteMotionType {
         EXPAND,  // Alt-o: expand selection to parent
@@ -125,33 +124,6 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
         return Optional.of(new Offsets(left.leftOffset() + elementOffset, left.rightOffset() + elementOffset));
     }
 
-    /**
-     * Finds the smallest common parent that fully encompasses the current selection
-     */
-    private @Nullable PsiElement findSmallestCommonParent(PsiElement leftElement, PsiElement rightElement, Offsets selection) {
-        if (rightElement == null) {
-            rightElement = leftElement;
-        }
-
-        PsiElement commonParent = PsiTreeUtil.findCommonParent(leftElement, rightElement);
-
-        // Walk up the tree until we find an element that fully encompasses our selection
-        while (commonParent != null) {
-            TextRange range = commonParent.getTextRange();
-            if (range.getStartOffset() <= selection.leftOffset() &&
-                    range.getEndOffset() >= selection.rightOffset()) {
-
-                // Check if this parent is actually larger than our current selection
-                if (range.getStartOffset() < selection.leftOffset() ||
-                        range.getEndOffset() > selection.rightOffset()) {
-                    return commonParent;
-                }
-            }
-            commonParent = commonParent.getParent();
-        }
-
-        return commonParent;
-    }
 
 
     /**
