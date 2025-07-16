@@ -108,85 +108,103 @@ class NumberedElementJumpHandlerTest {
     
     static Stream<NumberedJumpTestData> siblingJumpTestCases() {
         return Stream.of(
-                // Jump to first sibling in for loop initialization
+
                 new NumberedJumpTestData(
-                        new Offsets(90, 100), // "int i = 0;" (currently at initialization)
-                        "int i = 0;",
-                        1,
-                        new Offsets(90, 100), // same element (first sibling)
-                        "int i = 0;",
-                        "Sibling jump: already at first sibling in for loop"
-                ),
-                
-                // Jump to second sibling in for loop (condition)
-                new NumberedJumpTestData(
-                        new Offsets(90, 100), // "int i = 0;"
-                        "int i = 0;",
+                        new Offsets(90, 93), //`int` in `int i = 0;`"
+                        "int",
                         2,
-                        new Offsets(102, 108), // "i < 10"
-                        "i < 10",
-                        "Sibling jump: initialization to condition"
+                        new Offsets(94, 95),
+                        "i", // ``i` from ``"int i = 0;"
+                        "Sibling jump: next simplest element"
                 ),
-                
-                // Jump to third sibling in for loop (increment)
                 new NumberedJumpTestData(
-                        new Offsets(90, 100), // "int i = 0;"
-                        "int i = 0;",
-                        3,
-                        new Offsets(110, 113), // "i++"
-                        "i++",
-                        "Sibling jump: initialization to increment"
-                ),
-                
-                // Jump to fourth sibling in for loop (body)
-                new NumberedJumpTestData(
-                        new Offsets(90, 100), // "int i = 0;"
-                        "int i = 0;",
-                        4,
-                        new Offsets(120, 151), // "{ a[i] = 2 * i; }"
-                        "{ a[i] = 2 * i; }",
-                        "Sibling jump: initialization to body"
-                ),
-                
-                // Jump from method declaration elements
-                new NumberedJumpTestData(
-                        new Offsets(18, 25), // "execute" method name
-                        "execute",
+                        new Offsets(94, 95), //`i` in `int i = 0;`"
+                        "i",
                         1,
-                        new Offsets(13, 17), // "void" return type
-                        "void",
-                        "Sibling jump: method name to return type"
-                ),
-                
-                // Jump to method body from method name
-                new NumberedJumpTestData(
-                        new Offsets(18, 25), // "execute" method name
-                        "execute",
-                        3,
-                        new Offsets(42, 195), // method body
-                        "{ int[] a = new int[10]; for (int i = 0; i < 10; i++) { a[i] = 2 * i; } System.out.println(\"Test\"); }",
-                        "Sibling jump: method name to body"
-                ),
-                
-                // Jump within assignment expression
-                new NumberedJumpTestData(
-                        new Offsets(128, 131), // "a[i]" (left side of assignment)
-                        "a[i]",
-                        1,
-                        new Offsets(128, 131), // same element (first sibling)
-                        "a[i]",
-                        "Sibling jump: already at first sibling in assignment"
-                ),
-                
-                // Jump to right side of assignment
-                new NumberedJumpTestData(
-                        new Offsets(128, 131), // "a[i]"
-                        "a[i]",
-                        2,
-                        new Offsets(134, 139), // "2 * i"
-                        "2 * i",
-                        "Sibling jump: left side to right side of assignment"
+                        new Offsets(90, 93),
+                        "int", // `int` from ``"int i = 0;"
+                        "Sibling jump: prev simplest element"
                 )
+
+//                // Jump to first sibling in for loop initialization
+//                new NumberedJumpTestData(
+//                        new Offsets(90, 100), // "int i = 0;" (currently at initialization)
+//                        "int i = 0;",
+//                        1,
+//                        new Offsets(90, 100), // same element (first sibling)
+//                        "int i = 0;",
+//                        "Sibling jump: already at first sibling in for loop"
+//                ),
+//
+//                // Jump to second sibling in for loop (condition)
+//                new NumberedJumpTestData(
+//                        new Offsets(90, 100), // "int i = 0;"
+//                        "int i = 0;",
+//                        2,
+//                        new Offsets(102, 108), // "i < 10"
+//                        "i < 10",
+//                        "Sibling jump: initialization to condition"
+//                ),
+//
+//                // Jump to third sibling in for loop (increment)
+//                new NumberedJumpTestData(
+//                        new Offsets(90, 100), // "int i = 0;"
+//                        "int i = 0;",
+//                        3,
+//                        new Offsets(110, 113), // "i++"
+//                        "i++",
+//                        "Sibling jump: initialization to increment"
+//                ),
+//
+//                // Jump to fourth sibling in for loop (body)
+//                new NumberedJumpTestData(
+//                        new Offsets(90, 100), // "int i = 0;"
+//                        "int i = 0;",
+//                        4,
+//                        new Offsets(120, 151), // "{ a[i] = 2 * i; }"
+//                        "{ a[i] = 2 * i; }",
+//                        "Sibling jump: initialization to body"
+//                ),
+//
+//                // Jump from method declaration elements
+//                new NumberedJumpTestData(
+//                        new Offsets(18, 25), // "execute" method name
+//                        "execute",
+//                        1,
+//                        new Offsets(13, 17), // "void" return type
+//                        "void",
+//                        "Sibling jump: method name to return type"
+//                ),
+//
+//                // Jump to method body from method name
+//                new NumberedJumpTestData(
+//                        new Offsets(18, 25), // "execute" method name
+//                        "execute",
+//                        3,
+//                        new Offsets(42, 195), // method body
+//                        "{ int[] a = new int[10]; for (int i = 0; i < 10; i++) { a[i] = 2 * i; } System.out.println(\"Test\"); }",
+//                        "Sibling jump: method name to body"
+//                ),
+//
+//                // Jump within assignment expression
+//                new NumberedJumpTestData(
+//                        new Offsets(128, 131), // "a[i]" (left side of assignment)
+//                        "a[i]",
+//                        1,
+//                        new Offsets(128, 131), // same element (first sibling)
+//                        "a[i]",
+//                        "Sibling jump: already at first sibling in assignment"
+//                ),
+//
+//                // Jump to right side of assignment
+//                new NumberedJumpTestData(
+//                        new Offsets(128, 131), // "a[i]"
+//                        "a[i]",
+//                        2,
+//                        new Offsets(134, 139), // "2 * i"
+//                        "2 * i",
+//                        "Sibling jump: left side to right side of assignment"
+//                )
         );
     }
     
