@@ -99,6 +99,27 @@ public class SyntaxTreeJumper implements VimExtension {
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
                 true);
+
+        // Register numbered jump handlers (0-9)
+        for (int i = 0; i <= 9; i++) {
+            String commandNumberedJump = "<Plug>NumberedJump" + i;
+            final int number = i;
+            putExtensionHandlerMapping(
+                    EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                    VimInjectorKt.getInjector().getParser().parseKeys(commandNumberedJump),
+                    getOwner(),
+                    NumberedJumpFunctionHandler.createForNumber(number),
+                    false);
+
+            // Map Alt-j followed by the number
+            String keySequence = "<A-j>" + i;
+            putKeyMappingIfMissing(
+                    EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                    VimInjectorKt.getInjector().getParser().parseKeys(keySequence),
+                    getOwner(),
+                    VimInjectorKt.getInjector().getParser().parseKeys(commandNumberedJump),
+                    true);
+        }
     }
 
 }
