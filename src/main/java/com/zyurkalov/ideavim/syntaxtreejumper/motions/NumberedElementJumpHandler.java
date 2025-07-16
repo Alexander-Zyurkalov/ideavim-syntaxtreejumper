@@ -52,9 +52,11 @@ public class NumberedElementJumpHandler implements MotionHandler {
         if (currentElement == null) {
             return Optional.of(initialOffsets);
         }
-        initialOffsets = new Offsets(
-                currentElement.getTextRange().getStartOffset(),
-                currentElement.getTextRange().getEndOffset());
+        if (initialOffsets.leftOffset() == initialOffsets.rightOffset()) {
+            initialOffsets = new Offsets(
+                    currentElement.getTextRange().getStartOffset(),
+                    currentElement.getTextRange().getEndOffset());
+        }
 
         var syntaxNodeTreeHandler = new SyntaxNodeTreeHandler(psiFile, SyntaxNodeTreeHandler.SyntaxNoteMotionType.EXPAND);
         return syntaxNodeTreeHandler.findNext(initialOffsets);
@@ -137,7 +139,6 @@ public class NumberedElementJumpHandler implements MotionHandler {
             if (!(child instanceof PsiWhiteSpace) &&
                     !child.getText().trim().isEmpty()) {
                 siblings.add(child);
-                System.out.println(Integer.toString(n) + ": " + child.getText());
                 n++;
             }
         }

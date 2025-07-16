@@ -104,10 +104,10 @@ class NumberedElementJumpHandlerTest {
 
                 // Jump to parent from a method call
                 new NumberedJumpTestData(
-                        new Offsets(160, 185), // System.out.println("Test");
+                        new Offsets(160, 187), // System.out.println("Test");
                         "System.out.println(\"Test\");",
                         0,
-                        new Offsets(42, 195), // method body
+                        new Offsets(44, 193), // method body
                         "{ int[] a = new int[10]; for (int i = 0; i < 10; i++) { a[i] = 2 * i; } System.out.println(\"Test\"); }",
                         "Parent jump: method call to method body"
                 )
