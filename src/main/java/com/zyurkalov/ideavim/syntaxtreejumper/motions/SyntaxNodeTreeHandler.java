@@ -207,15 +207,6 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
         }
     }
 
-    /**
-     * Checks if an element contains only whitespace
-     */
-    private boolean isWhitespaceOnly(PsiElement element) {
-        String text = element.getText();
-        return text.trim().isEmpty();
-    }
-
-    // Factory methods for easier integration with your existing system
     public static SyntaxNodeTreeHandler createExpandHandler(PsiFile psiFile) {
         return new SyntaxNodeTreeHandler(psiFile, SyntaxNoteMotionType.EXPAND);
     }

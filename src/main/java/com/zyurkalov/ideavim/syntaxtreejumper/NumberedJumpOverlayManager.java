@@ -109,7 +109,7 @@ public class NumberedJumpOverlayManager {
             // Create highlighting for the target range
             createHighlighter(offsets);
             
-            // Create overlay label
+            // Create an overlay label
             createOverlayLabel(number, offsets);
         }
     }
@@ -159,7 +159,7 @@ public class NumberedJumpOverlayManager {
             labelSize.height
         );
         
-        // Add to editor component
+        // Add to an editor component
         JComponent editorComponent = editor.getContentComponent();
         editorComponent.add(label);
         editorComponent.setComponentZOrder(label, 0); // Bring to front
@@ -168,7 +168,7 @@ public class NumberedJumpOverlayManager {
     }
     
     /**
-     * Sets up key listener to handle number input
+     * Sets up a key listener to handle number input
      */
     private void setupKeyListener(Consumer<Offsets> onJumpSelected) {
         keyListener = new KeyAdapter() {
