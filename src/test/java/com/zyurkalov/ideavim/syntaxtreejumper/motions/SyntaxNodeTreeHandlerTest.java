@@ -54,7 +54,7 @@ class SyntaxNodeTreeHandlerTest {
 
     static Stream<HelixSelectionTestData> expandSelectionTestCases() {
         return Stream.of(
-                // Basic expansion from cursor position
+                // Basic expansion from the cursor position
                 new HelixSelectionTestData(
                         new Offsets(94, 94), // cursor at 'i' in "int i = 0;"
                         "",

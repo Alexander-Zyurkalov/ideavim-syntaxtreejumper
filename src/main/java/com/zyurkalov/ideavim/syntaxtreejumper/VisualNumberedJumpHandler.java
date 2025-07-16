@@ -65,7 +65,7 @@ public class VisualNumberedJumpHandler implements ExtensionHandler {
         
         // Show overlays and wait for user input
         overlayManager.showOverlaysAndWaitForInput(currentOffsets, (targetOffsets) -> {
-            // This callback is called when user selects a number
+            // This callback is called when the user selects a number
             performJump(vimEditor, editor, targetOffsets);
         });
     }

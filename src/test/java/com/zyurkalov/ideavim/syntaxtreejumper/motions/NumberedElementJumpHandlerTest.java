@@ -97,7 +97,7 @@ class NumberedElementJumpHandlerTest {
                         new Offsets(128, 141), // "a[i] = 2 * i;"
                         "a[i] = 2 * i;",
                         0,
-                        new Offsets(120, 151), // for loop body
+                        new Offsets(114, 151), // for loop body
                         "{ a[i] = 2 * i; }",
                         "Parent jump: assignment to block statement"
                 ),
