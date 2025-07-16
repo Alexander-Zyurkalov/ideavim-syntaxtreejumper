@@ -1,3 +1,4 @@
+// FILE: SyntaxTreeJumper.java (REPLACE your existing file)
 package com.zyurkalov.ideavim.syntaxtreejumper;
 
 import com.maddyhome.idea.vim.api.VimInjectorKt;
@@ -22,9 +23,10 @@ public class SyntaxTreeJumper implements VimExtension {
 
     @Override
     public void init() {
-        // Register the extension handlers with <Plug> mappings
+        // Register the existing extension handlers with <Plug> mappings
         String commandJumpToPrevElement = "<Plug>JumpToPrevElement";
         String commandJumpToNextElement = "<Plug>JumpToNextElement";
+        
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElement),
@@ -37,6 +39,8 @@ public class SyntaxTreeJumper implements VimExtension {
                 getOwner(),
                 new FunctionHandler(Direction.BACKWARD, SameLevelElementsMotionHandler::new),
                 false);
+        
+        // Sub-word navigation
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-w>"),
@@ -51,7 +55,6 @@ public class SyntaxTreeJumper implements VimExtension {
                 false);
 
         // Map the default key bindings to the <Plug> mappings
-
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-n>"),
@@ -65,7 +68,7 @@ public class SyntaxTreeJumper implements VimExtension {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElement),
                 true);
 
-
+        // Expand/Shrink selection handlers
         String commandExpandSelection = "<Plug>ExpandSelection";
         String commandShrinkSelection = "<Plug>ShrinkSelection";
 
@@ -85,7 +88,7 @@ public class SyntaxTreeJumper implements VimExtension {
                         SyntaxNodeTreeHandler.createShrinkHandler(psiFile)),
                 false);
 
-// Map the default key bindings (Alt-o and Alt-i like in Helix)
+        // Map the default key bindings (Alt-o and Alt-i like in Helix)
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-o>"),
@@ -100,7 +103,26 @@ public class SyntaxTreeJumper implements VimExtension {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
                 true);
 
-        // Register numbered jump handlers (0-9)
+        // NEW: Visual numbered jump handler
+        // Register the visual numbered jump handler that shows overlays
+        String commandVisualNumberedJump = "<Plug>VisualNumberedJump";
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandVisualNumberedJump),
+                getOwner(),
+                new VisualNumberedJumpHandler(),
+                false);
+
+        // Map Alt-; to show the visual numbered jump overlays
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-;>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandVisualNumberedJump),
+                true);
+
+        // LEGACY: Keep the old numbered jump handlers for backward compatibility
+        // These are still accessible via Alt-; followed by a number if someone prefers that
         for (int i = 0; i <= 9; i++) {
             String commandNumberedJump = "<Plug>NumberedJump" + i;
             final int number = i;
@@ -111,7 +133,7 @@ public class SyntaxTreeJumper implements VimExtension {
                     NumberedJumpFunctionHandler.createForNumber(number),
                     false);
 
-            // Map Alt-j followed by the number
+            // Alternative key sequence: Alt-; followed by the number (for those who prefer direct jumps)
             String keySequence = "<A-;>" + i;
             putKeyMappingIfMissing(
                     EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
@@ -122,4 +144,12 @@ public class SyntaxTreeJumper implements VimExtension {
         }
     }
 
+    /**
+     * Cleanup method called when the extension is being disabled/unloaded
+     */
+    @Override
+    public void dispose() {
+        // Hide any active overlays when the extension is disposed
+        VisualNumberedJumpHandler.hideAllOverlays();
+    }
 }
