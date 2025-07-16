@@ -132,6 +132,14 @@ class NumberedElementJumpHandlerTest {
                         new Offsets(90, 93),
                         "int", // `int` from ``"int i = 0;"
                         "Sibling jump: prev simplest element"
+                ),
+                new NumberedJumpTestData(
+                        new Offsets(94, 95), //`i` in `int i = 0;`"
+                        "i",
+                        0,
+                        new Offsets(90, 100),
+                        "int i = 0;", // `int` from ``"int i = 0;"
+                        "Sibling jump: jump to the parent"
                 )
 
 //                // Jump to first sibling in for loop initialization

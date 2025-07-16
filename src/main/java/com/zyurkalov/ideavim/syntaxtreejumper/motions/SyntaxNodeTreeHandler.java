@@ -44,7 +44,7 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
     }
 
     /**
-     * Expands the selection to the parent syntax node (Alt-o behavior)
+     * Expands the selection to the parent syntax node (Alt-o behaviour)
      */
     private Optional<Offsets> expandSelection(Offsets initialOffsets) {
         // Find the current selection boundaries

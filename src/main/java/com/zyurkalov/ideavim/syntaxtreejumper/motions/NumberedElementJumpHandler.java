@@ -48,28 +48,8 @@ public class NumberedElementJumpHandler implements MotionHandler {
      * Jumps to the parent element (similar to Alt-o expand selection)
      */
     private Optional<Offsets> jumpToParent(Offsets initialOffsets) {
-        PsiElement leftElement = psiFile.findElementAt(initialOffsets.leftOffset());
-        PsiElement rightElement = psiFile.findElementAt(Math.max(0, initialOffsets.rightOffset() - 1));
-
-        if (leftElement == null) {
-            return Optional.of(initialOffsets);
-        }
-
-        PsiElement targetElement;
-        if (initialOffsets.leftOffset() == initialOffsets.rightOffset()) {
-            // No selection - find parent of current element
-            targetElement = findMeaningfulParent(leftElement);
-        } else {
-            // Has selection - find parent that encompasses current selection
-            targetElement = findSmallestCommonParent(leftElement, rightElement, initialOffsets);
-        }
-
-        if (targetElement == null) {
-            return Optional.of(initialOffsets);
-        }
-
-        TextRange parentRange = targetElement.getTextRange();
-        return Optional.of(new Offsets(parentRange.getStartOffset(), parentRange.getEndOffset()));
+        var syntaxNodeTreeHandler = new SyntaxNodeTreeHandler(psiFile, SyntaxNodeTreeHandler.SyntaxNoteMotionType.EXPAND);
+        return syntaxNodeTreeHandler.findNext(initialOffsets);
     }
 
     /**
@@ -138,41 +118,6 @@ public class NumberedElementJumpHandler implements MotionHandler {
         return leftElement;
     }
 
-    /**
-     * Finds a meaningful element by walking up the tree if needed
-     */
-    private PsiElement findMeaningfulElement(PsiElement element) {
-        while (element != null) {
-            if (!(element instanceof PsiWhiteSpace) &&
-                    !element.getText().trim().isEmpty() &&
-                    element.getChildren().length > 0) {
-                return element;
-            }
-            element = element.getParent();
-        }
-        return element;
-    }
-
-    /**
-     * Finds a meaningful parent element
-     */
-    private PsiElement findMeaningfulParent(PsiElement element) {
-        PsiElement parent = element.getParent();
-        while (parent != null) {
-            if (!(parent instanceof PsiWhiteSpace) &&
-                    !parent.getText().trim().isEmpty()) {
-                // Check if parent is actually larger than current element
-                TextRange parentRange = parent.getTextRange();
-                TextRange elementRange = element.getTextRange();
-                if (parentRange.getStartOffset() < elementRange.getStartOffset() ||
-                        parentRange.getEndOffset() > elementRange.getEndOffset()) {
-                    return parent;
-                }
-            }
-            parent = parent.getParent();
-        }
-        return parent;
-    }
 
     /**
      * Gets all meaningful sibling elements (excluding whitespace and empty elements)
