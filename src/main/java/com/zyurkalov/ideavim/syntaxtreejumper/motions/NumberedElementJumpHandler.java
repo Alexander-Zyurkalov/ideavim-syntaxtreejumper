@@ -48,6 +48,14 @@ public class NumberedElementJumpHandler implements MotionHandler {
      * Jumps to the parent element (similar to Alt-o expand selection)
      */
     private Optional<Offsets> jumpToParent(Offsets initialOffsets) {
+        PsiElement currentElement = findCurrentElement(initialOffsets);
+        if (currentElement == null) {
+            return Optional.of(initialOffsets);
+        }
+        initialOffsets = new Offsets(
+                currentElement.getTextRange().getStartOffset(),
+                currentElement.getTextRange().getEndOffset());
+
         var syntaxNodeTreeHandler = new SyntaxNodeTreeHandler(psiFile, SyntaxNodeTreeHandler.SyntaxNoteMotionType.EXPAND);
         return syntaxNodeTreeHandler.findNext(initialOffsets);
     }
