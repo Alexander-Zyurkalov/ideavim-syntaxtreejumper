@@ -117,6 +117,14 @@ class NumberedElementJumpHandlerTest {
                         "i", // ``i` from ``"int i = 0;"
                         "Sibling jump: next simplest element"
                 ),
+                 new NumberedJumpTestData(
+                        new Offsets(90, 90), //`int` in `int i = 0;`"
+                        "",
+                        2,
+                        new Offsets(94, 95),
+                        "i", // ``i` from ``"int i = 0;"
+                        "Sibling jump: next simplest element with no initial selection"
+                ),
                 new NumberedJumpTestData(
                         new Offsets(94, 95), //`i` in `int i = 0;`"
                         "i",
