@@ -121,27 +121,6 @@ public class SyntaxTreeJumper implements VimExtension {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandVisualNumberedJump),
                 true);
 
-        // LEGACY: Keep the old numbered jump handlers for backward compatibility
-        // These are still accessible via Alt-; followed by a number if someone prefers that
-        for (int i = 0; i <= 9; i++) {
-            String commandNumberedJump = "<Plug>NumberedJump" + i;
-            final int number = i;
-            putExtensionHandlerMapping(
-                    EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                    VimInjectorKt.getInjector().getParser().parseKeys(commandNumberedJump),
-                    getOwner(),
-                    NumberedJumpFunctionHandler.createForNumber(number),
-                    false);
-
-            // Alternative key sequence: Alt-; followed by the number (for those who prefer direct jumps)
-            String keySequence = "<A-;>" + i;
-            putKeyMappingIfMissing(
-                    EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                    VimInjectorKt.getInjector().getParser().parseKeys(keySequence),
-                    getOwner(),
-                    VimInjectorKt.getInjector().getParser().parseKeys(commandNumberedJump),
-                    true);
-        }
     }
 
     /**

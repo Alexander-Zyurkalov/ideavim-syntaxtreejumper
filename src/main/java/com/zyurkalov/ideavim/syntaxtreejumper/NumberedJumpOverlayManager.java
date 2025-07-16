@@ -86,7 +86,7 @@ public class NumberedJumpOverlayManager {
             NumberedElementJumpHandler handler = new NumberedElementJumpHandler(psiFile, i);
             int finalI = i;
             handler.findNext(currentOffsets).ifPresent(offsets -> {
-                // Only add if it's different from current position
+                // Only add if it's different from the current position
                 if (!offsets.equals(currentOffsets)) {
                     targets.put(finalI, offsets);
                 }
