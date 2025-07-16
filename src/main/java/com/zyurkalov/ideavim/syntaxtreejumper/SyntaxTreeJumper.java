@@ -216,24 +216,26 @@ public class SyntaxTreeJumper implements VimExtension {
         }
     }
 
-    /**
-     * Checks if Rust plugin/support is available in the current IDE.
-     */
     private static boolean isRustPluginAvailable() {
+    try {
+        // Primary detection - this should work for most cases
+        Class.forName("org.rust.lang.core.psi.RsFile");
+        return true;
+    } catch (ClassNotFoundException e) {
         try {
-            // Try to load Rust-specific classes to verify Rust support is available
-            // The org.rust.lang plugin provides these classes
-            Class.forName("org.rust.lang.core.psi.RsFile");
+            // Fallback for older versions or different plugin distributions
+            Class.forName("org.rust.lang.RsFileType");
             return true;
-        } catch (ClassNotFoundException e) {
-            // Fallback: try alternative Rust plugin class names
+        } catch (ClassNotFoundException e2) {
             try {
-                Class.forName("org.rust.lang.RsFileType");
+                // Additional fallback for potential new plugin structure
+                Class.forName("org.rust.lang.core.psi.RsStructItem");
                 return true;
-            } catch (ClassNotFoundException e2) {
+            } catch (ClassNotFoundException e3) {
                 return false;
             }
         }
     }
+}
 
 }
