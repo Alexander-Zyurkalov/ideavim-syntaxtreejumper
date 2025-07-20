@@ -4,10 +4,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.NumberedElementJumpHandler;
@@ -200,32 +197,13 @@ public class NumberedJumpOverlayManager implements TypedActionHandler {
                 continue;
             }
 
-            // Create highlighting for the target range
-            createHighlighter(offsets);
 
             // Create an overlay label
             createOverlayLabel(key, offsets);
         }
     }
 
-    /**
-     * Creates a range highlighter to highlight the target element
-     */
-    private void createHighlighter(Offsets offsets) {
-        TextAttributes attributes = new TextAttributes();
-        attributes.setBackgroundColor(JBColor.GRAY);
-        attributes.setForegroundColor(JBColor.BLACK);
 
-        RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(
-                offsets.leftOffset(),
-                offsets.rightOffset(),
-                HighlighterLayer.SELECTION + 1,
-                attributes,
-                HighlighterTargetArea.EXACT_RANGE
-        );
-
-        highlighters.add(highlighter);
-    }
 
     /**
      * Creates an overlay label showing the key
