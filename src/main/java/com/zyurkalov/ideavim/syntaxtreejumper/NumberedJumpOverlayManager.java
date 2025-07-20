@@ -35,6 +35,7 @@ public class NumberedJumpOverlayManager implements TypedActionHandler {
     private final Map<Character, Offsets> keyToOffsets = new HashMap<>();
     private boolean isActive = false;
     private Consumer<Offsets> jumpCallback;
+    private Offsets lastJumpOffsets = new Offsets(0, 0);
 
     // QWERTY keyboard order for keys (digits first, then letters in QWERTY order)
     private static final char[] QWERTY_KEYS = {
@@ -74,8 +75,12 @@ public class NumberedJumpOverlayManager implements TypedActionHandler {
                 if (jumpCallback != null) {
                     jumpCallback.accept(targetOffsets);
                 }
-                // Instead of hiding overlays, refresh them from the new position
-                refreshOverlaysFromCurrentPosition();
+                if (lastJumpOffsets.equals(targetOffsets)) {
+                    hideOverlays();
+                } else {
+                    refreshOverlaysFromCurrentPosition();
+                }
+                lastJumpOffsets = targetOffsets;
             } else {
                 // Invalid key for current targets - hide overlays
                 hideOverlays();
@@ -109,7 +114,7 @@ public class NumberedJumpOverlayManager implements TypedActionHandler {
             return;
         }
 
-        // Get current caret position
+        // Get the current caret position
         int startOffset = editor.getCaretModel().getOffset();
         int endOffset = startOffset;
 
@@ -208,7 +213,7 @@ public class NumberedJumpOverlayManager implements TypedActionHandler {
      */
     private void createHighlighter(Offsets offsets) {
         TextAttributes attributes = new TextAttributes();
-        attributes.setBackgroundColor(JBColor.YELLOW.darker());
+        attributes.setBackgroundColor(JBColor.GRAY);
         attributes.setForegroundColor(JBColor.BLACK);
 
         RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(
