@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.NumberedElementJumpHandler;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -118,10 +119,10 @@ public class NumberedJumpOverlayManager {
 
         for (Map.Entry<Integer, Offsets> entry : jumpTargets.entrySet()) {
             int number = entry.getKey();
-            if (number == 0) {
+            Offsets offsets = entry.getValue();
+            if (number == 0 || offsets.rightOffset() - offsets.leftOffset() <= 1) {
                 continue;
             }
-            Offsets offsets = entry.getValue();
 
             // Create highlighting for the target range
             createHighlighter(offsets);
@@ -159,6 +160,17 @@ public class NumberedJumpOverlayManager {
         Point screenPos = editor.logicalPositionToXY(logicalPos);
 
         // Create label
+        JLabel label = getJLabel(number, screenPos);
+
+        // Add to an editor component
+        JComponent editorComponent = editor.getContentComponent();
+        editorComponent.add(label);
+        editorComponent.setComponentZOrder(label, 0); // Bring to the front
+
+        overlayLabels.add(label);
+    }
+
+    private static @NotNull JLabel getJLabel(int number, Point screenPos) {
         JLabel label = new JLabel(String.valueOf(number));
         label.setOpaque(true);
         label.setBackground(JBColor.RED);
@@ -175,13 +187,7 @@ public class NumberedJumpOverlayManager {
                 labelSize.width,
                 labelSize.height
         );
-
-        // Add to an editor component
-        JComponent editorComponent = editor.getContentComponent();
-        editorComponent.add(label);
-        editorComponent.setComponentZOrder(label, 0); // Bring to the front
-
-        overlayLabels.add(label);
+        return label;
     }
 
     /**
@@ -230,7 +236,6 @@ public class NumberedJumpOverlayManager {
             @Override
             public void keyTyped(KeyEvent e) {
                 if (!isActive) return;
-
                 // Also handle escape in keyTyped to ensure it's caught
                 if (e.getKeyChar() == KeyEvent.VK_ESCAPE) {
                     hideOverlays();
