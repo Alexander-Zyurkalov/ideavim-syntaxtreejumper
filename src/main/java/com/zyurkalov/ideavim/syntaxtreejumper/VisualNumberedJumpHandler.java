@@ -1,4 +1,3 @@
-// FILE: VisualNumberedJumpHandler.java
 package com.zyurkalov.ideavim.syntaxtreejumper;
 
 import com.intellij.openapi.editor.Caret;
@@ -18,17 +17,23 @@ import com.maddyhome.idea.vim.state.mode.Mode;
 import com.maddyhome.idea.vim.state.mode.SelectionType;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Handler that shows visual overlays for numbered jumps instead of immediately jumping.
- * This replaces the direct numbered jump handlers and provides visual feedback.
+ * Improved handler that shows visual overlays for numbered jumps.
+ * Uses a different approach to prevent IdeaVIM interference.
  */
 public class VisualNumberedJumpHandler implements ExtensionHandler {
 
     // Static map to keep track of overlay managers per editor
     private static final Map<Editor, NumberedJumpOverlayManager> overlayManagers = new HashMap<>();
+
+    // Timer to temporarily disable IdeaVIM key processing
+    private static Timer disableTimer;
 
     @Override
     public void execute(
@@ -63,11 +68,46 @@ public class VisualNumberedJumpHandler implements ExtensionHandler {
 
         Offsets currentOffsets = new Offsets(startOffset, endOffset);
 
+        // Temporarily disable IdeaVIM processing while overlays are active
+        disableIdeaVimTemporarily();
+
         // Show overlays and wait for user input
         overlayManager.showOverlaysAndWaitForInput(currentOffsets, (targetOffsets) -> {
             // This callback is called when the user selects a number
             performJump(vimEditor, editor, targetOffsets);
+
+            // Re-enable IdeaVIM processing
+            enableIdeaVim();
         });
+    }
+
+    /**
+     * Temporarily disables IdeaVIM key processing
+     */
+    private void disableIdeaVimTemporarily() {
+        // Cancel any existing timer
+        if (disableTimer != null && disableTimer.isRunning()) {
+            disableTimer.stop();
+        }
+
+        // Create a safety timer to re-enable IdeaVIM after a timeout
+        disableTimer = new Timer(5000, new ActionListener() { // 5 second timeout
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                enableIdeaVim();
+            }
+        });
+        disableTimer.setRepeats(false);
+        disableTimer.start();
+    }
+
+    /**
+     * Re-enables IdeaVIM key processing
+     */
+    private void enableIdeaVim() {
+        if (disableTimer != null && disableTimer.isRunning()) {
+            disableTimer.stop();
+        }
     }
 
     /**
@@ -97,6 +137,9 @@ public class VisualNumberedJumpHandler implements ExtensionHandler {
         if (manager != null && manager.isActive()) {
             manager.hideOverlays();
         }
+
+        // Also re-enable IdeaVIM if needed
+        enableIdeaVimStatic();
     }
 
     /**
@@ -109,5 +152,17 @@ public class VisualNumberedJumpHandler implements ExtensionHandler {
             }
         }
         overlayManagers.clear();
+
+        // Emergency cleanup of global key interceptor
+        GlobalKeyInterceptor.getInstance().detachAll();
+    }
+
+    /**
+     * Static method to re-enable IdeaVIM
+     */
+    private static void enableIdeaVimStatic() {
+        if (disableTimer != null && disableTimer.isRunning()) {
+            disableTimer.stop();
+        }
     }
 }
