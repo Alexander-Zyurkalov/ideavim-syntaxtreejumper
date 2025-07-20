@@ -3,8 +3,6 @@ package com.zyurkalov.ideavim.syntaxtreejumper;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -19,7 +17,9 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -31,18 +31,17 @@ public class NumberedJumpOverlayManager {
     private final PsiFile psiFile;
     private final List<JLabel> overlayLabels = new ArrayList<>();
     private final List<RangeHighlighter> highlighters = new ArrayList<>();
-    private final List<Offsets> numberToOffsets = new ArrayList<>();
+    private final Map<Character, Offsets> keyToOffsets = new HashMap<>();
     private KeyAdapter keyListener;
     private boolean isActive = false;
     private Consumer<Offsets> jumpCallback;
 
-
     // QWERTY keyboard order for keys (digits first, then letters in QWERTY order)
     private static final char[] QWERTY_KEYS = {
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p',
-            'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l',
-            'z', 'x', 'c', 'v', 'b', 'n', 'm'
+//            'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p',
+//            'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l',
+//            'z', 'x', 'c', 'v', 'b', 'n', 'm'
     };
 
     public NumberedJumpOverlayManager(Editor editor, PsiFile psiFile) {
@@ -73,15 +72,15 @@ public class NumberedJumpOverlayManager {
         isActive = true;
 
         // Calculate all possible jump targets
-        List<Offsets> jumpTargets = calculateJumpTargets(currentOffsets);
+        Map<Character, Offsets> jumpTargets = calculateJumpTargets(currentOffsets);
         if (jumpTargets.isEmpty()) {
             isActive = false;
             return;
         }
 
         // Store the mapping for later use
-        numberToOffsets.clear();
-        numberToOffsets.addAll(jumpTargets);
+        keyToOffsets.clear();
+        keyToOffsets.putAll(jumpTargets);
 
         // Create visual overlays
         createOverlays(jumpTargets);
@@ -100,20 +99,30 @@ public class NumberedJumpOverlayManager {
     /**
      * Calculates all possible jump targets (siblings + parent)
      */
-    private List<Offsets> calculateJumpTargets(Offsets currentOffsets) {
+    private Map<Character, Offsets> calculateJumpTargets(Offsets currentOffsets) {
         NumberedElementJumpHandler handler = new NumberedElementJumpHandler(psiFile, 0);
-        return handler.findAllTargets(currentOffsets);
+        List<Offsets> targets = handler.findAllTargets(currentOffsets);
+        Map<Character, Offsets> result = new HashMap<>();
+        for (int i = 0; i < targets.size(); i++) {
+            if (i >= QWERTY_KEYS.length) {
+                break;
+            }
+            result.put(QWERTY_KEYS[i], targets.get(i));
+        }
+        return result;
+
     }
 
     /**
      * Creates visual overlay labels for each jump target
      */
-    private void createOverlays(List<Offsets> jumpTargets) {
-        EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    private void createOverlays(Map<Character, Offsets> jumpTargets) {
+        for (Map.Entry<Character, Offsets> entry : jumpTargets.entrySet()) {
+            char key = entry.getKey();
+            Offsets offsets = entry.getValue();
 
-        for (int i = 1; i < jumpTargets.size(); i++) {
-            Offsets offsets = jumpTargets.get(i);
-            if (offsets.rightOffset() - offsets.leftOffset() <= 1) {
+            // Skip very small targets (single character selections)
+            if (key == '0' || offsets.rightOffset() - offsets.leftOffset() <= 1) {
                 continue;
             }
 
@@ -121,11 +130,6 @@ public class NumberedJumpOverlayManager {
             createHighlighter(offsets);
 
             // Create an overlay label
-            if (i >= QWERTY_KEYS.length) {
-                continue;
-            }
-            char key = QWERTY_KEYS[i];
-
             createOverlayLabel(key, offsets);
         }
     }
@@ -150,7 +154,7 @@ public class NumberedJumpOverlayManager {
     }
 
     /**
-     * Creates an overlay label showing the number
+     * Creates an overlay label showing the key
      */
     private void createOverlayLabel(char key, Offsets offsets) {
         // Convert text offset to screen coordinates
@@ -169,7 +173,7 @@ public class NumberedJumpOverlayManager {
     }
 
     private static @NotNull JLabel getJLabel(char key, Point screenPos) {
-        JLabel label = new JLabel(Character.toString(key));
+        JLabel label = new JLabel(String.valueOf(key));
         label.setOpaque(true);
         label.setBackground(JBColor.RED);
         label.setForeground(JBColor.WHITE);
@@ -189,7 +193,7 @@ public class NumberedJumpOverlayManager {
     }
 
     /**
-     * Sets up a key listener to handle number input and escape
+     * Sets up a key listener to handle key input and escape
      */
     private void setupKeyListener() {
         keyListener = new KeyAdapter() {
@@ -204,23 +208,22 @@ public class NumberedJumpOverlayManager {
                     return;
                 }
 
-                char keyChar = e.getKeyChar();
+                char keyChar = Character.toLowerCase(e.getKeyChar());
 
-                // Handle number keys
+                // Handle valid keys (digits and letters from our QWERTY set)
                 if (isValidJumpKey(keyChar)) {
-                    int index = new String(QWERTY_KEYS).indexOf(keyChar);
-
-                    Offsets targetOffsets = numberToOffsets.get(index);
+                    Offsets targetOffsets = keyToOffsets.get(keyChar);
                     if (targetOffsets != null) {
+                        clearOverlaysOnly();
                         // Show new overlays for the selected position
-                        showOverlaysForPosition(targetOffsets);
+//                        showOverlaysForPosition(targetOffsets);
 
                         // Also notify the callback that we jumped to this position
                         if (jumpCallback != null) {
                             jumpCallback.accept(targetOffsets);
                         }
                     } else {
-                        // Invalid number - just hide overlays
+                        // Invalid key - just hide overlays
                         hideOverlays();
                     }
                     e.consume();
@@ -272,7 +275,7 @@ public class NumberedJumpOverlayManager {
         highlighters.clear();
 
         // Clear mappings
-        numberToOffsets.clear();
+        keyToOffsets.clear();
 
         // Repaint editor
         editorComponent.repaint();
