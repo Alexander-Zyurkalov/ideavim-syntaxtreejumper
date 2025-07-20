@@ -104,6 +104,9 @@ public class NumberedJumpOverlayManager {
         
         for (Map.Entry<Integer, Offsets> entry : jumpTargets.entrySet()) {
             int number = entry.getKey();
+            if (number == 0) {
+                continue;
+            }
             Offsets offsets = entry.getValue();
             
             // Create highlighting for the target range
@@ -162,7 +165,7 @@ public class NumberedJumpOverlayManager {
         // Add to an editor component
         JComponent editorComponent = editor.getContentComponent();
         editorComponent.add(label);
-        editorComponent.setComponentZOrder(label, 0); // Bring to front
+        editorComponent.setComponentZOrder(label, 0); // Bring to the front
         
         overlayLabels.add(label);
     }
