@@ -25,7 +25,7 @@ import java.util.Map;
 
 /**
  * Improved handler that shows visual overlays for numbered jumps.
- * Uses a different approach to prevent IdeaVIM interference.
+ * Now supports continuous jumping until explicitly dismissed with Alt-; or Esc.
  */
 public class VisualNumberedJumpHandler implements ExtensionHandler {
 
@@ -56,6 +56,13 @@ public class VisualNumberedJumpHandler implements ExtensionHandler {
                 e -> new NumberedJumpOverlayManager(e, psiFile)
         );
 
+        // Toggle behavior: if overlays are already active, hide them
+        if (overlayManager.isActive()) {
+            overlayManager.hideOverlays();
+            enableIdeaVim(); // Re-enable IdeaVIM when toggling off
+            return;
+        }
+
         // Get the current caret position
         Caret primaryCaret = editor.getCaretModel().getPrimaryCaret();
         int startOffset = primaryCaret.getOffset();
@@ -75,9 +82,7 @@ public class VisualNumberedJumpHandler implements ExtensionHandler {
         overlayManager.showOverlaysAndWaitForInput(currentOffsets, (targetOffsets) -> {
             // This callback is called when the user selects a number
             performJump(vimEditor, editor, targetOffsets);
-
-            // Re-enable IdeaVIM processing
-            enableIdeaVim();
+            // Note: We don't re-enable IdeaVIM here anymore since we want continuous jumping
         });
     }
 
@@ -91,10 +96,11 @@ public class VisualNumberedJumpHandler implements ExtensionHandler {
         }
 
         // Create a safety timer to re-enable IdeaVIM after a timeout
-        disableTimer = new Timer(5000, new ActionListener() { // 5 second timeout
+        disableTimer = new Timer(30000, new ActionListener() { // 30 second timeout (increased for continuous use)
             @Override
             public void actionPerformed(ActionEvent e) {
                 enableIdeaVim();
+                hideAllOverlays(); // Also hide overlays on timeout
             }
         });
         disableTimer.setRepeats(false);
@@ -155,6 +161,9 @@ public class VisualNumberedJumpHandler implements ExtensionHandler {
 
         // Emergency cleanup of global key interceptor
         GlobalKeyInterceptor.getInstance().detachAll();
+
+        // Re-enable IdeaVIM
+        enableIdeaVimStatic();
     }
 
     /**

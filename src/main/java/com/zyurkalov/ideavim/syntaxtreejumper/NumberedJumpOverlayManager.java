@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 /**
  * Manages visual overlays showing numbered labels for jump targets.
  * Uses AceJump-style global key interception for reliable input handling.
+ * Extended to support continuous jumping until explicitly dismissed.
  */
 public class NumberedJumpOverlayManager implements TypedActionHandler {
 
@@ -59,7 +60,7 @@ public class NumberedJumpOverlayManager implements TypedActionHandler {
 
         char keyChar = Character.toLowerCase(charTyped);
 
-        // Handle escape character (if somehow typed)
+        // Handle escape character - hide overlays completely
         if (charTyped == '\u001B') { // ESC character
             hideOverlays();
             return;
@@ -73,7 +74,8 @@ public class NumberedJumpOverlayManager implements TypedActionHandler {
                 if (jumpCallback != null) {
                     jumpCallback.accept(targetOffsets);
                 }
-                hideOverlays();
+                // Instead of hiding overlays, refresh them from the new position
+                refreshOverlaysFromCurrentPosition();
             } else {
                 // Invalid key for current targets - hide overlays
                 hideOverlays();
@@ -97,6 +99,44 @@ public class NumberedJumpOverlayManager implements TypedActionHandler {
 
         this.jumpCallback = onJumpSelected;
         showOverlaysForPosition(currentOffsets);
+    }
+
+    /**
+     * Refreshes overlays from the current editor position
+     */
+    private void refreshOverlaysFromCurrentPosition() {
+        if (!isActive) {
+            return;
+        }
+
+        // Get current caret position
+        int startOffset = editor.getCaretModel().getOffset();
+        int endOffset = startOffset;
+
+        if (editor.getCaretModel().getPrimaryCaret().hasSelection()) {
+            startOffset = editor.getCaretModel().getPrimaryCaret().getSelectionStart();
+            endOffset = editor.getCaretModel().getPrimaryCaret().getSelectionEnd();
+        }
+
+        Offsets currentOffsets = new Offsets(startOffset, endOffset);
+
+        // Calculate new jump targets
+        Map<Character, Offsets> jumpTargets = calculateJumpTargets(currentOffsets);
+
+        // If no targets available, hide overlays
+        if (jumpTargets.isEmpty()) {
+            hideOverlays();
+            return;
+        }
+
+        // Clear current overlays and show new ones
+        clearOverlaysOnly();
+        keyToOffsets.clear();
+        keyToOffsets.putAll(jumpTargets);
+        createOverlays(jumpTargets);
+
+        // Request focus to ensure we receive key events
+        editor.getContentComponent().requestFocus();
     }
 
     /**
@@ -238,9 +278,6 @@ public class NumberedJumpOverlayManager implements TypedActionHandler {
         }
         highlighters.clear();
 
-        // Clear mappings
-        keyToOffsets.clear();
-
         // Repaint editor
         editorComponent.repaint();
     }
@@ -257,6 +294,9 @@ public class NumberedJumpOverlayManager implements TypedActionHandler {
 
         // Clear visual overlays
         clearOverlaysOnly();
+
+        // Clear mappings
+        keyToOffsets.clear();
 
         // Clear callback
         jumpCallback = null;
