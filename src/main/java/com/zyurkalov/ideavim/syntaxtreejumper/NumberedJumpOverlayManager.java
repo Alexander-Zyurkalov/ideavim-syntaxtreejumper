@@ -151,7 +151,7 @@ public class NumberedJumpOverlayManager implements TypedActionHandler {
             Offsets offsets = entry.getValue();
 
             // Skip very small targets (single character selections)
-            if (key == '0' || offsets.rightOffset() - offsets.leftOffset() <= 1) {
+            if (key == '0' || offsets.rightOffset() - offsets.leftOffset() < 1) {
                 continue;
             }
 
@@ -193,7 +193,7 @@ public class NumberedJumpOverlayManager implements TypedActionHandler {
         // Create label
         JLabel label = createLabel(key, screenPos);
 
-        // Add to editor component
+        // Add to an editor component
         JComponent editorComponent = editor.getContentComponent();
         editorComponent.add(label);
         editorComponent.setComponentZOrder(label, 0); // Bring to the front
