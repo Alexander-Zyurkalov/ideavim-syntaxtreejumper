@@ -47,7 +47,7 @@ public class NumberedElementJumpHandler implements MotionHandler {
     public List<Offsets> findAllTargets(Offsets initialOffsets) {
         List<Offsets> targets = new ArrayList<>();
         jumpToParent(initialOffsets).map(targets::add);
-        allSiblings(initialOffsets).addAll(targets);
+        targets.addAll(allSiblings(initialOffsets));
         return targets;
     }
 
