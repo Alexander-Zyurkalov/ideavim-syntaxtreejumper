@@ -129,7 +129,6 @@ public class NumberedElementJumpHandler implements MotionHandler {
                 .map(
                         psiElement -> new Offsets(psiElement.getTextRange().getStartOffset(),
                                 psiElement.getTextRange().getEndOffset()))
-                .filter(offsets -> !offsets.equals(finalInitialOffsets))
                 .toList();
     }
 
