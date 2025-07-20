@@ -17,7 +17,7 @@ import java.util.Optional;
  * <p>
  * Usage:
  * - Alt-j followed by 1-9: Jump to the nth sibling element
- * - Alt-j followed by 0: Jump to parent element (like Alt-o)
+ * - Alt-j followed by 0: Jump to a parent element (like Alt-o)
  */
 public class NumberedElementJumpHandler implements MotionHandler {
 
@@ -42,6 +42,13 @@ public class NumberedElementJumpHandler implements MotionHandler {
 
         // Handle sibling jumps (1-9)
         return jumpToNthSibling(initialOffsets, targetNumber);
+    }
+
+    public List<Offsets> findAllTargets(Offsets initialOffsets) {
+        List<Offsets> targets = new ArrayList<>();
+        jumpToParent(initialOffsets).map(targets::add);
+        allSiblings(initialOffsets).addAll(targets);
+        return targets;
     }
 
     /**
@@ -93,6 +100,39 @@ public class NumberedElementJumpHandler implements MotionHandler {
         return Optional.of(new Offsets(targetRange.getStartOffset(), targetRange.getEndOffset()));
     }
 
+    /**
+     * Jumps to the nth sibling element at the same level
+     */
+    private List<Offsets> allSiblings(Offsets initialOffsets) {
+        PsiElement currentElement = findCurrentElement(initialOffsets);
+        if (currentElement == null) {
+            return List.of();
+        }
+        initialOffsets = new Offsets(
+                currentElement.getTextRange().getStartOffset(),
+                currentElement.getTextRange().getEndOffset());
+
+        // Find the parent to get siblings from
+        PsiElement parent = findSmallestCommonParent(currentElement, currentElement, initialOffsets);
+        if (parent == null) {
+            return List.of();
+        }
+
+        // Get all meaningful siblings
+        List<PsiElement> siblings = getMeaningfulSiblings(parent);
+        if (siblings.isEmpty()) {
+            return List.of();
+        }
+
+        Offsets finalInitialOffsets = initialOffsets;
+        return siblings.stream()
+                .map(
+                        psiElement -> new Offsets(psiElement.getTextRange().getStartOffset(),
+                                psiElement.getTextRange().getEndOffset() + 1))
+                .filter(offsets -> !offsets.equals(finalInitialOffsets))
+                .toList();
+    }
+
 
     /**
      * Finds the current element based on the selection/cursor position
@@ -134,15 +174,12 @@ public class NumberedElementJumpHandler implements MotionHandler {
      */
     private List<PsiElement> getMeaningfulSiblings(PsiElement parent) {
         List<PsiElement> siblings = new ArrayList<>();
-        int n = 1;
         for (PsiElement child : parent.getChildren()) {
             if (!(child instanceof PsiWhiteSpace) &&
                     !child.getText().trim().isEmpty()) {
                 siblings.add(child);
-                n++;
             }
         }
-
         return siblings;
     }
 
