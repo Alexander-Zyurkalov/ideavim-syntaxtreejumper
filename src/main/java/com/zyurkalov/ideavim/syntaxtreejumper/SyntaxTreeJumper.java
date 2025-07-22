@@ -3,6 +3,7 @@ package com.zyurkalov.ideavim.syntaxtreejumper;
 import com.maddyhome.idea.vim.api.VimInjectorKt;
 import com.maddyhome.idea.vim.command.MappingMode;
 import com.maddyhome.idea.vim.extension.VimExtension;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.ListElementsMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SubWordMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SyntaxNodeTreeHandler;
@@ -98,6 +99,39 @@ public class SyntaxTreeJumper implements VimExtension {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-i>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
+                true);
+
+        // Register list navigation handlers
+        String commandJumpToNextListItem = "<Plug>JumpToNextListItem";
+        String commandJumpToPrevListItem = "<Plug>JumpToPrevListItem";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextListItem),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, ListElementsMotionHandler::new),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevListItem),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, ListElementsMotionHandler::new),
+                false);
+
+        // Map default key bindings (e.g., Alt-j and Alt-k for list navigation)
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-l>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextListItem),
+                true);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-h>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevListItem),
                 true);
     }
 

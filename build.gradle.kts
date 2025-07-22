@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.zyurkalov"
-version = "1.0.7"
+version = "1.0.13"
 
 repositories {
     mavenCentral()
