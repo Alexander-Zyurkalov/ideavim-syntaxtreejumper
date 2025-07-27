@@ -1,12 +1,10 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter.SyntaxNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,11 +25,11 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
         SHRINK   // Alt-i: shrink selection to children
     }
 
-    private final PsiFile psiFile;
+    private final SyntaxTreeAdapter syntaxTree;
     private final SyntaxNoteMotionType motionType;
 
-    public SyntaxNodeTreeHandler(PsiFile psiFile, SyntaxNoteMotionType motionType) {
-        this.psiFile = psiFile;
+    public SyntaxNodeTreeHandler(SyntaxTreeAdapter syntaxTree, SyntaxNoteMotionType motionType) {
+        this.syntaxTree = syntaxTree;
         this.motionType = motionType;
     }
 
@@ -48,18 +46,17 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
      */
     private Optional<Offsets> expandSelection(Offsets initialOffsets) {
         // Find the current selection boundaries
-        PsiElement leftElement = psiFile.findElementAt(initialOffsets.leftOffset());
-        PsiElement rightElement = psiFile.findElementAt(Math.max(0, initialOffsets.rightOffset() - 1));
+        SyntaxNode leftElement = syntaxTree.findNodeAt(initialOffsets.leftOffset());
+        SyntaxNode rightElement = syntaxTree.findNodeAt(Math.max(0, initialOffsets.rightOffset() - 1));
 
-        if (leftElement == null || initialOffsets.rightOffset() >= psiFile.getFileDocument().getTextLength()) {
+        if (leftElement == null || initialOffsets.rightOffset() >= syntaxTree.getDocumentLength()) {
             return Optional.of(initialOffsets);
         }
 
         // If we have a selection, find the common parent that encompasses it
-        PsiElement targetElement;
+        SyntaxNode targetElement;
         if (initialOffsets.leftOffset() == initialOffsets.rightOffset()) {
             targetElement = leftElement;
-            return findSubWordToExpand(initialOffsets, targetElement);
         } else {
             // Find the smallest common parent that encompasses the current selection
             targetElement = findSmallestCommonParent(leftElement, rightElement, initialOffsets);
@@ -73,7 +70,7 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
         return Optional.of(new Offsets(parentRange.getStartOffset(), parentRange.getEndOffset()));
     }
 
-    private static @NotNull Optional<Offsets> findSubWordToExpand(Offsets initialOffsets, PsiElement targetElement) {
+    private static @NotNull Optional<Offsets> findSubWordToExpand(Offsets initialOffsets, SyntaxNode targetElement) {
         int elementOffset = targetElement.getTextRange().getStartOffset();
         int offsetInParent = initialOffsets.leftOffset() - elementOffset;
         Offsets elementRelativeOffset = new Offsets(offsetInParent, offsetInParent);
@@ -94,46 +91,37 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
         }
 
         // Find the element that encompasses the current selection
-        PsiElement leftElement = psiFile.findElementAt(initialOffsets.leftOffset());
-        PsiElement rightElement = psiFile.findElementAt(initialOffsets.rightOffset() - 1);
+        SyntaxNode leftElement = syntaxTree.findNodeAt(initialOffsets.leftOffset());
+        SyntaxNode rightElement = syntaxTree.findNodeAt(initialOffsets.rightOffset() - 1);
 
         if (leftElement == null) {
             return Optional.of(initialOffsets);
         }
 
-        PsiElement encompassingElement = findSmallestCommonParent(leftElement, rightElement, initialOffsets);
+        SyntaxNode encompassingElement = findSmallestCommonParent(leftElement, rightElement, initialOffsets);
         if (encompassingElement == null) {
             return Optional.of(initialOffsets);
         }
 
         // Find the largest meaningful child that fits within the current selection
-        PsiElement childElement = findLargestChildWithinSelection(encompassingElement, initialOffsets);
-        if (childElement == null || childElement.equals(encompassingElement)) {
-            return findSubWordToShrink(initialOffsets, encompassingElement);
+        SyntaxNode childElement = findLargestChildWithinSelection(encompassingElement, initialOffsets);
+        if (childElement == null || childElement.isEquivalentTo(encompassingElement)) {
+            return Optional.of(initialOffsets);
         }
 
         TextRange childRange = childElement.getTextRange();
         return Optional.of(new Offsets(childRange.getStartOffset(), childRange.getEndOffset()));
     }
 
-    private static @NotNull Optional<Offsets> findSubWordToShrink(Offsets initialOffsets, PsiElement encompassingElement) {
-        int elementOffset = encompassingElement.getTextRange().getStartOffset();
-        int offsetInParent = initialOffsets.rightOffset() - elementOffset - 1;
-        SubWordFinder finderBackward = new SubWordFinder(Direction.BACKWARD);
-        Offsets elementRelativeOffset = new Offsets(offsetInParent, offsetInParent);
-        Offsets left = finderBackward.findNext(elementRelativeOffset, encompassingElement.getText());
-        return Optional.of(new Offsets(left.leftOffset() + elementOffset, left.rightOffset() + elementOffset));
-    }
-
     /**
      * Finds the smallest common parent that fully encompasses the current selection
      */
-    private @Nullable PsiElement findSmallestCommonParent(PsiElement leftElement, PsiElement rightElement, Offsets selection) {
+    private @Nullable SyntaxNode findSmallestCommonParent(SyntaxNode leftElement, SyntaxNode rightElement, Offsets selection) {
         if (rightElement == null) {
             rightElement = leftElement;
         }
 
-        PsiElement commonParent = PsiTreeUtil.findCommonParent(leftElement, rightElement);
+        SyntaxNode commonParent = syntaxTree.findCommonParent(leftElement, rightElement);
 
         // Walk up the tree until we find an element that fully encompasses our selection
         while (commonParent != null) {
@@ -153,21 +141,20 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
         return commonParent;
     }
 
-
     /**
      * Finds the largest meaningful child that fits within the current selection
      */
-    private @Nullable PsiElement findLargestChildWithinSelection(PsiElement parent, Offsets selection) {
-        List<PsiElement> candidateChildren = new ArrayList<>();
+    private @Nullable SyntaxNode findLargestChildWithinSelection(SyntaxNode parent, Offsets selection) {
+        List<SyntaxNode> candidateChildren = new ArrayList<>();
 
         // Collect all meaningful children that fit within the selection
         collectChildrenWithinSelection(parent, selection, candidateChildren);
 
         // Find the largest child by text range
-        PsiElement largestChild = null;
+        SyntaxNode largestChild = null;
         int largestSize = 0;
 
-        for (PsiElement child : candidateChildren) {
+        for (SyntaxNode child : candidateChildren) {
             TextRange range = child.getTextRange();
             int size = range.getLength();
 
@@ -183,9 +170,9 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
     /**
      * Recursively collects children that fit within the selection
      */
-    private void collectChildrenWithinSelection(PsiElement element, Offsets selection, List<PsiElement> candidates) {
-        for (PsiElement child : element.getChildren()) {
-            if (child instanceof PsiWhiteSpace) {
+    private void collectChildrenWithinSelection(SyntaxNode element, Offsets selection, List<SyntaxNode> candidates) {
+        for (SyntaxNode child : element.getChildren()) {
+            if (child.isWhitespace()) {
                 continue;
             }
 
@@ -207,20 +194,12 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
         }
     }
 
-    /**
-     * Checks if an element contains only whitespace
-     */
-    private boolean isWhitespaceOnly(PsiElement element) {
-        String text = element.getText();
-        return text.trim().isEmpty();
-    }
-
     // Factory methods for easier integration with your existing system
-    public static SyntaxNodeTreeHandler createExpandHandler(PsiFile psiFile) {
-        return new SyntaxNodeTreeHandler(psiFile, SyntaxNoteMotionType.EXPAND);
+    public static SyntaxNodeTreeHandler createExpandHandler(SyntaxTreeAdapter syntaxTree) {
+        return new SyntaxNodeTreeHandler(syntaxTree, SyntaxNoteMotionType.EXPAND);
     }
 
-    public static SyntaxNodeTreeHandler createShrinkHandler(PsiFile psiFile) {
-        return new SyntaxNodeTreeHandler(psiFile, SyntaxNoteMotionType.SHRINK);
+    public static SyntaxNodeTreeHandler createShrinkHandler(SyntaxTreeAdapter syntaxTree) {
+        return new SyntaxNodeTreeHandler(syntaxTree, SyntaxNoteMotionType.SHRINK);
     }
 }

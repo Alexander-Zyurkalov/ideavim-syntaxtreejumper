@@ -7,6 +7,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.PsiSyntaxTreeAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,10 +65,10 @@ class SyntaxNodeTreeHandlerTest {
                         "Expand: cursor position to identifier"
                 ),
                 new HelixSelectionTestData(
-                        new Offsets(13, 13), // cursor at 'i' in "int i = 0;"
+                        new Offsets(13, 13), // cursor at 'T' in "TestClass"
                         "",
-                        new Offsets(13, 17), // select 'i'
-                        "Test",
+                        new Offsets(13, 22), // select 'Test' //subwords are not considered any more
+                        "TestClass",
                         SyntaxNodeTreeHandler.SyntaxNoteMotionType.EXPAND,
                         "Expand: cursor position to SubWord"
                 ),
@@ -96,15 +97,16 @@ class SyntaxNodeTreeHandlerTest {
 
     static Stream<HelixSelectionTestData> shrinkSelectionTestCases() {
         return Stream.of(
-
                 new HelixSelectionTestData(
-                        new Offsets(13, 22), // cursor at 'i' in "int i = 0;"
+                        new Offsets(13, 22), // "TestClass"
                         "TestClass",
-                        new Offsets(17, 22), // select 'i'
-                        "Class",
+                        new Offsets(13, 22), // "Class"
+                        "TestClass",
                         SyntaxNodeTreeHandler.SyntaxNoteMotionType.SHRINK,
                         "Shrink: an element to SubWord"
-                ),                // Shrink from method call to method name
+                ),
+
+                // Shrink from method call to method name
                 new HelixSelectionTestData(
                         new Offsets(160, 185), // full method call
                         "System.out.println(\"Test\")",
@@ -113,6 +115,7 @@ class SyntaxNodeTreeHandlerTest {
                         SyntaxNodeTreeHandler.SyntaxNoteMotionType.SHRINK,
                         "Shrink: method call to method name"
                 ),
+
                 // Shrink from System.out.println to System.out
                 new HelixSelectionTestData(
                         new Offsets(160, 178), // fully qualified method name
@@ -156,9 +159,10 @@ class SyntaxNodeTreeHandlerTest {
                         SyntaxNodeTreeHandler.SyntaxNoteMotionType.EXPAND,
                         "Edge case: expand from closing brace"
                 ),
+
                 // Expand at the end of a file
                 new HelixSelectionTestData(
-                        new Offsets(0, 196), // "}"
+                        new Offsets(0, 196), // whole file
                         "public class TestClass { void execute() { int[] a = new int[10]; for (int i = 0; i < 10; i++) { a[i] = 2 * i; } System.out.println(\"Test\"); } }",
                         new Offsets(0, 196), // whole class body
                         "public class TestClass { void execute() { int[] a = new int[10]; for (int i = 0; i < 10; i++) { a[i] = 2 * i; } System.out.println(\"Test\"); } }",
@@ -215,7 +219,7 @@ class SyntaxNodeTreeHandlerTest {
         }
 
         PsiFile javaFile = myFixture.configureByText("TestClass.java", javaCode);
-        SyntaxNodeTreeHandler handler = new SyntaxNodeTreeHandler(javaFile, testData.motionType);
+        SyntaxNodeTreeHandler handler = new SyntaxNodeTreeHandler( new PsiSyntaxTreeAdapter(javaFile), testData.motionType);
 
         ApplicationManager.getApplication().runReadAction(() -> {
             Optional<Offsets> result = handler.findNext(testData.initialOffsets);

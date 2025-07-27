@@ -6,12 +6,20 @@
 
     <name>Ideavim-syntaxtreejumper</name>
 
+    <!-- IdeaVIM specific extensions -->
     <extensions defaultExtensionNs="IdeaVIM">
         <vimExtension implementation="com.zyurkalov.ideavim.syntaxtreejumper.SyntaxTreeJumper"/>
     </extensions>
 
+    <!-- IntelliJ Platform extensions -->
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Service for highlighting configuration -->
+        <applicationService
+                serviceInterface="com.zyurkalov.ideavim.syntaxtreejumper.highlighting.HighlightingConfig"
+                serviceImplementation="com.zyurkalov.ideavim.syntaxtreejumper.highlighting.HighlightingConfig"/>
+    </extensions>
+
     <depends>com.intellij.modules.platform</depends>
     <depends>IdeaVIM</depends>
-
 
 </idea-plugin>
