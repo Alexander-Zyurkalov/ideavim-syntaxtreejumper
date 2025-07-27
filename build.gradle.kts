@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.zyurkalov"
-version = "1.0.7"
+version = "1.0.26"
 
 repositories {
     mavenCentral()
@@ -24,21 +24,24 @@ repositories {
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
     intellijPlatform {
+//        clion("2025.1.4")
+//        bundledPlugin("com.intellij.clion")
         create("IC", "2025.1.1.1")
-        plugins("IdeaVIM:2.24.0" )
         bundledPlugin("com.intellij.java")
+        plugins("IdeaVIM:2.24.0")
         pluginVerifier()
         zipSigner()
-        testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
+        testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Bundled)
 
-        // Add necessary plugin dependencies for compilation here, example:
-        // bundledPlugin("com.intellij.java")
+
     }
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
-    testImplementation ( "org.junit.jupiter:junit-jupiter-params:5.10.1" )
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.1")
     testImplementation("org.opentest4j:opentest4j:1.3.0")
     testRuntimeOnly("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.18.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.18.0")
 }
 
 intellijPlatform {

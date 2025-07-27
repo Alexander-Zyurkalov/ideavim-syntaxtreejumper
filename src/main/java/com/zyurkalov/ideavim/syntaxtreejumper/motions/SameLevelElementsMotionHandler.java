@@ -1,12 +1,10 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter.SyntaxNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,49 +12,49 @@ import java.util.Optional;
 
 public class SameLevelElementsMotionHandler implements MotionHandler {
 
-    private final PsiFile psiFile;
+    private final SyntaxTreeAdapter syntaxTree;
     private final Direction direction;
 
-    public SameLevelElementsMotionHandler(PsiFile psiFile, Direction direction) {
-        this.psiFile = psiFile;
+    public SameLevelElementsMotionHandler(SyntaxTreeAdapter syntaxTree, Direction direction) {
+        this.syntaxTree = syntaxTree;
         this.direction = direction;
+    }
+
+    /**
+     * Data structure to hold an element and its siblings for reuse across classes.
+     */
+    public record ElementWithSiblings(SyntaxNode currentElement, SyntaxNode previousSibling, SyntaxNode nextSibling) {
+    }
+
+    /**
+     * Public method to find the current element and its siblings based on the given offsets.
+     * This method can be reused by other classes like PsiElementHighlighter.
+     */
+    public ElementWithSiblings findElementWithSiblings(Offsets initialOffsets) {
+        SyntaxNode currentElement = findCurrentElement(initialOffsets);
+        if (currentElement == null) {
+            return new ElementWithSiblings(null, null, null);
+        }
+
+        currentElement = syntaxTree.replaceWithParentIfParentEqualsTheNode(currentElement);
+        if (currentElement == null) {
+            return new ElementWithSiblings(null, null, null);
+        }
+
+        SyntaxNode previousSibling = syntaxTree.findPreviousNonWhitespaceSibling(currentElement);
+        SyntaxNode nextSibling = syntaxTree.findNextNonWhitespaceSibling(currentElement);
+
+        return new ElementWithSiblings(currentElement, previousSibling, nextSibling);
     }
 
     @Override
     public Optional<Offsets> findNext(Offsets initialOffsets) {
-
-        PsiElement initialElement;
-        boolean isOnlyCaretButNoSelection = initialOffsets.leftOffset() >= initialOffsets.rightOffset() - 1;
-        if (isOnlyCaretButNoSelection) {
-            initialElement = psiFile.findElementAt(initialOffsets.leftOffset());
-
-        } else {
-            PsiElement initElementAtLeft = psiFile.findElementAt(initialOffsets.leftOffset());
-            PsiElement initElementAtRight = psiFile.findElementAt(initialOffsets.rightOffset() - 1);
-            if (initElementAtLeft == null || initElementAtRight == null) {
-                return Optional.of(initialOffsets);
-            }
-            if (initElementAtLeft.equals(initElementAtRight)) {
-                initialElement = initElementAtLeft;
-            } else {
-                initialElement = findParentElementIfInitialElementsAreAtEdgesOrChooseOne(initElementAtLeft, initElementAtRight);
-            }
-        }
-        if (initialElement != null && initialElement.getChildren().length == 0 &&
-                (initialElement.getTextRange().getStartOffset() != initialOffsets.leftOffset() ||
-                        initialElement.getTextRange().getEndOffset() != initialOffsets.rightOffset())) {
-            Optional<Offsets> subWordOffset = findNextSubWord(initialOffsets, initialElement);
-            if (subWordOffset.isPresent()) {
-                return subWordOffset;
-            }
-        }
-        initialElement = replaceWithParentIfParentEqualsTheElement(initialElement);
-        if (initialElement == null) {
+        ElementWithSiblings elementWithSiblings = findElementWithSiblings(initialOffsets);
+        if (elementWithSiblings.currentElement == null) {
             return Optional.of(initialOffsets);
         }
 
-
-        PsiElement nextElement = findNextNoneEmptyElement(initialElement);
+        SyntaxNode nextElement = getNextElementFromSiblings(elementWithSiblings);
         if (nextElement == null) {
             return Optional.of(initialOffsets);
         }
@@ -65,63 +63,43 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
         return Optional.of(new Offsets(nextElementTextRange.getStartOffset(), nextElementTextRange.getEndOffset()));
     }
 
+    /**
+     * Finds the current syntax node based on the given offsets.
+     * Extracted from the original findNext method for reuse.
+     */
+    private @Nullable SyntaxNode findCurrentElement(Offsets initialOffsets) {
+        boolean isOnlyCaretButNoSelection = initialOffsets.leftOffset() >= initialOffsets.rightOffset() - 1;
 
-    private Optional<Offsets> findNextSubWord(Offsets initialOffsets, PsiElement initialElement) {
-        int elementOffset = initialElement.getTextRange().getStartOffset();
-        var subWordFinder = new SubWordFinder(direction);
-        int offsetInParent = switch (direction) {
-            case FORWARD -> initialOffsets.leftOffset() - elementOffset;
-            case BACKWARD -> initialOffsets.rightOffset() - elementOffset - 1;
-        };
-        Offsets elementRelativeOffset = new Offsets(offsetInParent, offsetInParent);
-        Offsets subWordLocalOffset = subWordFinder.findNext(elementRelativeOffset, initialElement.getText());
-        Offsets nextSubWordLocalOffset = subWordFinder.findNext(subWordLocalOffset, initialElement.getText());
-
-        boolean selectedTheSame = subWordLocalOffset.leftOffset() == nextSubWordLocalOffset.leftOffset() &&
-                subWordLocalOffset.rightOffset() == nextSubWordLocalOffset.rightOffset() - 1 &&
-                subWordLocalOffset.leftOffset() == subWordLocalOffset.rightOffset();
-        if (!(subWordLocalOffset.equals(nextSubWordLocalOffset) || selectedTheSame) ||
-                SubWordFinder.areThereSubwords(initialElement.getText())) {
-
-            var subWordOffset = getPreviousSubWord(initialElement, nextSubWordLocalOffset);
-
-            subWordOffset = new Offsets(
-                    subWordOffset.leftOffset() + elementOffset,
-                    subWordOffset.rightOffset() + elementOffset);
-            return Optional.of(subWordOffset);
+        if (isOnlyCaretButNoSelection) {
+            return syntaxTree.findNodeAt(initialOffsets.leftOffset());
+        } else {
+            SyntaxNode initElementAtLeft = syntaxTree.findNodeAt(initialOffsets.leftOffset());
+            SyntaxNode initElementAtRight = syntaxTree.findNodeAt(initialOffsets.rightOffset() - 1);
+            if (initElementAtLeft == null || initElementAtRight == null) {
+                return null;
+            }
+            if (initElementAtLeft.isEquivalentTo(initElementAtRight)) {
+                return initElementAtLeft;
+            } else {
+                return findParentElementIfInitialElementsAreAtEdgesOrChooseOne(initElementAtLeft, initElementAtRight);
+            }
         }
-
-        return Optional.empty();
     }
 
-    private Offsets getPreviousSubWord(PsiElement initialElement, Offsets nextSubWordLocalOffset) {
+    /**
+     * Gets the next element based on a direction from the ElementWithSiblings.
+     */
+    private @Nullable SyntaxNode getNextElementFromSiblings(ElementWithSiblings elementWithSiblings) {
         return switch (direction) {
-            case BACKWARD -> {
-                var subWordOppositeDirection = new SubWordFinder(Direction.FORWARD);
-                Offsets prevSubWord = subWordOppositeDirection.findNext(
-                        new Offsets(nextSubWordLocalOffset.leftOffset(), nextSubWordLocalOffset.leftOffset()),
-                        initialElement.getText());
-                yield new Offsets(
-                        prevSubWord.leftOffset(),
-                        nextSubWordLocalOffset.rightOffset());
-            }
-            case Direction.FORWARD -> {
-                var subWordOppositeDirection = new SubWordFinder(Direction.BACKWARD);
-                Offsets prevSubWord = subWordOppositeDirection.findNext(
-                        new Offsets(nextSubWordLocalOffset.rightOffset() - 1, nextSubWordLocalOffset.rightOffset()),
-                        initialElement.getText());
-                yield new Offsets(
-                        prevSubWord.rightOffset(),
-                        nextSubWordLocalOffset.rightOffset());
-            }
-
+            case BACKWARD -> elementWithSiblings.previousSibling;
+            case FORWARD -> elementWithSiblings.nextSibling;
         };
     }
 
-    private @NotNull PsiElement findParentElementIfInitialElementsAreAtEdgesOrChooseOne(
-                                                    PsiElement initElementAtLeft, PsiElement initElementAtRight) {
-        PsiElement initialElement = initElementAtLeft;
-        PsiElement commonParent = PsiTreeUtil.findCommonParent(initElementAtLeft, initElementAtRight);
+    private @NotNull SyntaxNode findParentElementIfInitialElementsAreAtEdgesOrChooseOne(
+            SyntaxNode initElementAtLeft, SyntaxNode initElementAtRight) {
+        SyntaxNode initialElement = initElementAtLeft;
+        SyntaxNode commonParent = syntaxTree.findCommonParent(initElementAtLeft, initElementAtRight);
         if (commonParent == null) {
             return initialElement;
         }
@@ -138,32 +116,4 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
         }
         return initialElement;
     }
-
-    private @Nullable PsiElement replaceWithParentIfParentEqualsTheElement(PsiElement initialElement) {
-        if (initialElement == null) {
-            return null;
-        }
-        PsiElement parent = initialElement.getParent();
-        while (parent != null && parent.getText().equals(initialElement.getText())) {
-            initialElement = parent;
-            parent = initialElement.getParent();
-        }
-        return initialElement;
-    }
-
-    private @Nullable PsiElement findNextNoneEmptyElement(PsiElement initialElement) {
-        if (initialElement == null) {
-            return null;
-        }
-        PsiElement nextElement = initialElement;
-        do {
-            nextElement = switch (direction) {
-                case BACKWARD -> PsiTreeUtil.skipSiblingsBackward(nextElement, PsiWhiteSpace.class);
-                case FORWARD -> PsiTreeUtil.skipSiblingsForward(nextElement, PsiWhiteSpace.class);
-            };
-        } while (nextElement != null && nextElement.getText().isEmpty());
-        return nextElement;
-    }
-
-
 }
