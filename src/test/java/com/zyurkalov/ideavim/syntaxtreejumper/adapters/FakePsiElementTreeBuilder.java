@@ -1,3 +1,4 @@
+
 package com.zyurkalov.ideavim.syntaxtreejumper.adapters;
 
 import com.intellij.psi.PsiElement;
@@ -20,6 +21,20 @@ public class FakePsiElementTreeBuilder {
         private MyFakePsiElement prevSibling;
         private MyFakePsiElement nextSibling;
 
+        private MyFakePsiElement(String text, String type, List<MyFakePsiElement> children) {
+            this.text = text;
+            this.type = type;
+            this.children = children;
+            MyFakePsiElement prev = null;
+            for (int i = 0; i < children.size(); i++) {
+                var child = children.get(i);
+                child.parent = this;
+                child.prevSibling = prev;
+                child.nextSibling = (i + 1 < children.size()) ? children.get(i + 1) : null;
+                prev = child;
+            }
+        }
+
         private MyFakePsiElement(String text, List<MyFakePsiElement> children) {
             this.text = text;
             this.children = children;
@@ -27,17 +42,18 @@ public class FakePsiElementTreeBuilder {
                 case "for" -> "FOR_KEYWORD";
                 case "while" -> "WHILE_KEYWORD";
                 case "int" -> "INT_KEYWORD";
-                case "" -> "DUMMY_NODE";
                 case " " -> "WHITE_SPACE";
-                case "(" -> "OCPunctuator:(";
-                case ")" -> "OCPunctuator:)";
-                case "=" -> "OCPunctuator:=";
-                case ";" -> "OCPunctuator:;";
-                case "<" -> "OCPunctuator:<";
-                case "++" -> "OCPunctuator:++";
-                case "[" -> "OCPunctuator:[";
-                case "]" -> "OCPunctuator:]";
-                case "*" -> "OCPunctuator:*";
+                case "(" -> "OCPunctuation:(";
+                case ")" -> "OCPunctuation:)";
+                case "=" -> "OCPunctuation:=";
+                case ";" -> "OCPunctuation:;";
+                case "<" -> "OCPunctuation:<";
+                case "++" -> "OCPunctuation:++";
+                case "[" -> "OCPunctuation:[";
+                case "]" -> "OCPunctuation:]";
+                case "*" -> "OCPunctuation:*";
+                case "{" -> "OCPunctuation:{";
+                case "}" -> "OCPunctuation:}";
                 default -> {
                     // Check if it's an integer literal (all digits)
                     if (text.matches("\\d+")) {
@@ -46,8 +62,7 @@ public class FakePsiElementTreeBuilder {
                     // Check if it's an identifier (starts with letter/underscore, contains alphanumeric/underscore)
                     else if (text.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
                         yield "IDENTIFIER";
-                    }
-                    else {
+                    } else {
                         yield "UNKNOWN";
                     }
                 }
@@ -60,7 +75,6 @@ public class FakePsiElementTreeBuilder {
                 child.nextSibling = (i + 1 < children.size()) ? children.get(i + 1) : null;
                 prev = child;
             }
-
         }
 
         public MyFakePsiElement(String text) {
@@ -68,11 +82,18 @@ public class FakePsiElementTreeBuilder {
         }
 
         public String getText() {
-            return text;
+            if (children.isEmpty()) {
+                return text;
+            }
+            StringBuilder result = new StringBuilder();
+            for (MyFakePsiElement child : children) {
+                result.append(child.getText());
+            }
+            return result.toString();
         }
 
         @Override
-        public PsiElement @NotNull [] getChildren() {
+        public PsiElement [] getChildren() {
             return children.toArray(PsiElement[]::new);
         }
 
@@ -105,7 +126,7 @@ public class FakePsiElementTreeBuilder {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            sb.append("'").append(text).append("':     '").append(type).append("'");
+            sb.append("'").append(getText()).append("':     '").append(type).append("'");
             if (!children.isEmpty()) {
                 for (MyFakePsiElement child : children) {
                     String[] childLines = child.toString().split("\n");
@@ -121,6 +142,15 @@ public class FakePsiElementTreeBuilder {
 
     public static MyFakePsiElement leaf(String text) {
         return new MyFakePsiElement(text, new ArrayList<>());
+    }
+
+    public static MyFakePsiElement leafWithType(String text, String type) {
+        return new MyFakePsiElement(text, type, new ArrayList<>());
+    }
+
+    public static MyFakePsiElement branchWithType(String type, MyFakePsiElement... children) {
+        List<MyFakePsiElement> psiList = Arrays.stream(children).toList();
+        return new MyFakePsiElement("", type, psiList);
     }
 
     public static MyFakePsiElement branch(MyFakePsiElement... children) {
@@ -198,19 +228,133 @@ public class FakePsiElementTreeBuilder {
         return new MyFakePsiElement("list", elements);
     }
 
-    public static MyFakePsiElement makeForLoop(MyFakePsiElement initialization, MyFakePsiElement condition, MyFakePsiElement increment, MyFakePsiElement body) {
-        return list(
-                branch(listFromString("for ("), initialization, leaf(";")),
+    public static MyFakePsiElement makeForLoop1To10() {
+        return branchWithType("FOR_STATEMENT",
+                // for keyword
+                leaf("for"),
                 leaf(" "),
-                branch(condition, leaf(";")),
-                branch(increment, leaf(")")),
-                body
+
+                // opening parenthesis
+                leaf("("),
+
+                // initialization: int i = 0
+                branchWithType("OCDeclarationStatement",
+                        branchWithType("OCDeclaration",
+                                branchWithType("OCTypeElement",
+                                        leaf("int"),
+                                        leaf(" ")
+                                ),
+                                branchWithType("OCDeclarator",
+                                        leaf("i"),
+                                        leaf(" ")
+                                ),
+                                leaf("="),
+                                leaf(" ")
+                        ),
+                        branchWithType("OCLiteralExpression",
+                                leaf("0")
+                        )
+                ),
+
+                // semicolon
+                leaf(";"),
+                leaf(" "),
+
+                // condition: i < 10
+                branchWithType("OCCondition",
+                        branchWithType("OCBinaryExpression",
+                                branchWithType("OCReferenceExpression",
+                                        branchWithType("OCReferenceElement",
+                                                leaf("i"),
+                                                leaf(" ")
+                                        ),
+                                        leaf("<"),
+                                        leaf(" ")
+                                ),
+                                branchWithType("OCLiteralExpression",
+                                        leaf("10")
+                                )
+                        )
+                ),
+
+                // semicolon
+                leaf(";"),
+                leaf(" "),
+
+                // increment: i++
+                branchWithType("OCExpressionStatement",
+                        branchWithType("OCPostfixExpression",
+                                branchWithType("OCReferenceExpression",
+                                        branchWithType("OCReferenceElement",
+                                                leaf("i")
+                                        )
+                                ),
+                                leaf("++")
+                        )
+                ),
+
+                // closing parenthesis
+                leaf(")"),
+                leaf(" "),
+
+                // body: { a[i] = 2 * i; }
+                branchWithType("OCEagerBlockStatement",
+                        leaf("{"),
+                        leaf(" "),
+                        branchWithType("OCExpressionStatement",
+                                branchWithType("OCAssignmentExpression",
+                                        branchWithType("OCArraySelectionExpression",
+                                                branchWithType("OCReferenceExpression",
+                                                        branchWithType("OCReferenceElement",
+                                                                leaf("a")
+                                                        )
+                                                ),
+                                                leaf("["),
+                                                leaf("i"),
+                                                leaf("]"),
+                                                leaf(" ")
+                                        ),
+                                        leaf("="),
+                                        leaf(" ")
+                                ),
+                                branchWithType("OCBinaryExpression",
+                                        branchWithType("OCLiteralExpression",
+                                                leaf("2"),
+                                                leaf(" ")
+                                        ),
+                                        leaf("*"),
+                                        leaf(" ")
+                                ),
+                                branchWithType("OCReferenceExpression",
+                                        branchWithType("OCReferenceElement",
+                                                leaf("i")
+                                        )
+                                ),
+                                leaf(";"),
+                                leaf(" ")
+                        ),
+                        leaf("}"),
+                        leaf(" ")
+                )
         );
     }
 
-    public static MyFakePsiElement makeForLoop1To10() {
-        return makeForLoop(listFromString("int i = 0"), listFromString("i<10"), list(leaf("++"), leaf("i")), listFromString("a[i] = 2 * i;"));
+    public static MyFakePsiElement makeForLoop(MyFakePsiElement initialization, MyFakePsiElement condition, MyFakePsiElement increment, MyFakePsiElement body) {
+        return branchWithType("FOR_STATEMENT",
+                leaf("for"),
+                leaf(" "),
+                leaf("("),
+                initialization,
+                leaf(";"),
+                leaf(" "),
+                condition,
+                leaf(";"),
+                leaf(" "),
+                increment,
+                leaf(")"),
+                leaf(" "),
+                body
+        );
     }
-
 
 }

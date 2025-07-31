@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.9.25"
+    id("org.jetbrains.kotlin.jvm") version "2.1.0"
     id("org.jetbrains.intellij.platform") version "2.3.0"
 
     id("java-test-fixtures")
@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.zyurkalov"
-version = "1.0.26"
+version = "1.1.1"
 
 repositories {
     mavenCentral()
@@ -26,14 +26,12 @@ dependencies {
     intellijPlatform {
 //        clion("2025.1.4")
 //        bundledPlugin("com.intellij.clion")
-        create("IC", "2025.1.1.1")
+        create("IC", "2025.1.1")
         bundledPlugin("com.intellij.java")
-        plugins("IdeaVIM:2.24.0")
+        plugins("IdeaVIM:2.27.0")
         pluginVerifier()
         zipSigner()
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Bundled)
-
-
     }
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
@@ -47,7 +45,7 @@ dependencies {
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "251"
+            sinceBuild = "252"
         }
 
         changeNotes = """
@@ -62,11 +60,20 @@ tasks {
         sourceCompatibility = "21"
         targetCompatibility = "21"
     }
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "21"
+//    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+//        compilerOptions.jvmTarget.set(JvmTarget.JVM_21)
+//    }
+
+    buildSearchableOptions {
+        enabled = false // Temporarily disable if the issue persists
     }
+
 
     test {
         useJUnitPlatform()
+//        jvmArgs = jvmArgs?.filter { !it.contains("kotlinx-coroutines-core") } ?: emptyList()
+//        // Or more specifically:
+//        jvmArgs("-XX:-UsePerfData") // Disable if using performance data
+
     }
 }

@@ -14,13 +14,12 @@ import java.util.Objects;
 /**
  * PSI-based implementation of SyntaxNode.
  */
-public record CppSyntaxNode(PsiElement psiElement) implements SyntaxTreeAdapter.SyntaxNode {
+public record CppSyntaxNode(PsiElement psiElement) implements SyntaxNode {
     public CppSyntaxNode(@NotNull PsiElement psiElement) {
         this.psiElement = psiElement;
     }
 
     @Override
-    @NotNull
     public TextRange getTextRange() {
         return psiElement.getTextRange();
     }
@@ -33,34 +32,34 @@ public record CppSyntaxNode(PsiElement psiElement) implements SyntaxTreeAdapter.
 
     @Override
     @Nullable
-    public SyntaxTreeAdapter.SyntaxNode getParent() {
+    public SyntaxNode getParent() {
         PsiElement parent = psiElement.getParent();
         return parent != null ? new CppSyntaxNode(parent) : null;
     }
 
     @Override
     @NotNull
-    public List<SyntaxTreeAdapter.SyntaxNode> getChildren() {
+    public List<SyntaxNode> getChildren() {
         PsiElement[] children = psiElement.getChildren();
         if (children.length == 0) {
             return Collections.emptyList();
         }
         return Arrays.stream(children)
                 .map(CppSyntaxNode::new)
-                .map(node -> (SyntaxTreeAdapter.SyntaxNode) node)
+                .map(node -> (SyntaxNode) node)
                 .toList();
     }
 
     @Override
     @Nullable
-    public SyntaxTreeAdapter.SyntaxNode getPreviousSibling() {
+    public SyntaxNode getPreviousSibling() {
         PsiElement sibling = psiElement.getPrevSibling();
         return sibling != null ? new CppSyntaxNode(sibling) : null;
     }
 
     @Override
     @Nullable
-    public SyntaxTreeAdapter.SyntaxNode getNextSibling() {
+    public SyntaxNode getNextSibling() {
         PsiElement sibling = psiElement.getNextSibling();
         return sibling != null ? new CppSyntaxNode(sibling) : null;
     }
@@ -71,7 +70,7 @@ public record CppSyntaxNode(PsiElement psiElement) implements SyntaxTreeAdapter.
     }
 
     @Override
-    public boolean isEquivalentTo(@Nullable SyntaxTreeAdapter.SyntaxNode other) {
+    public boolean isEquivalentTo(@Nullable SyntaxNode other) {
         if (!(other instanceof CppSyntaxNode(PsiElement element))) {
             return false;
         }
@@ -84,15 +83,9 @@ public record CppSyntaxNode(PsiElement psiElement) implements SyntaxTreeAdapter.
         return psiElement.getClass().getSimpleName();
     }
 
-    /**
-     * Gets the underlying PSI element. This method is provided for cases where
-     * PSI-specific operations are needed, but should be used sparingly to maintain
-     * the abstraction.
-     */
     @Override
-    @NotNull
-    public PsiElement psiElement() {
-        return psiElement;
+    public @NotNull String getTypeName() {
+        return psiElement.getNode().getElementType().toString();
     }
 
     @Override

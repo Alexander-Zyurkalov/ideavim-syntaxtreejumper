@@ -15,6 +15,7 @@ import com.maddyhome.idea.vim.state.mode.Mode;
 import com.maddyhome.idea.vim.state.mode.SelectionType;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapterFactory;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsMotionHandler;
@@ -74,7 +75,7 @@ public class MoveSiblingHandler implements ExtensionHandler {
             }
 
             // Get the sibling to swap with based on direction
-            SyntaxTreeAdapter.SyntaxNode targetSibling = switch (direction) {
+            SyntaxNode targetSibling = switch (direction) {
                 case BACKWARD -> elementWithSiblings.previousSibling();
                 case FORWARD -> elementWithSiblings.nextSibling();
             };
@@ -110,8 +111,8 @@ public class MoveSiblingHandler implements ExtensionHandler {
      * Returns the new offsets of the moved element, or null if swap failed.
      */
     private Offsets swapElements(@NotNull Editor editor,
-                                 @NotNull SyntaxTreeAdapter.SyntaxNode originalElement,
-                                 @NotNull SyntaxTreeAdapter.SyntaxNode targetElement) {
+                                 @NotNull SyntaxNode originalElement,
+                                 @NotNull SyntaxNode targetElement) {
         TextRange originalElementTextRange = originalElement.getTextRange();
         TextRange targetElementTextRange = targetElement.getTextRange();
 

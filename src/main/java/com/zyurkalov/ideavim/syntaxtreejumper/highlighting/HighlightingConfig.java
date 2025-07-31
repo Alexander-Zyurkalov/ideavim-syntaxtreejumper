@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 public final class HighlightingConfig implements PersistentStateComponent<HighlightingConfig> {
 
     public boolean highlightingEnabled = false;
-    public boolean showCurrentElement = false;
+    public boolean showCurrentElement = true;
     public boolean showPreviousSibling = true;
     public boolean showNextSibling = true;
     public boolean showTooltips = false;

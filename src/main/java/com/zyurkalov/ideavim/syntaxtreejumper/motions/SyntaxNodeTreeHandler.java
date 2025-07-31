@@ -3,8 +3,8 @@ package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 import com.intellij.openapi.util.TextRange;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
-import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter.SyntaxNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +59,7 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
             targetElement = leftElement;
         } else {
             // Find the smallest common parent that encompasses the current selection
-            targetElement = findSmallestCommonParent(leftElement, rightElement, initialOffsets);
+            targetElement = syntaxTree.findSmallestCommonParent(leftElement, rightElement, initialOffsets);
         }
 
         if (targetElement == null) {
@@ -98,7 +98,7 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
             return Optional.of(initialOffsets);
         }
 
-        SyntaxNode encompassingElement = findSmallestCommonParent(leftElement, rightElement, initialOffsets);
+        SyntaxNode encompassingElement = syntaxTree.findSmallestCommonParent(leftElement, rightElement, initialOffsets);
         if (encompassingElement == null) {
             return Optional.of(initialOffsets);
         }
@@ -111,34 +111,6 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
 
         TextRange childRange = childElement.getTextRange();
         return Optional.of(new Offsets(childRange.getStartOffset(), childRange.getEndOffset()));
-    }
-
-    /**
-     * Finds the smallest common parent that fully encompasses the current selection
-     */
-    private @Nullable SyntaxNode findSmallestCommonParent(SyntaxNode leftElement, SyntaxNode rightElement, Offsets selection) {
-        if (rightElement == null) {
-            rightElement = leftElement;
-        }
-
-        SyntaxNode commonParent = syntaxTree.findCommonParent(leftElement, rightElement);
-
-        // Walk up the tree until we find an element that fully encompasses our selection
-        while (commonParent != null) {
-            TextRange range = commonParent.getTextRange();
-            if (range.getStartOffset() <= selection.leftOffset() &&
-                    range.getEndOffset() >= selection.rightOffset()) {
-
-                // Check if this parent is actually larger than our current selection
-                if (range.getStartOffset() < selection.leftOffset() ||
-                        range.getEndOffset() > selection.rightOffset()) {
-                    return commonParent;
-                }
-            }
-            commonParent = commonParent.getParent();
-        }
-
-        return commonParent;
     }
 
     /**

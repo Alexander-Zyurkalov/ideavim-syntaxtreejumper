@@ -1,10 +1,9 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.adapters;
 
 import com.intellij.openapi.util.TextRange;
+import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * Adapter interface for syntax tree operations.
@@ -12,56 +11,6 @@ import java.util.List;
  * particularly useful for languages like C++ where the default PSI tree might be inconvenient.
  */
 public interface SyntaxTreeAdapter {
-
-    /**
-     * Represents a node in the syntax tree.
-     */
-    interface SyntaxNode {
-        /**
-         * Gets the text range of this node in the document.
-         */
-        @NotNull TextRange getTextRange();
-
-        /**
-         * Gets the text content of this node.
-         */
-        @NotNull String getText();
-
-        /**
-         * Gets the parent node, or null if this is the root.
-         */
-        @Nullable SyntaxNode getParent();
-
-        /**
-         * Gets all direct children of this node.
-         */
-        @NotNull List<SyntaxNode> getChildren();
-
-        /**
-         * Gets the previous sibling node, or null if this is the first child.
-         */
-        @Nullable SyntaxNode getPreviousSibling();
-
-        /**
-         * Gets the next sibling node, or null if this is the last child.
-         */
-        @Nullable SyntaxNode getNextSibling();
-
-        /**
-         * Checks if this node represents whitespace only.
-         */
-        boolean isWhitespace();
-
-        /**
-         * Checks if this node is equivalent to another node.
-         */
-        boolean isEquivalentTo(@Nullable SyntaxNode other);
-
-        /**
-         * Gets a simple name for this node type (for debugging/tooltips).
-         */
-        @NotNull String getNodeTypeName();
-    }
 
     /**
      * Finds the syntax node at the specified offset in the file.
@@ -97,10 +46,14 @@ public interface SyntaxTreeAdapter {
         return sibling;
     }
 
-    private static boolean isASymbolToSkip(SyntaxTreeAdapter.SyntaxNode sibling) {
+    private static boolean isASymbolToSkip(SyntaxNode sibling) {
+        if (sibling.isOperator()) {
+            return true;
+        }
         return sibling.isWhitespace() ||
                 sibling.getText().trim().isEmpty() ||
                 sibling.getText().equals("=") ||
+                sibling.getText().equals("||") ||
                 sibling.getText().equals(",") ||
                 sibling.getText().equals("+") ||
                 sibling.getText().equals("-") ||
@@ -114,9 +67,18 @@ public interface SyntaxTreeAdapter {
                 sibling.getText().equals("}") ||
                 sibling.getText().equals("'") ||
                 sibling.getText().equals("\"") ||
-                sibling.getText().equals(";");
+                sibling.getText().equals(";") ||
+                sibling.getTypeName().equals("OPERATION_SIGN") ||
+                sibling.getTypeName().equals("COMMA") ||
+                sibling.getTypeName().equals("OROR") ||
+                sibling.getTypeName().equals("SEMICOLON") ||
+                sibling.getTypeName().equals("RPAR") ||
+                sibling.getTypeName().equals("LPAR") ||
+                sibling.getTypeName().equals("RBRACE") ||
+                sibling.getTypeName().equals("LBRACE") ||
+                sibling.getTypeName().equals("RBRACK") ||
+                sibling.getTypeName().equals("LBRACK");
     }
-
 
     /**
      * Finds the next non-whitespace sibling of the given node.
@@ -129,7 +91,6 @@ public interface SyntaxTreeAdapter {
         }
         return sibling;
     }
-
 
     /**
      * Helper method to replace a node with its parent if they have the same text content.
@@ -146,5 +107,34 @@ public interface SyntaxTreeAdapter {
             parent = node.getParent();
         }
         return node;
+    }
+
+    /**
+     * Finds the smallest common parent that fully encompasses the current selection
+     */
+    @Nullable
+    default SyntaxNode findSmallestCommonParent(SyntaxNode leftElement, SyntaxNode rightElement, Offsets selection) {
+        if (rightElement == null) {
+            rightElement = leftElement;
+        }
+
+        SyntaxNode commonParent = findCommonParent(leftElement, rightElement);
+
+        // Walk up the tree until we find an element that fully encompasses our selection
+        while (commonParent != null) {
+            TextRange range = commonParent.getTextRange();
+            if (range.getStartOffset() <= selection.leftOffset() &&
+                    range.getEndOffset() >= selection.rightOffset()) {
+
+                // Check if this parent is actually larger than our current selection
+                if (range.getStartOffset() < selection.leftOffset() ||
+                        range.getEndOffset() > selection.rightOffset()) {
+                    return commonParent;
+                }
+            }
+            commonParent = commonParent.getParent();
+        }
+
+        return commonParent;
     }
 }

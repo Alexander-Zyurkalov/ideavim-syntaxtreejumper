@@ -21,9 +21,8 @@ import com.maddyhome.idea.vim.state.mode.Mode;
 import com.maddyhome.idea.vim.state.mode.SelectionType;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
-import com.zyurkalov.ideavim.syntaxtreejumper.adapters.CppSyntaxTreeAdapter;
-import com.zyurkalov.ideavim.syntaxtreejumper.adapters.PsiSyntaxTreeAdapter;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapterFactory;
 import com.zyurkalov.ideavim.syntaxtreejumper.highlighting.HighlightingConfig;
 import com.zyurkalov.ideavim.syntaxtreejumper.highlighting.PsiElementHighlighter;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.MotionHandler;
@@ -72,7 +71,7 @@ public class FunctionHandler implements ExtensionHandler {
         if (psiFile == null) return;
 
         // Get or create the syntax tree adapter for this editor
-        SyntaxTreeAdapter syntaxTree = createSyntaxTreeAdapter(psiFile);
+        SyntaxTreeAdapter syntaxTree = SyntaxTreeAdapterFactory.createAdapter(psiFile);
 
         MotionHandler navigator = navigatorFactory.apply(syntaxTree, direction);
         List<LogicalPosition> caretPositions = new ArrayList<>();
@@ -113,46 +112,6 @@ public class FunctionHandler implements ExtensionHandler {
         vimEditor.setMode(new Mode.VISUAL(SelectionType.CHARACTER_WISE, new Mode.NORMAL()));
     }
 
-
-    /**
-     * Creates a syntax tree adapter for the given PSI file.
-     * This method can be overridden to provide custom implementations for specific languages.
-     */
-    protected SyntaxTreeAdapter createSyntaxTreeAdapter(@NotNull PsiFile psiFile) {
-        if (isCppFile(psiFile)) {
-            return new CppSyntaxTreeAdapter(psiFile);
-        }
-        return new PsiSyntaxTreeAdapter(psiFile);
-    }
-
-    /**
-     * Determines if the given PSI file is a C++ file based on file extension and language type.
-     */
-    private boolean isCppFile(@NotNull PsiFile psiFile) {
-        // Check by file extension first (most reliable)
-        String fileName = psiFile.getName().toLowerCase();
-        if (fileName.endsWith(".cpp") || fileName.endsWith(".cxx") || fileName.endsWith(".cc") ||
-                fileName.endsWith(".c++") || fileName.endsWith(".hpp") || fileName.endsWith(".hxx") ||
-                fileName.endsWith(".h++")) {
-            return true;
-        }
-
-        // For .h files, also check the language type to distinguish C++ headers from C headers
-        if (fileName.endsWith(".h")) {
-            String languageName = psiFile.getLanguage().getID().toLowerCase();
-            return languageName.contains("c++") ||
-                    languageName.contains("cpp") ||
-                    languageName.contains("cxx") ||
-                    languageName.equals("objectivec");
-        }
-
-        // Check by language type for files without standard extensions
-        String languageName = psiFile.getLanguage().getID().toLowerCase();
-        return languageName.contains("c++") ||
-                languageName.contains("cpp") ||
-                languageName.contains("cxx") ||
-                languageName.equals("objectivec");
-    }
 
     /**
      * Sets up highlighting, caret, and selection listeners for the given editor if not already present.
@@ -206,14 +165,11 @@ public class FunctionHandler implements ExtensionHandler {
     public static void updateHighlightingForEditor(@NotNull Editor editor) {
         HighlightingConfig config = HighlightingConfig.getInstance();
 
-        // Skip if highlighting is disabled
         if (!config.isHighlightingEnabled()) {
             clearHighlightsForEditor(editor);
             return;
         }
 
-
-        // Rest of the method remains the same...
         if (editor.getProject() == null) return;
         VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
         if (file == null) return;
@@ -221,7 +177,7 @@ public class FunctionHandler implements ExtensionHandler {
         if (psiFile == null) return;
 
         // Get the syntax tree adapter for this editor - this will now use language detection
-        SyntaxTreeAdapter syntaxTree = isCppFileStatic(psiFile) ? new CppSyntaxTreeAdapter(psiFile) : new PsiSyntaxTreeAdapter(psiFile);
+        SyntaxTreeAdapter syntaxTree = SyntaxTreeAdapterFactory.createAdapter(psiFile);
 
         PsiElementHighlighter highlighter = editorHighlighters.get(editor);
         if (highlighter == null) return;
@@ -233,14 +189,9 @@ public class FunctionHandler implements ExtensionHandler {
         boolean hasAnySelection = editor.getCaretModel().getAllCarets().stream()
                 .anyMatch(Caret::hasSelection);
 
-        if (!hasAnySelection) {
-            // If no selection, highlight based on the primary caret position
-            Caret primaryCaret = editor.getCaretModel().getPrimaryCaret();
-            int offset = primaryCaret.getOffset();
-            highlighter.highlightElementAndSiblings(syntaxTree, offset, offset);
-        } else {
+        Caret primaryCaret = editor.getCaretModel().getPrimaryCaret();
+        if (hasAnySelection) {
             // If there's selection, highlight the primary caret's selection
-            Caret primaryCaret = editor.getCaretModel().getPrimaryCaret();
             if (primaryCaret.hasSelection()) {
                 highlighter.highlightElementAndSiblings(
                         syntaxTree,
@@ -260,36 +211,11 @@ public class FunctionHandler implements ExtensionHandler {
                     }
                 }
             }
+        } else {
+            // If no selection, highlight based on the primary caret position
+            int offset = primaryCaret.getOffset();
+            highlighter.highlightElementAndSiblings(syntaxTree, offset, offset);
         }
-    }
-
-    /**
-     * Static version of isCppFile for use in static contexts.
-     */
-    private static boolean isCppFileStatic(@NotNull PsiFile psiFile) {
-        // Check by file extension first (most reliable)
-        String fileName = psiFile.getName().toLowerCase();
-        if (fileName.endsWith(".cpp") || fileName.endsWith(".cxx") || fileName.endsWith(".cc") ||
-                fileName.endsWith(".c++") || fileName.endsWith(".hpp") || fileName.endsWith(".hxx") ||
-                fileName.endsWith(".h++")) {
-            return true;
-        }
-
-        // For .h files, also check the language type to distinguish C++ headers from C headers
-        if (fileName.endsWith(".h")) {
-            String languageName = psiFile.getLanguage().getID().toLowerCase();
-            return languageName.contains("c++") ||
-                    languageName.contains("cpp") ||
-                    languageName.contains("cxx") ||
-                    languageName.equals("objectivec");
-        }
-
-        // Check by language type for files without standard extensions
-        String languageName = psiFile.getLanguage().getID().toLowerCase();
-        return languageName.contains("c++") ||
-                languageName.contains("cpp") ||
-                languageName.contains("cxx") ||
-                languageName.equals("objectivec");
     }
 
     private void scrollToFirstOrLast(List<LogicalPosition> caretPositions, Editor editor) {

@@ -15,6 +15,7 @@ import com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.MoveSiblingHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.highlighting.ToggleHighlightingHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsMotionHandler;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.SmartSelectionExtendHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SubWordMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SyntaxNodeTreeHandler;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,9 @@ import static com.maddyhome.idea.vim.extension.VimExtensionFacade.putExtensionHa
 import static com.maddyhome.idea.vim.extension.VimExtensionFacade.putKeyMappingIfMissing;
 
 public class SyntaxTreeJumper implements VimExtension, Disposable {
+
+    private EditorFactoryListener editorFactoryListener;
+    private boolean isDisposed = false;
 
     @Override
     public @NotNull String getName() {
@@ -130,6 +134,25 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
                 true);
 
+        // Smart Selection Extend Handler (A-e shortcut)
+        String commandSmartSelectionExtend = "<Plug>SmartSelectionExtend";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandSmartSelectionExtend),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
+                        new SmartSelectionExtendHandler(syntaxTree)),
+                false);
+
+        // Map Alt-e to smart selection extend
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-e>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandSmartSelectionExtend),
+                true);
+
         // Highlighting toggle functionality
         String commandToggleHighlighting = "<Plug>ToggleHighlighting";
         putExtensionHandlerMapping(
@@ -146,7 +169,6 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandToggleHighlighting),
                 true);
-
 
         // Register sibling motion handlers
         String commandJumpToPrevSibling = "<Plug>JumpToPrevSibling";
@@ -166,7 +188,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new MoveSiblingHandler(Direction.FORWARD),
                 false);
 
-    // Map Alt-[ and Alt-] to sibling motion handlers
+        // Map Alt-[ and Alt-] to sibling motion handlers
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-[>"),
@@ -189,6 +211,10 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
      * Sets up automatic highlighting for existing and new editors.
      */
     private void setupAutomaticHighlighting() {
+        if (isDisposed) {
+            return;
+        }
+
         // Set up highlighting for all currently open editors
         VimEditorGroup editorGroup = injector.getEditorGroup();
         Collection<VimEditor> allEditors = editorGroup.getEditors();
@@ -198,11 +224,13 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
             FunctionHandler.setupEditorHighlighting(editor, vimEditor);
         }
 
-
-        // Set up listener for new editors using the non-deprecated method
-        EditorFactoryListener editorFactoryListener = new EditorFactoryListener() {
+        // Create and store the listener reference
+        editorFactoryListener = new EditorFactoryListener() {
             @Override
             public void editorCreated(@NotNull EditorFactoryEvent event) {
+                if (isDisposed) {
+                    return;
+                }
                 Editor editor = event.getEditor();
                 var vimEditor = IjVimEditorKt.getVim(editor);
                 FunctionHandler.setupEditorHighlighting(editor, vimEditor);
@@ -213,18 +241,25 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 Editor editor = event.getEditor();
                 FunctionHandler.cleanupEditor(editor);
             }
-
         };
 
-        // Use the non-deprecated method with Disposable
-        EditorFactory.getInstance().addEditorFactoryListener(editorFactoryListener, this);
+        // Register the listener manually so we can control its lifecycle
+        EditorFactory.getInstance().addEditorFactoryListener(editorFactoryListener);
     }
 
-    /**
-     * No need for explicit cleanup - the listener will be automatically removed
-     * when this Disposable is disposed of.
-     */
+    @Override
     public void dispose() {
+        if (isDisposed) {
+            return;
+        }
+
+        isDisposed = true;
+
+        // Remove the editor factory listener
+        if (editorFactoryListener != null) {
+            EditorFactory.getInstance().removeEditorFactoryListener(editorFactoryListener);
+            editorFactoryListener = null;
+        }
 
         // Clean up all remaining editors
         Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
