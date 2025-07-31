@@ -3,8 +3,8 @@ package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 import com.intellij.openapi.util.TextRange;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
-import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter.SyntaxNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

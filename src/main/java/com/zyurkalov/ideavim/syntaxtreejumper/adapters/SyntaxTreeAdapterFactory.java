@@ -11,8 +11,6 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 /**
  * Factory class for creating appropriate SyntaxTreeAdapter instances based on file type and language.
  */
@@ -50,8 +48,7 @@ public class SyntaxTreeAdapterFactory {
      * @param psiFile The PSI file to create an adapter for
      * @return The appropriate adapter, or null if no suitable adapter can be created
      */
-    @Nullable
-    public static SyntaxTreeAdapter createAdapter(@NotNull PsiFile psiFile) {
+    public static @NotNull SyntaxTreeAdapter createAdapter(@NotNull PsiFile psiFile) {
         Language language = psiFile.getLanguage();
         FileType fileType = psiFile.getFileType();
 
@@ -81,15 +78,14 @@ public class SyntaxTreeAdapterFactory {
     }
 
     /**
-     * Creates a C++ specific adapter.
-     * Falls back to PSI adapter if C++ adapter cannot be created.
+     * Creates a C++-specific adapter.
+     * Falls back to PSI adapter if a C++ adapter cannot be created.
      */
-    @Nullable
-    private static SyntaxTreeAdapter createCppAdapter(@NotNull PsiFile psiFile) {
+    private static @NotNull SyntaxTreeAdapter createCppAdapter(@NotNull PsiFile psiFile) {
         try {
             return new CppSyntaxTreeAdapter(psiFile);
         } catch (Exception e) {
-            // If C++ adapter fails to initialize, fall back to PSI adapter
+            // If the C++ adapter fails to initialise, fall back to PSI adapter
             return new PsiSyntaxTreeAdapter(psiFile);
         }
     }
@@ -110,32 +106,4 @@ public class SyntaxTreeAdapterFactory {
         };
     }
 
-    /**
-     * Checks if an adapter can be created for the given file.
-     * 
-     * @param psiFile The PSI file to check
-     * @return true if an adapter can be created, false otherwise
-     */
-    public static boolean canCreateAdapter(@NotNull PsiFile psiFile) {
-        try {
-            return createAdapter(psiFile) != null;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
-     * Gets the preferred adapter class for a given language.
-     * Useful for testing or when you need to know which adapter would be used.
-     * 
-     * @param language The language to check
-     * @return The adapter class that would be used
-     */
-    @NotNull
-    public static Class<? extends SyntaxTreeAdapter> getAdapterClass(@NotNull Language language) {
-        if (isCppFile(language, Objects.requireNonNull(language.getAssociatedFileType()))) {
-            return CppSyntaxTreeAdapter.class;
-        }
-        return PsiSyntaxTreeAdapter.class;
-    }
 }

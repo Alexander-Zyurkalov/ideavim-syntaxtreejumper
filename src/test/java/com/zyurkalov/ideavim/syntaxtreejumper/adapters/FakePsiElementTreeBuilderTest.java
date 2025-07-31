@@ -16,11 +16,12 @@ class FakePsiElementTreeBuilderTest {
         Assertions.assertArrayEquals(list("i", "=", " ", "1", " ", "+", " ", "2", ";").getChildren(), result);
     }
 
-
     @Test
     void flattenList() {
         PsiElement[] result = list(leaf("for"), leaf(" "), leaf("("), list("int", " ", "i", "=", "0")).getChildren();
         PsiElement[] expected = FakePsiElementTreeBuilder.listFromString("for (int i=0").getChildren();
+        Assertions.assertArrayEquals(expected, result);
+
     }
 
     @Test
@@ -66,7 +67,7 @@ class FakePsiElementTreeBuilderTest {
         FakePsiElementTreeBuilder.MyFakePsiElement body =
                 FakePsiElementTreeBuilder.branch("print", "(", "i", ")");
 
-        // Create parent with sublists that won't be flattened
+        // Create a parent with sublists that won't be flattened
         FakePsiElementTreeBuilder.MyFakePsiElement parent =
                 FakePsiElementTreeBuilder.list(
                         leaf("while"),
