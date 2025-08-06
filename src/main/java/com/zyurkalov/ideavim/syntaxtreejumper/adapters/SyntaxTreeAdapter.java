@@ -92,6 +92,41 @@ public interface SyntaxTreeAdapter {
         return sibling;
     }
 
+
+    /**
+     * Finds the first non-whitespace child of the parent node.
+     *
+     * @param node The node whose parent's first child to find
+     * @return The first non-whitespace child, or null if not found
+     */
+    @Nullable
+    default SyntaxNode findFirstChildOfItsParent(@NotNull SyntaxNode node) {
+        SyntaxNode parent = node.getParent();
+        if (parent == null) return null;
+        SyntaxNode firstChild = parent.getFirstChild();
+        while (firstChild != null && isASymbolToSkip(firstChild)) {
+            firstChild = firstChild.getNextSibling();
+        }
+        return firstChild;
+    }
+
+    /**
+     * Finds the last non-whitespace child of the parent node.
+     *
+     * @param node The node whose parent's last child to find
+     * @return The last non-whitespace child, or null if not found
+     */
+    @Nullable
+    default SyntaxNode findLastChildOfItsParent(@NotNull SyntaxNode node) {
+        SyntaxNode parent = node.getParent();
+        if (parent == null) return null;
+        SyntaxNode lastChild = parent.getLastChild();
+        while (lastChild != null && isASymbolToSkip(lastChild)) {
+            lastChild = lastChild.getPreviousSibling();
+        }
+        return lastChild;
+    }
+
     /**
      * Helper method to replace a node with its parent if they have the same text content.
      * This is useful for handling cases where leaf nodes and their parents represent the same construct.
@@ -135,6 +170,6 @@ public interface SyntaxTreeAdapter {
             commonParent = commonParent.getParent();
         }
 
-        return commonParent;
+        return null;
     }
 }
