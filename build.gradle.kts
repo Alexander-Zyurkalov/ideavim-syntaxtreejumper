@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.zyurkalov"
-version = "1.1.2"
+version = "1.2.1"
 
 repositories {
     mavenCentral()
@@ -45,7 +45,7 @@ dependencies {
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "252"
+            sinceBuild = "251"
         }
 
         changeNotes = """

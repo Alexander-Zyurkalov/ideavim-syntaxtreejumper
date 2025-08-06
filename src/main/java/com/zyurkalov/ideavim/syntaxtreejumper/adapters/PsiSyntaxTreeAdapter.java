@@ -28,6 +28,11 @@ public record PsiSyntaxTreeAdapter(PsiFile psiFile) implements SyntaxTreeAdapter
     }
 
     @Override
+    public @Nullable PsiFile getPsiFile() {
+        return psiFile;
+    }
+
+    @Override
     @Nullable
     public SyntaxNode findNodeAt(int offset) {
         PsiElement element = psiFile.findElementAt(offset);

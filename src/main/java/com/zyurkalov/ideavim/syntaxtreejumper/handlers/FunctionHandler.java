@@ -39,6 +39,7 @@ public class FunctionHandler implements ExtensionHandler {
 
     private final Direction direction;
     private final BiFunction<SyntaxTreeAdapter, Direction, MotionHandler> navigatorFactory;
+    private final boolean addNewCaret;
 
     // Static map to track highlighters per editor to avoid conflicts
     private static final ConcurrentHashMap<Editor, PsiElementHighlighter> editorHighlighters =
@@ -52,10 +53,24 @@ public class FunctionHandler implements ExtensionHandler {
     private static final ConcurrentHashMap<Editor, CaretListener> editorCaretListeners =
             new ConcurrentHashMap<>();
 
-
+    /**
+     * Constructor for motion without adding a new caret (backward compatibility).
+     */
     public FunctionHandler(Direction direction, BiFunction<SyntaxTreeAdapter, Direction, MotionHandler> navigatorFactory) {
+        this(direction, navigatorFactory, false);
+    }
+
+    /**
+     * Constructor with a new caret addition parameter.
+     *
+     * @param direction        The direction of the motion
+     * @param navigatorFactory Factory to create the motion handler
+     * @param addNewCaret      Whether to add a new caret with selection (true) or move existing carets (false)
+     */
+    public FunctionHandler(Direction direction, BiFunction<SyntaxTreeAdapter, Direction, MotionHandler> navigatorFactory, boolean addNewCaret) {
         this.direction = direction;
         this.navigatorFactory = navigatorFactory;
+        this.addNewCaret = addNewCaret;
     }
 
     @Override
@@ -74,14 +89,16 @@ public class FunctionHandler implements ExtensionHandler {
         SyntaxTreeAdapter syntaxTree = SyntaxTreeAdapterFactory.createAdapter(psiFile);
 
         MotionHandler navigator = navigatorFactory.apply(syntaxTree, direction);
-        List<LogicalPosition> caretPositions = new ArrayList<>();
+        List<LogicalPosition> caretPositionsToScrollTo = new ArrayList<>();
         List<Caret> carets = editor.getCaretModel().getAllCarets();
 
         // Ensure highlighter and listeners are set up for this editor
-        setupEditorHighlighting(editor, vimEditor );
+        setupEditorHighlighting(editor, vimEditor);
 
         boolean anyMotionExecuted = false;
+        List<Offsets> newCaretOffsets = new ArrayList<>();
 
+        // Add a new carets mode: find motion targets for each existing caret and collect them
         for (Caret caret : carets) {
             int startSelectionOffset = caret.getOffset();
             int endSelectionOffset = caret.getOffset();
@@ -95,23 +112,46 @@ public class FunctionHandler implements ExtensionHandler {
 
             if (optionalOffsets.isPresent()) {
                 Offsets offsets = optionalOffsets.get();
-                caret.setSelection(offsets.leftOffset(), offsets.rightOffset());
-                caret.moveToOffset(offsets.leftOffset());
+                if (addNewCaret) {
+                    newCaretOffsets.add(offsets);
+                } else {
+                    caret.setSelection(offsets.leftOffset(), offsets.rightOffset());
+                    caret.moveToOffset(offsets.leftOffset());
+                }
                 anyMotionExecuted = true;
             }
-
-            caretPositions.add(caret.getLogicalPosition());
         }
+
+        // Create new carets for all found targets
+        for (Offsets offsets : newCaretOffsets) {
+            Caret newCaret = editor.getCaretModel().addCaret(
+                    editor.offsetToLogicalPosition(offsets.leftOffset()),
+                    true // make visible
+            );
+            if (newCaret != null) {
+                newCaret.setSelection(offsets.leftOffset(), offsets.rightOffset());
+                caretPositionsToScrollTo.add(newCaret.getLogicalPosition());
+            }
+        }
+
+        // Also add positions of existing carets to decide where to scroll to.
+        for (Caret caret : carets) {
+            caretPositionsToScrollTo.add(caret.getLogicalPosition());
+        }
+
 
         // Update highlighting based on new positions
         if (anyMotionExecuted) {
             updateHighlightingForEditor(editor);
         }
 
-        scrollToFirstOrLast(caretPositions, editor);
-        vimEditor.setMode(new Mode.VISUAL(SelectionType.CHARACTER_WISE, new Mode.NORMAL()));
-    }
+        scrollToFirstOrLast(caretPositionsToScrollTo, editor);
 
+        // Set mode based on whether any motion was executed
+        if (anyMotionExecuted) {
+            vimEditor.setMode(new Mode.VISUAL(SelectionType.CHARACTER_WISE, new Mode.NORMAL()));
+        }
+    }
 
     /**
      * Sets up highlighting, caret, and selection listeners for the given editor if not already present.
@@ -260,7 +300,5 @@ public class FunctionHandler implements ExtensionHandler {
         if (caretListener != null) {
             editor.getCaretModel().removeCaretListener(caretListener);
         }
-
-
     }
 }
