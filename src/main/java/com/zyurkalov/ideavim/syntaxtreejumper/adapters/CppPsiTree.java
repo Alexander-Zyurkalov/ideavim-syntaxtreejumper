@@ -8,6 +8,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class CppPsiTree {
     private final PsiFile psiFile;
+
+    public @Nullable PsiFile getPsiFile() {
+        return psiFile;
+    }
+
     public CppPsiTree(PsiFile file) {
         this.psiFile = file;
     }

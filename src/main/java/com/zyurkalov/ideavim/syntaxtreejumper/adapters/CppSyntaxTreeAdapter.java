@@ -16,6 +16,11 @@ public class CppSyntaxTreeAdapter implements SyntaxTreeAdapter {
     }
 
     @Override
+    public @Nullable PsiFile getPsiFile() {
+        return cppPsiTree.getPsiFile();
+    }
+
+    @Override
     @Nullable
     public CppSyntaxNode findNodeAt(int offset) {
         return cppPsiTree.findNodeAt(offset);

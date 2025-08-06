@@ -1,6 +1,7 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.adapters;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * particularly useful for languages like C++ where the default PSI tree might be inconvenient.
  */
 public interface SyntaxTreeAdapter {
+    @Nullable PsiFile getPsiFile();
 
     /**
      * Finds the syntax node at the specified offset in the file.

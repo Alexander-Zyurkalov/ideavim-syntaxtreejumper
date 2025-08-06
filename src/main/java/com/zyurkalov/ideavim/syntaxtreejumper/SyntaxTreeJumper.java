@@ -61,14 +61,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-w>"),
                 getOwner(),
                 new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) -> {
-                    // SubWordMotionHandler still needs the PsiFile, so we extract it if using PSI adapter
-                    if (syntaxTree instanceof com.zyurkalov.ideavim.syntaxtreejumper.adapters.PsiSyntaxTreeAdapter(
-                            com.intellij.psi.PsiFile psiFile
-                    )) {
-                        // We'll need to add a getter method to PsiSyntaxTreeAdapter
-                        return new SubWordMotionHandler(psiFile, direction);
-                    }
-                    throw new UnsupportedOperationException("SubWordMotionHandler currently only supports PSI-based syntax trees");
+                        return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
                 }),
                 false);
         putExtensionHandlerMapping(
@@ -76,12 +69,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-S-w>"),
                 getOwner(),
                 new FunctionHandler(Direction.BACKWARD, (syntaxTree, direction) -> {
-                    if (syntaxTree instanceof com.zyurkalov.ideavim.syntaxtreejumper.adapters.PsiSyntaxTreeAdapter(
-                            com.intellij.psi.PsiFile psiFile
-                    )) {
-                        return new SubWordMotionHandler(psiFile, direction);
-                    }
-                    throw new UnsupportedOperationException("SubWordMotionHandler currently only supports PSI-based syntax trees");
+                        return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
                 }),
                 false);
 
@@ -203,6 +191,57 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextSibling),
                 true);
 
+        // Selection-extending versions of motion commands
+        String commandJumpToPrevElementExtend = "<Plug>ExtendJumpToPrevElement";
+        String commandJumpToNextElementExtend = "<Plug>ExtendJumpToNextElement";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElementExtend),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, SameLevelElementsMotionHandler::new, true),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElementExtend),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, SameLevelElementsMotionHandler::new, true),
+                false);
+
+        // Map Ctrl+Alt+N and Ctrl+Alt+Shift+N for selection extension
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-n>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElementExtend),
+                true);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-n>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElementExtend),
+                true);
+
+        // Selection-extending versions of subword motions
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-w>"),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) -> {
+                        return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
+                }, true),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-w>"),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, (syntaxTree, direction) -> {
+                        return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
+                }, true),
+                false);
         // Set up automatic highlighting for all editors
         setupAutomaticHighlighting();
     }
