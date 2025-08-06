@@ -91,8 +91,12 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
      */
     private @Nullable SyntaxNode getNextElementFromSiblings(ElementWithSiblings elementWithSiblings) {
         return switch (direction) {
-            case BACKWARD -> elementWithSiblings.previousSibling;
-            case FORWARD -> elementWithSiblings.nextSibling;
+            case BACKWARD -> elementWithSiblings.previousSibling == null ?
+                    syntaxTree.findLastChildOfItsParent(elementWithSiblings.currentElement) :
+                    elementWithSiblings.previousSibling;
+            case FORWARD -> elementWithSiblings.nextSibling == null ?
+                    syntaxTree.findFirstChildOfItsParent(elementWithSiblings.currentElement) :
+                    elementWithSiblings.nextSibling;
         };
     }
 

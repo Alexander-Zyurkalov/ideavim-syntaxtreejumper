@@ -135,4 +135,9 @@ public interface SyntaxNode {
             default -> false;
         };
     }
+
+
+    SyntaxNode getFirstChild();
+
+    SyntaxNode getLastChild();
 }

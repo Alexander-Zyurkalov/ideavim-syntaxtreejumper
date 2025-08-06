@@ -89,6 +89,16 @@ public record CppSyntaxNode(PsiElement psiElement) implements SyntaxNode {
     }
 
     @Override
+    public SyntaxNode getFirstChild() {
+        return new PsiSyntaxNode(psiElement.getFirstChild());
+    }
+
+    @Override
+    public SyntaxNode getLastChild() {
+        return new PsiSyntaxNode(psiElement.getLastChild());
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (!(obj instanceof CppSyntaxNode(PsiElement element))) return false;

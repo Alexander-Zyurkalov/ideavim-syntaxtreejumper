@@ -88,6 +88,15 @@ public record PsiSyntaxNode(PsiElement psiElement) implements SyntaxNode {
         return psiElement.getNode().getElementType().toString();
     }
 
+    @Override
+    public SyntaxNode getFirstChild() {
+        return new PsiSyntaxNode(psiElement.getFirstChild());
+    }
+
+    @Override
+    public SyntaxNode getLastChild() {
+        return new PsiSyntaxNode(psiElement.getLastChild());
+    }
 
 
     @Override
