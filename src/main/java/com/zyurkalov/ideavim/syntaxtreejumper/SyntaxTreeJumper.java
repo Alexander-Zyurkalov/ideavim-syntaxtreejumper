@@ -15,10 +15,7 @@ import com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.MoveSiblingHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.RepeatLastMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.highlighting.ToggleHighlightingHandler;
-import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsMotionHandler;
-import com.zyurkalov.ideavim.syntaxtreejumper.motions.SmartSelectionExtendHandler;
-import com.zyurkalov.ideavim.syntaxtreejumper.motions.SubWordMotionHandler;
-import com.zyurkalov.ideavim.syntaxtreejumper.motions.SyntaxNodeTreeHandler;
+import com.zyurkalov.ideavim.syntaxtreejumper.motions.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -254,12 +251,47 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new RepeatLastMotionHandler(),
                 false);
 
-        // Map S-r to repeat the last motion
+        // Map A-r to repeat the last motion
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<S-r>"),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-r>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
+                true);
+
+
+        // Argument/Parameter List navigation functionality
+        String commandBackwardArgumentList = "<Plug>BackwardArgumentList";
+        String commandForwardArgumentList = "<Plug>ForwardArgumentList";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardArgumentList),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, ArgumentParameterListMotionHandler::new),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardArgumentList),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, ArgumentParameterListMotionHandler::new),
+                false);
+
+        // Map [-a to backward argument/parameter list navigation
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("[a"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardArgumentList),
+                true);
+
+        // Map ]-a to forward argument/parameter list navigation
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("]a"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardArgumentList),
                 true);
 
         // Set up automatic highlighting for all editors

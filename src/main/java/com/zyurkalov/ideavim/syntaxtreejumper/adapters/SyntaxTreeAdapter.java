@@ -1,18 +1,38 @@
+
 package com.zyurkalov.ideavim.syntaxtreejumper.adapters;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+import java.util.function.Function;
+
 /**
- * Adapter interface for syntax tree operations.
+ * Abstract adapter class for syntax tree operations.
  * This abstraction allows different implementations for various language parsers,
  * particularly useful for languages like C++ where the default PSI tree might be inconvenient.
  */
-public interface SyntaxTreeAdapter {
-    @Nullable PsiFile getPsiFile();
+public abstract class SyntaxTreeAdapter {
+    protected static Optional<SyntaxNode> nextNeighbour(SyntaxNode node, Direction direction) {
+        return switch (direction) {
+            case Direction.FORWARD -> Optional.ofNullable(node.getNextSibling());
+            case Direction.BACKWARD -> Optional.ofNullable(node.getPreviousSibling());
+        };
+    }
+
+    protected static SyntaxNode getChild(@NotNull SyntaxNode currentNode, Direction direction) {
+        return switch (direction) {
+            case Direction.FORWARD -> currentNode.getFirstChild();
+            case Direction.BACKWARD -> currentNode.getLastChild();
+        };
+    }
+
+    @Nullable
+    public abstract PsiFile getPsiFile();
 
     /**
      * Finds the syntax node at the specified offset in the file.
@@ -20,7 +40,8 @@ public interface SyntaxTreeAdapter {
      * @param offset The character offset in the file
      * @return The node at the offset, or null if not found
      */
-    @Nullable SyntaxNode findNodeAt(int offset);
+    @Nullable
+    public abstract SyntaxNode findNodeAt(int offset);
 
     /**
      * Finds the smallest common parent of two nodes.
@@ -29,18 +50,19 @@ public interface SyntaxTreeAdapter {
      * @param node2 Second node
      * @return The common parent, or null if no common parent exists
      */
-    @Nullable SyntaxNode findCommonParent(@NotNull SyntaxNode node1, @NotNull SyntaxNode node2);
+    @Nullable
+    public abstract SyntaxNode findCommonParent(@NotNull SyntaxNode node1, @NotNull SyntaxNode node2);
 
     /**
      * Gets the total length of the document/file.
      */
-    int getDocumentLength();
+    public abstract int getDocumentLength();
 
     /**
      * Finds the previous non-whitespace sibling of the given node.
      */
     @Nullable
-    default SyntaxNode findPreviousNonWhitespaceSibling(@NotNull SyntaxNode node) {
+    public SyntaxNode findPreviousNonWhitespaceSibling(@NotNull SyntaxNode node) {
         SyntaxNode sibling = node.getPreviousSibling();
         while (sibling != null && isASymbolToSkip(sibling)) {
             sibling = sibling.getPreviousSibling();
@@ -86,7 +108,7 @@ public interface SyntaxTreeAdapter {
      * Finds the next non-whitespace sibling of the given node.
      */
     @Nullable
-    default SyntaxNode findNextNonWhitespaceSibling(@NotNull SyntaxNode node) {
+    public SyntaxNode findNextNonWhitespaceSibling(@NotNull SyntaxNode node) {
         SyntaxNode sibling = node.getNextSibling();
         while (sibling != null && isASymbolToSkip(sibling)) {
             sibling = sibling.getNextSibling();
@@ -102,7 +124,7 @@ public interface SyntaxTreeAdapter {
      * @return The first non-whitespace child, or null if not found
      */
     @Nullable
-    default SyntaxNode findFirstChildOfItsParent(@NotNull SyntaxNode node) {
+    public SyntaxNode findFirstChildOfItsParent(@NotNull SyntaxNode node) {
         SyntaxNode parent = node.getParent();
         if (parent == null) return null;
         SyntaxNode firstChild = parent.getFirstChild();
@@ -119,7 +141,7 @@ public interface SyntaxTreeAdapter {
      * @return The last non-whitespace child, or null if not found
      */
     @Nullable
-    default SyntaxNode findLastChildOfItsParent(@NotNull SyntaxNode node) {
+    public SyntaxNode findLastChildOfItsParent(@NotNull SyntaxNode node) {
         SyntaxNode parent = node.getParent();
         if (parent == null) return null;
         SyntaxNode lastChild = parent.getLastChild();
@@ -134,7 +156,7 @@ public interface SyntaxTreeAdapter {
      * This is useful for handling cases where leaf nodes and their parents represent the same construct.
      */
     @Nullable
-    default SyntaxNode replaceWithParentIfParentEqualsTheNode(@Nullable SyntaxNode node) {
+    public SyntaxNode replaceWithParentIfParentEqualsTheNode(@Nullable SyntaxNode node) {
         if (node == null) {
             return null;
         }
@@ -150,7 +172,7 @@ public interface SyntaxTreeAdapter {
      * Finds the smallest common parent that fully encompasses the current selection
      */
     @Nullable
-    default SyntaxNode findSmallestCommonParent(SyntaxNode leftElement, SyntaxNode rightElement, Offsets selection) {
+    public SyntaxNode findSmallestCommonParent(SyntaxNode leftElement, SyntaxNode rightElement, Offsets selection) {
         if (rightElement == null) {
             rightElement = leftElement;
         }
@@ -173,5 +195,108 @@ public interface SyntaxTreeAdapter {
         }
 
         return null;
+    }
+
+    /**
+     * Finds the largest parent node that is still completely within the selection boundaries.
+     *
+     * @param node1     First node
+     * @param node2     Second node
+     * @param selection The current selection boundaries
+     * @return The largest parent node within the selection, or null if no such node exists
+     */
+    @Nullable
+    public SyntaxNode findLargestParentWithinSelection(@NotNull SyntaxNode node1, @NotNull SyntaxNode node2, Offsets selection) {
+        SyntaxNode commonParent = findCommonParent(node1, node2);
+        if (commonParent == null) {
+            return null;
+        }
+
+        SyntaxNode currentNode = commonParent;
+        SyntaxNode result = null;
+
+        while (currentNode != null) {
+            TextRange range = currentNode.getTextRange();
+            if (range.getStartOffset() >= selection.leftOffset() &&
+                    range.getEndOffset() <= selection.rightOffset()) {
+                result = currentNode;
+                currentNode = currentNode.getParent();
+            } else {
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    public Optional<SyntaxNode> findWithinNeighbours(
+            @NotNull SyntaxNode currentNode, Direction direction, Offsets initialSelection,
+            Function<SyntaxNode, Optional<SyntaxNode>> findNodeType,
+            boolean skipFirstNode) {
+        Optional<SyntaxNode> found = Optional.empty();
+        var next = Optional.of(currentNode);
+        if (skipFirstNode) {
+            next = nextNeighbour(currentNode, direction);
+        }
+        while (true) {
+
+            if (next.isEmpty()) {
+                break;
+            }
+            currentNode = next.get();
+            if (!currentNode.isInDirection(initialSelection, direction)) {
+                next = nextNeighbour(currentNode, direction);
+                continue;
+            }
+
+            found = findNodeType.apply(currentNode);
+            if (found.isPresent()) {
+                return found;
+            }
+            if (!currentNode.getChildren().isEmpty()) {
+                found = findWithinNeighbours(
+                        getChild(currentNode, direction), direction, initialSelection, findNodeType, false);
+                if (found.isPresent()) {
+                    return found;
+                }
+            }
+            next = nextNeighbour(currentNode, direction);
+        }
+        return found;
+    }
+
+    /**
+     * Finds a PARAMETER_LIST or ARGUMENT_LIST node based on the direction from the current node.
+     *
+     * @param currentNode      The starting node
+     * @param direction        The direction to search
+     * @param initialSelection The inidial selection
+     * @return The found parameter/argument list node or null if not found
+     */
+    public Optional<SyntaxNode> findParameter(SyntaxNode currentNode, Direction direction, Offsets initialSelection) {
+        Function<SyntaxNode, Optional<SyntaxNode>> functionToFindParameterNode =
+                createFunctionToFindParameterNode(direction, initialSelection);
+
+        Optional<SyntaxNode> found = findWithinNeighbours(
+                currentNode, direction, initialSelection, functionToFindParameterNode, false);
+
+        while (found.isEmpty()) {
+            currentNode = currentNode.getParent();
+            if (currentNode == null || currentNode.isPsiFile()) {
+                break;
+            }
+            found = findWithinNeighbours(currentNode, direction, initialSelection, functionToFindParameterNode, false);
+        }
+        return found;
+    }
+
+    @NotNull
+    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToFindParameterNode(Direction direction, Offsets initialSelection) {
+        return node -> {
+            if (node.isFunctionParameter() || node.isFunctionArgument() || node.isTypeParameter()){
+                return Optional.of(node);
+            }
+            return Optional.empty();
+        };
     }
 }

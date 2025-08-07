@@ -1,67 +1,107 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.adapters;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
+import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a node in the syntax tree.
  */
-public interface SyntaxNode {
+public abstract class SyntaxNode {
+    final protected PsiElement psiElement;
+
+    public SyntaxNode(@NotNull PsiElement psiElement) {
+        this.psiElement = Objects.requireNonNull(psiElement);
+    }
+
     /**
      * Gets the text range of this node in the document.
      */
-    TextRange getTextRange();
+    public TextRange getTextRange() {
+        return psiElement.getTextRange();
+    }
+
+
 
     /**
      * Gets the text content of this node.
      */
-    @NotNull String getText();
+    @NotNull
+    public String getText() {
+        return psiElement.getText();
+    }
 
     /**
      * Gets the parent node, or null if this is the root.
      */
-    @Nullable SyntaxNode getParent();
+    @Nullable
+    public abstract SyntaxNode getParent();
 
     /**
      * Gets all direct children of this node.
      */
-    @NotNull List<SyntaxNode> getChildren();
+    @NotNull
+    public abstract List<SyntaxNode> getChildren();
 
     /**
      * Gets the previous sibling node, or null if this is the first child.
      */
-    @Nullable SyntaxNode getPreviousSibling();
+    @Nullable
+    public abstract SyntaxNode getPreviousSibling();
 
     /**
      * Gets the next sibling node, or null if this is the last child.
      */
-    @Nullable SyntaxNode getNextSibling();
+    @Nullable
+    public abstract SyntaxNode getNextSibling();
 
     /**
      * Checks if this node represents whitespace only.
      */
-    boolean isWhitespace();
-
+    public boolean isWhitespace() {
+        return psiElement instanceof PsiWhiteSpace || psiElement.getText().trim().isEmpty();
+    }
     /**
      * Checks if this node is equivalent to another node.
      */
-    boolean isEquivalentTo(@Nullable SyntaxNode other);
+    public boolean isEquivalentTo(@Nullable SyntaxNode other) {
+        return false;
+    }
 
     /**
      * Gets a simple name for this node type (for debugging/tooltips).
      */
-    @NotNull String getNodeTypeName();
+    @NotNull
+    public String getNodeTypeName() {
+        return psiElement.getClass().getSimpleName();
+    }
 
     /**
      * Gets the specific type or category name of the node.
      */
-    @NotNull String getTypeName();
+    public @NotNull String getTypeName() {
+        return psiElement.getNode().getElementType().toString();
+    }
 
-    // Helper methods
-    default boolean isCompoundExpression() {
+    public abstract SyntaxNode getFirstChild();
+
+    public abstract SyntaxNode getLastChild();
+
+    @NotNull
+    public PsiElement getPsiElement(){
+        return psiElement;
+    }
+
+    // Helper methods - these remain as concrete implementations
+    public boolean isCompoundExpression() {
         return getTypeName().contains("BINARY") ||
                 getTypeName().contains("ADDITIVE") ||
                 getTypeName().contains("MULTIPLICATIVE") ||
@@ -78,8 +118,7 @@ public interface SyntaxNode {
                 getTypeName().contains("LOGICAL");
     }
 
-
-    default boolean isOperator() {
+    public boolean isOperator() {
         String text = getText().trim();
 
         // Single character operators common across all languages
@@ -129,15 +168,60 @@ public interface SyntaxNode {
         return false;
     }
 
-    default boolean isBracket() {
+    public boolean isBracket() {
         return switch (getText()) {
-            case "(", ")", "[", "]", "{", "}" -> true;
+            case "(", ")", "[", "]", "{", "}", ">", "<" -> true;
             default -> false;
         };
     }
 
+    /**
+     * Checks if a node represents a parameter list or argument list.
+     */
+    public boolean isFunctionParameter() {
+        String typeName = getTypeName();
+        return typeName.equals("PARAMETER") || typeName.equals("ARGUMENT");
+    }
 
-    SyntaxNode getFirstChild();
+    public boolean isFunctionArgument() {
+//        REFERENCE_EXPRESSION
+        String typeName = getTypeName();
+        boolean result = false;
+        try {
+            result = typeName.contains("EXPRESSION") &&
+                    Objects.requireNonNull(getParent()).isExpressionList() &&
+                    Objects.requireNonNull(getParent().getParent()).isMethodCallExpression();
+        } catch (NullPointerException ignored) {}
+        return result;
+    }
 
-    SyntaxNode getLastChild();
+
+    public boolean isMethodCallExpression() {
+        String typeName = getTypeName();
+        return typeName.equals("METHOD_CALL_EXPRESSION");
+    }
+
+    public boolean isExpressionList() {
+        String typeName = getTypeName();
+        return typeName.equals("EXPRESSION_LIST");
+    }
+
+    public boolean isTypeParameter() {
+        return getTypeName().equals("TYPE_PARAMETER");
+    }
+
+    public boolean isInDirection(Offsets initialSelection, Direction direction) {
+        TextRange currentRange = getTextRange();
+        if (currentRange == null) {
+            return false;
+        }
+        return switch (direction) {
+            case FORWARD -> currentRange.getStartOffset() >= initialSelection.rightOffset();
+            case BACKWARD -> currentRange.getEndOffset() <= initialSelection.leftOffset();
+        };
+    }
+
+    public boolean isPsiFile() {
+        return psiElement instanceof PsiFile;
+    }
 }
