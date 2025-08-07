@@ -1,3 +1,4 @@
+
 package com.zyurkalov.ideavim.syntaxtreejumper.adapters;
 
 import com.intellij.psi.PsiElement;
@@ -10,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
  * Default PSI-based implementation of SyntaxTreeAdapter.
  * This wraps the standard IntelliJ PSI tree operations.
  */
-public record PsiSyntaxTreeAdapter(PsiFile psiFile) implements SyntaxTreeAdapter {
+public class PsiSyntaxTreeAdapter extends SyntaxTreeAdapter {
+    private final PsiFile psiFile;
 
     public PsiSyntaxTreeAdapter(@NotNull PsiFile psiFile) {
         this.psiFile = psiFile;
@@ -18,17 +20,17 @@ public record PsiSyntaxTreeAdapter(PsiFile psiFile) implements SyntaxTreeAdapter
 
     /**
      * Gets the underlying PSI file. This method is provided for cases where
-     * PSI-specific operations are needed, but should be used sparingly to maintain
+     * PSI-specific operations are needed but should be used sparingly to maintain
      * the abstraction.
      */
-    @Override
     @NotNull
     public PsiFile psiFile() {
         return psiFile;
     }
 
     @Override
-    public @Nullable PsiFile getPsiFile() {
+    @Nullable
+    public PsiFile getPsiFile() {
         return psiFile;
     }
 
@@ -42,13 +44,11 @@ public record PsiSyntaxTreeAdapter(PsiFile psiFile) implements SyntaxTreeAdapter
     @Override
     @Nullable
     public SyntaxNode findCommonParent(@NotNull SyntaxNode node1, @NotNull SyntaxNode node2) {
-        if (!(node1 instanceof PsiSyntaxNode(PsiElement psiElement)) || !(node2 instanceof PsiSyntaxNode(
-                PsiElement element
-        ))) {
+        if (!(node1 instanceof PsiSyntaxNode psiNode1) || !(node2 instanceof PsiSyntaxNode psiNode2)) {
             return null;
         }
 
-        PsiElement commonParent = PsiTreeUtil.findCommonParent(psiElement, element);
+        PsiElement commonParent = PsiTreeUtil.findCommonParent(psiNode1.getPsiElement(), psiNode2.getPsiElement());
         return commonParent != null ? new PsiSyntaxNode(commonParent) : null;
     }
 
@@ -56,5 +56,4 @@ public record PsiSyntaxTreeAdapter(PsiFile psiFile) implements SyntaxTreeAdapter
     public int getDocumentLength() {
         return psiFile.getTextLength();
     }
-
 }

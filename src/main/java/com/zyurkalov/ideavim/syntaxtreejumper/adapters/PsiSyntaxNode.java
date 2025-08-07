@@ -1,8 +1,7 @@
+
 package com.zyurkalov.ideavim.syntaxtreejumper.adapters;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,21 +13,12 @@ import java.util.Objects;
 /**
  * PSI-based implementation of SyntaxNode.
  */
-public record PsiSyntaxNode(PsiElement psiElement) implements SyntaxNode {
+public class PsiSyntaxNode extends SyntaxNode {
+
     public PsiSyntaxNode(@NotNull PsiElement psiElement) {
-        this.psiElement = psiElement;
+        super(psiElement);
     }
 
-    @Override
-    public TextRange getTextRange() {
-        return psiElement.getTextRange();
-    }
-
-    @Override
-    @NotNull
-    public String getText() {
-        return psiElement.getText();
-    }
 
     @Override
     @Nullable
@@ -65,28 +55,13 @@ public record PsiSyntaxNode(PsiElement psiElement) implements SyntaxNode {
     }
 
     @Override
-    public boolean isWhitespace() {
-        return psiElement instanceof PsiWhiteSpace || psiElement.getText().trim().isEmpty();
-    }
-
-    @Override
     public boolean isEquivalentTo(@Nullable SyntaxNode other) {
-        if (!(other instanceof PsiSyntaxNode(PsiElement element))) {
+        if (!(other instanceof PsiSyntaxNode otherNode)) {
             return false;
         }
-        return psiElement.isEquivalentTo(element);
+        return psiElement.isEquivalentTo(otherNode.getPsiElement());
     }
 
-    @Override
-    @NotNull
-    public String getNodeTypeName() {
-        return psiElement.getClass().getSimpleName();
-    }
-
-    @Override
-    public @NotNull String getTypeName() {
-        return psiElement.getNode().getElementType().toString();
-    }
 
     @Override
     public SyntaxNode getFirstChild() {
@@ -98,12 +73,21 @@ public record PsiSyntaxNode(PsiElement psiElement) implements SyntaxNode {
         return new PsiSyntaxNode(psiElement.getLastChild());
     }
 
+    @Override
+    public @NotNull PsiElement getPsiElement() {
+        return psiElement;
+    }
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof PsiSyntaxNode(PsiElement element))) return false;
-        return Objects.equals(psiElement, element);
+        if (!(obj instanceof PsiSyntaxNode other)) return false;
+        return Objects.equals(psiElement, other.psiElement);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(psiElement);
     }
 
     @Override

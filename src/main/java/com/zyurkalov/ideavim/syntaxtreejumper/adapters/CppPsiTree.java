@@ -25,13 +25,14 @@ public class CppPsiTree {
 
     @Nullable
     public CppSyntaxNode findCommonParent(@NotNull SyntaxNode node1, @NotNull SyntaxNode node2) {
-        if (!(node1 instanceof CppSyntaxNode(PsiElement psiElement)) || !(node2 instanceof CppSyntaxNode(
-                PsiElement element
-        ))) {
+        if (!(node1 instanceof CppSyntaxNode) || !(node2 instanceof CppSyntaxNode)) {
             return null;
         }
 
-        PsiElement commonParent = PsiTreeUtil.findCommonParent(psiElement, element);
+        CppSyntaxNode cppNode1 = (CppSyntaxNode) node1;
+        CppSyntaxNode cppNode2 = (CppSyntaxNode) node2;
+
+        PsiElement commonParent = PsiTreeUtil.findCommonParent(cppNode1.getPsiElement(), cppNode2.getPsiElement());
         return commonParent != null ? new CppSyntaxNode(commonParent) : null;
     }
 

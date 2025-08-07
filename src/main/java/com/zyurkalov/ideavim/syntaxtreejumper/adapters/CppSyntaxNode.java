@@ -1,8 +1,6 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.adapters;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,20 +12,11 @@ import java.util.Objects;
 /**
  * PSI-based implementation of SyntaxNode.
  */
-public record CppSyntaxNode(PsiElement psiElement) implements SyntaxNode {
+public class CppSyntaxNode extends SyntaxNode {
+
+
     public CppSyntaxNode(@NotNull PsiElement psiElement) {
-        this.psiElement = psiElement;
-    }
-
-    @Override
-    public TextRange getTextRange() {
-        return psiElement.getTextRange();
-    }
-
-    @Override
-    @NotNull
-    public String getText() {
-        return psiElement.getText();
+        super(psiElement);
     }
 
     @Override
@@ -64,50 +53,67 @@ public record CppSyntaxNode(PsiElement psiElement) implements SyntaxNode {
         return sibling != null ? new CppSyntaxNode(sibling) : null;
     }
 
-    @Override
-    public boolean isWhitespace() {
-        return psiElement instanceof PsiWhiteSpace || psiElement.getText().trim().isEmpty();
-    }
 
     @Override
     public boolean isEquivalentTo(@Nullable SyntaxNode other) {
-        if (!(other instanceof CppSyntaxNode(PsiElement element))) {
+        if (!(other instanceof CppSyntaxNode cppNode)) {
             return false;
         }
-        return psiElement.isEquivalentTo(element);
-    }
-
-    @Override
-    @NotNull
-    public String getNodeTypeName() {
-        return psiElement.getClass().getSimpleName();
-    }
-
-    @Override
-    public @NotNull String getTypeName() {
-        return psiElement.getNode().getElementType().toString();
+        return psiElement.isEquivalentTo(cppNode.psiElement);
     }
 
     @Override
     public SyntaxNode getFirstChild() {
-        return new PsiSyntaxNode(psiElement.getFirstChild());
+        return new CppSyntaxNode(psiElement.getFirstChild());
     }
 
     @Override
     public SyntaxNode getLastChild() {
-        return new PsiSyntaxNode(psiElement.getLastChild());
+        return new CppSyntaxNode(psiElement.getLastChild());
     }
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof CppSyntaxNode(PsiElement element))) return false;
-        return Objects.equals(psiElement, element);
+        if (!(obj instanceof CppSyntaxNode that)) return false;
+        return Objects.equals(psiElement, that.psiElement);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(psiElement);
     }
 
     @Override
     public @NotNull String toString() {
         return "PsiSyntaxNode{" + psiElement.getClass().getSimpleName() +
                 ", text='" + getText() + "'}";
+    }
+
+    @Override
+    public boolean isFunctionParameter() {
+        return getTypeName().contains("PARAMETER_DECLARATION");
+    }
+
+    @Override
+    public boolean isFunctionArgument() {
+        boolean result = false;
+        try {
+            result = getTypeName().contains("EXPRESSION") &&
+                    Objects.requireNonNull(getParent()).getTypeName().equals("ARGUMENT_LIST")/* &&
+                    Objects.requireNonNull(getParent().getParent()).getTypeName().equals("CALL_EXPRESSION")*/;
+        } catch (NullPointerException ignored) {
+        }
+        return result;
+    }
+
+    public boolean isTypeParameter() {
+        boolean result = false;
+        try {
+            result = getTypeName().equals("TYPE_PARAMETER") ||
+                    (getTypeName().equals("TYPE_ELEMENT") &&
+                            Objects.requireNonNull(getParent()).getTypeName().equals("TEMPLATE_ARGUMENT_LIST"));
+        } catch (NullPointerException ignored) {}
+        return result;
     }
 }
