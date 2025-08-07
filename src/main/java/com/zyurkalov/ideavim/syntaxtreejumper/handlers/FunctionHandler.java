@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -40,6 +41,10 @@ public class FunctionHandler implements ExtensionHandler {
     private final Direction direction;
     private final BiFunction<SyntaxTreeAdapter, Direction, MotionHandler> navigatorFactory;
     private final boolean addNewCaret;
+
+    // Static variable to track the last executed FunctionHandler
+    public static Optional<FunctionHandler> lastExecutedHandler = Optional.empty();
+    public static Optional<OperatorArguments> lastExecutedHandlerArguments = Optional.empty();
 
     // Static map to track highlighters per editor to avoid conflicts
     private static final ConcurrentHashMap<Editor, PsiElementHighlighter> editorHighlighters =
@@ -109,7 +114,7 @@ public class FunctionHandler implements ExtensionHandler {
         } else if (addNewCaret && direction == Direction.FORWARD) {
             start_caret = carets.size() - 1;
         }
-        
+
         // Execute the motion 'count' times for each caret
         for (int caret_i = start_caret; caret_i <= end_caret; caret_i++) {
             Caret caret = carets.get(caret_i);
@@ -171,6 +176,8 @@ public class FunctionHandler implements ExtensionHandler {
 
         // Set mode based on whether any motion was executed
         if (anyMotionExecuted) {
+            lastExecutedHandler = Optional.of(this);
+            lastExecutedHandlerArguments = Optional.of(operatorArguments);
             vimEditor.setMode(new Mode.VISUAL(SelectionType.CHARACTER_WISE, new Mode.NORMAL()));
         }
     }

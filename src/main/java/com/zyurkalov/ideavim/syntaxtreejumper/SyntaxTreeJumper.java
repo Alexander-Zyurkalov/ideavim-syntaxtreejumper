@@ -13,6 +13,7 @@ import com.maddyhome.idea.vim.extension.VimExtension;
 import com.maddyhome.idea.vim.newapi.IjVimEditorKt;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.MoveSiblingHandler;
+import com.zyurkalov.ideavim.syntaxtreejumper.handlers.RepeatLastMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.highlighting.ToggleHighlightingHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsMotionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.SmartSelectionExtendHandler;
@@ -61,7 +62,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-w>"),
                 getOwner(),
                 new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) -> {
-                        return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
+                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
                 }),
                 false);
         putExtensionHandlerMapping(
@@ -69,7 +70,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-S-w>"),
                 getOwner(),
                 new FunctionHandler(Direction.BACKWARD, (syntaxTree, direction) -> {
-                        return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
+                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
                 }),
                 false);
 
@@ -230,7 +231,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<C-A-w>"),
                 getOwner(),
                 new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) -> {
-                        return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
+                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
                 }, true),
                 false);
 
@@ -239,9 +240,28 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-w>"),
                 getOwner(),
                 new FunctionHandler(Direction.BACKWARD, (syntaxTree, direction) -> {
-                        return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
+                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
                 }, true),
                 false);
+
+        // Repeat the last motion functionality
+        String commandRepeatLastMotion = "<Plug>RepeatLastMotion";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
+                getOwner(),
+                new RepeatLastMotionHandler(),
+                false);
+
+        // Map S-r to repeat the last motion
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<S-r>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
+                true);
+
         // Set up automatic highlighting for all editors
         setupAutomaticHighlighting();
     }
