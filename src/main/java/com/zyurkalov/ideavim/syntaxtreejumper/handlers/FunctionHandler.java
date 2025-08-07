@@ -85,6 +85,9 @@ public class FunctionHandler implements ExtensionHandler {
         PsiFile psiFile = PsiManager.getInstance(editor.getProject()).findFile(file);
         if (psiFile == null) return;
 
+        // Get the count from operatorArguments (defaults to 1 if no count provided)
+        int count = operatorArguments.getCount1(); // This gets the count, defaulting to 1
+
         // Get or create the syntax tree adapter for this editor
         SyntaxTreeAdapter syntaxTree = SyntaxTreeAdapterFactory.createAdapter(psiFile);
 
@@ -98,8 +101,18 @@ public class FunctionHandler implements ExtensionHandler {
         boolean anyMotionExecuted = false;
         List<Offsets> newCaretOffsets = new ArrayList<>();
 
-        // Add a new carets mode: find motion targets for each existing caret and collect them
-        for (Caret caret : carets) {
+        // When creating new carets, we should only do that for frontier carets
+        int start_caret = 0;
+        int end_caret = carets.size() - 1;
+        if (addNewCaret && direction == Direction.BACKWARD) {
+            end_caret = 0;
+        } else if (addNewCaret && direction == Direction.FORWARD) {
+            start_caret = carets.size() - 1;
+        }
+        
+        // Execute the motion 'count' times for each caret
+        for (int caret_i = start_caret; caret_i <= end_caret; caret_i++) {
+            Caret caret = carets.get(caret_i);
             int startSelectionOffset = caret.getOffset();
             int endSelectionOffset = caret.getOffset();
             if (caret.hasSelection()) {
@@ -107,18 +120,28 @@ public class FunctionHandler implements ExtensionHandler {
                 endSelectionOffset = caret.getSelectionEnd();
             }
 
-            var initialOffsets = new Offsets(startSelectionOffset, endSelectionOffset);
-            var optionalOffsets = navigator.findNext(initialOffsets);
+            var currentOffsets = new Offsets(startSelectionOffset, endSelectionOffset);
 
-            if (optionalOffsets.isPresent()) {
-                Offsets offsets = optionalOffsets.get();
-                if (addNewCaret) {
-                    newCaretOffsets.add(offsets);
+            // Apply the motion 'count' times
+            for (int i = 0; i < count; i++) {
+                var optionalOffsets = navigator.findNext(currentOffsets);
+                if (optionalOffsets.isPresent()) {
+                    currentOffsets = optionalOffsets.get();
+                    anyMotionExecuted = true;
                 } else {
-                    caret.setSelection(offsets.leftOffset(), offsets.rightOffset());
-                    caret.moveToOffset(offsets.leftOffset());
+                    // If we can't find the next position, stop trying
+                    break;
                 }
-                anyMotionExecuted = true;
+            }
+
+            // Only update position if we moved at least once
+            if (anyMotionExecuted) {
+                if (addNewCaret) {
+                    newCaretOffsets.add(currentOffsets);
+                } else {
+                    caret.setSelection(currentOffsets.leftOffset(), currentOffsets.rightOffset());
+                    caret.moveToOffset(currentOffsets.leftOffset());
+                }
             }
         }
 
@@ -138,7 +161,6 @@ public class FunctionHandler implements ExtensionHandler {
         for (Caret caret : carets) {
             caretPositionsToScrollTo.add(caret.getLogicalPosition());
         }
-
 
         // Update highlighting based on new positions
         if (anyMotionExecuted) {
