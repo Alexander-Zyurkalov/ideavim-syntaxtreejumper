@@ -30,7 +30,6 @@ public abstract class SyntaxNode {
     }
 
 
-
     /**
      * Gets the text content of this node.
      */
@@ -69,6 +68,7 @@ public abstract class SyntaxNode {
     public boolean isWhitespace() {
         return psiElement instanceof PsiWhiteSpace || psiElement.getText().trim().isEmpty();
     }
+
     /**
      * Checks if this node is equivalent to another node.
      */
@@ -96,7 +96,7 @@ public abstract class SyntaxNode {
     public abstract SyntaxNode getLastChild();
 
     @NotNull
-    public PsiElement getPsiElement(){
+    public PsiElement getPsiElement() {
         return psiElement;
     }
 
@@ -191,7 +191,8 @@ public abstract class SyntaxNode {
             result = typeName.contains("EXPRESSION") &&
                     Objects.requireNonNull(getParent()).isExpressionList() &&
                     Objects.requireNonNull(getParent().getParent()).isMethodCallExpression();
-        } catch (NullPointerException ignored) {}
+        } catch (NullPointerException ignored) {
+        }
         return result;
     }
 
@@ -244,6 +245,35 @@ public abstract class SyntaxNode {
         String typeName = getTypeName();
         return typeName.equals("RETURN_STATEMENT") ||
                 typeName.equals("RETURN");
+    }
+
+    public boolean isLoopStatement() {
+        String typeName = getTypeName();
+        return typeName.equals("FOR_STATEMENT") ||
+                typeName.equals("WHILE_STATEMENT") ||
+                typeName.equals("DO_WHILE_STATEMENT") ||
+                typeName.equals("FOREACH_STATEMENT") ||
+                typeName.equals("FOR") ||
+                typeName.equals("WHILE") ||
+                typeName.equals("DO_WHILE") ||
+                typeName.equals("FOREACH");
+    }
+
+    public boolean isConditionalStatement() {
+        String typeName = getTypeName();
+        return typeName.equals("IF_STATEMENT") ||
+                typeName.equals("SWITCH_STATEMENT") ||
+                typeName.equals("CASE_STATEMENT") ||
+                typeName.equals("DEFAULT_CASE_STATEMENT") ||
+                typeName.equals("SWITCH_EXPRESSION") ||
+                typeName.equals("IF") ||
+                typeName.equals("SWITCH") ||
+                typeName.equals("CASE") ||
+                typeName.equals("DEFAULT");
+    }
+
+    public boolean isLoopOrConditionalStatement() {
+        return isLoopStatement() || isConditionalStatement();
     }
 
 }

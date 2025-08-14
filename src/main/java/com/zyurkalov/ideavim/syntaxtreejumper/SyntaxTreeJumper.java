@@ -336,6 +336,39 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandForwardStatement),
                 true);
 
+        // Loop and conditional statement navigation functionality
+        String commandBackwardLoopConditional = "<Plug>BackwardLoopConditional";
+        String commandForwardLoopConditional = "<Plug>ForwardLoopConditional";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardLoopConditional),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, LoopConditionalMotionHandler::new),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardLoopConditional),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, LoopConditionalMotionHandler::new),
+                false);
+
+        // Map [-l to backward loop/conditional statement navigation
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("[l"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardLoopConditional),
+                true);
+
+        // Map ]-l to forward loop/conditional statement navigation
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("]l"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardLoopConditional),
+                true);
 
         // Set up automatic highlighting for all editors
         setupAutomaticHighlighting();
