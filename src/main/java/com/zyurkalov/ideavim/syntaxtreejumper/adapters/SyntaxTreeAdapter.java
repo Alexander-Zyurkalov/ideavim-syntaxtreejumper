@@ -268,35 +268,26 @@ public abstract class SyntaxTreeAdapter {
     /**
      * Finds a PARAMETER_LIST or ARGUMENT_LIST node based on the direction from the current node.
      *
-     * @param currentNode      The starting node
-     * @param direction        The direction to search
-     * @param initialSelection The inidial selection
+     * @param currentNode                  The starting node
+     * @param direction                    The direction to search
+     * @param initialSelection             The initial selection
+     * @param functionToFindNode The function to find parameter nodes based on specific criteria
      * @return The found parameter/argument list node or null if not found
      */
-    public Optional<SyntaxNode> findParameter(SyntaxNode currentNode, Direction direction, Offsets initialSelection) {
-        Function<SyntaxNode, Optional<SyntaxNode>> functionToFindParameterNode =
-                createFunctionToFindParameterNode(direction, initialSelection);
-
+    public Optional<SyntaxNode> findNodeByDirection(
+            SyntaxNode currentNode, Direction direction, Offsets initialSelection,
+            @NotNull Function<SyntaxNode, Optional<SyntaxNode>> functionToFindNode) {
         Optional<SyntaxNode> found = findWithinNeighbours(
-                currentNode, direction, initialSelection, functionToFindParameterNode, false);
+                currentNode, direction, initialSelection, functionToFindNode, false);
 
         while (found.isEmpty()) {
             currentNode = currentNode.getParent();
             if (currentNode == null || currentNode.isPsiFile()) {
                 break;
             }
-            found = findWithinNeighbours(currentNode, direction, initialSelection, functionToFindParameterNode, false);
+            found = findWithinNeighbours(currentNode, direction, initialSelection, functionToFindNode, false);
         }
         return found;
     }
 
-    @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToFindParameterNode(Direction direction, Offsets initialSelection) {
-        return node -> {
-            if (node.isFunctionParameter() || node.isFunctionArgument() || node.isTypeParameter()){
-                return Optional.of(node);
-            }
-            return Optional.empty();
-        };
-    }
 }

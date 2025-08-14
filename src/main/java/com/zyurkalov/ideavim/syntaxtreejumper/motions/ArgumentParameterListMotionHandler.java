@@ -4,8 +4,10 @@ import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * MotionHandler that finds PsiElements of type PARAMETER_LIST or ARGUMENT_LIST
@@ -39,7 +41,8 @@ public class ArgumentParameterListMotionHandler implements MotionHandler {
         }
 
         // 2. Search for PARAMETER_LIST or ARGUMENT_LIST based on a direction
-        Optional<SyntaxNode> targetListNode = syntaxTree.findParameter(currentNode, direction, initialOffsets);
+        Optional<SyntaxNode> targetListNode = syntaxTree.findNodeByDirection(
+                currentNode, direction, initialOffsets, createFunctionToFindNode(direction, initialOffsets));
         if (targetListNode.isPresent()) {
             // 3. Place caret at the first child
             SyntaxNode syntaxNode = targetListNode.get();
@@ -54,5 +57,14 @@ public class ArgumentParameterListMotionHandler implements MotionHandler {
         return Optional.empty();
     }
 
+    @NotNull
+    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToFindNode(Direction direction, Offsets initialSelection) {
+        return node -> {
+            if (node.isFunctionParameter() || node.isFunctionArgument() || node.isTypeParameter()) {
+                return Optional.of(node);
+            }
+            return Optional.empty();
+        };
+    }
 
 }
