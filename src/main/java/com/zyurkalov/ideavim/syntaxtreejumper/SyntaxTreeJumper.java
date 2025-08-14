@@ -294,6 +294,49 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandForwardArgumentList),
                 true);
 
+        // Map ]-a to forward argument/parameter list navigation
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("]a"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardArgumentList),
+                true);
+
+        // Statement navigation functionality
+        String commandBackwardStatement = "<Plug>BackwardStatement";
+        String commandForwardStatement = "<Plug>ForwardStatement";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardStatement),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, StatementMotionHandler::new),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardStatement),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, StatementMotionHandler::new),
+                false);
+
+        // Map [-s to backward statement navigation
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("[s"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardStatement),
+                true);
+
+        // Map ]-s to forward statement navigation
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("]s"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardStatement),
+                true);
+
+
         // Set up automatic highlighting for all editors
         setupAutomaticHighlighting();
     }
