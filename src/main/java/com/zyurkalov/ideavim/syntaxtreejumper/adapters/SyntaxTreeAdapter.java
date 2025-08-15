@@ -238,11 +238,8 @@ public abstract class SyntaxTreeAdapter {
         if (skipFirstNode) {
             next = nextNeighbour(currentNode, direction);
         }
-        while (true) {
+        while (next.isPresent()) {
 
-            if (next.isEmpty()) {
-                break;
-            }
             currentNode = next.get();
             if (!currentNode.isInDirection(initialSelection, direction)) {
                 next = nextNeighbour(currentNode, direction);
