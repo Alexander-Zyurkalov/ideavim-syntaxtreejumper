@@ -288,7 +288,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToNextSibling),
                 true);
 
-        // Repeat last motion
+        // Repeat the last motion
         String commandRepeatLastMotion = "<Plug>RepeatLastMotion";
 
         putExtensionHandlerMapping(
