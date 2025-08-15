@@ -11,23 +11,23 @@ import java.util.function.BiFunction;
  */
 public record MotionHandlerConfig(
         String name,                    // Used for generating command names like "BackwardArgument", "ForwardArgument"
-        String shortcutLetter,         // The letter used in shortcuts like "a" for "[a" and "]a"
+        ShortcutConfig[] shortcuts,     // Array of shortcut configurations
         BiFunction<SyntaxTreeAdapter, Direction, MotionHandler> handlerFactory
 ) {
-    
+
     public String getBackwardCommand() {
         return "<Plug>Backward" + name;
     }
-    
+
     public String getForwardCommand() {
         return "<Plug>Forward" + name;
     }
-    
-    public String getBackwardShortcut() {
-        return "[" + shortcutLetter;
+
+    public String getExtendBackwardCommand() {
+        return "<Plug>ExtendBackward" + name;
     }
-    
-    public String getForwardShortcut() {
-        return "]" + shortcutLetter;
+
+    public String getExtendForwardCommand() {
+        return "<Plug>ExtendForward" + name;
     }
 }

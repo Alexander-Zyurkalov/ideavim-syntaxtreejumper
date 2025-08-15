@@ -107,6 +107,7 @@ public class CppSyntaxNode extends SyntaxNode {
         return result;
     }
 
+    @Override
     public boolean isTypeParameter() {
         boolean result = false;
         try {
@@ -117,10 +118,12 @@ public class CppSyntaxNode extends SyntaxNode {
         return result;
     }
 
+    @Override
     public boolean isMethodDefinition() {
         return isFunctionDefinition();
     }
 
+    @Override
     public boolean isFunctionDefinition() {
         String typeName = getTypeName();
         return

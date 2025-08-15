@@ -12,6 +12,7 @@ import com.maddyhome.idea.vim.command.MappingMode;
 import com.maddyhome.idea.vim.extension.VimExtension;
 import com.maddyhome.idea.vim.newapi.IjVimEditorKt;
 import com.zyurkalov.ideavim.syntaxtreejumper.config.MotionHandlerConfig;
+import com.zyurkalov.ideavim.syntaxtreejumper.config.ShortcutConfig;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.MoveSiblingHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.RepeatLastMotionHandler;
@@ -38,85 +39,149 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
 
     @Override
     public void init() {
-
-        registerBasicElementNavigation();
-
-        registerSelectionHandlers();
-
-        registerSpecialHandlers();
-
         registerStructuredMotionHandlers();
-
-        // Set up automatic highlighting for all editors
+        registerSelectionHandlers();
+        registerSpecialHandlers();
         setupAutomaticHighlighting();
     }
 
-    private void registerBasicElementNavigation() {
-        String commandJumpToPrevElement = "<Plug>JumpToPrevElement";
-        String commandJumpToNextElement = "<Plug>JumpToNextElement";
+    /**
+     * Registers motion handlers using the structured configuration approach.
+     */
+    private void registerStructuredMotionHandlers() {
+        MotionHandlerConfig[] motionConfigs = {
+                // Basic element navigation
+                new MotionHandlerConfig(
+                        "Element",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("<A-n>", Direction.FORWARD, false),
+                                new ShortcutConfig("<A-S-n>", Direction.BACKWARD, false),
+                                new ShortcutConfig("<C-A-n>", Direction.FORWARD, true),
+                                new ShortcutConfig("<C-A-S-n>", Direction.BACKWARD, true)
+                        },
+                        SameLevelElementsMotionHandler::new
+                ),
 
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElement),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, SameLevelElementsMotionHandler::new),
-                false);
+                // SubWord motion (special wrapper needed)
+                new MotionHandlerConfig(
+                        "SubWord",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("<A-w>", Direction.FORWARD, false),
+                                new ShortcutConfig("<A-S-w>", Direction.BACKWARD, false),
+                                new ShortcutConfig("<C-A-w>", Direction.FORWARD, true),
+                                new ShortcutConfig("<C-A-S-w>", Direction.BACKWARD, true)
+                        },
+                        (syntaxTree, direction) -> new SubWordMotionHandler(syntaxTree.getPsiFile(), direction)
+                ),
 
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElement),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, SameLevelElementsMotionHandler::new),
-                false);
+                // Argument/Parameter List navigation
+                new MotionHandlerConfig(
+                        "ArgumentList",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[a", Direction.BACKWARD, false),
+                                new ShortcutConfig("]a", Direction.FORWARD, false),
+                                new ShortcutConfig("<C-[>a", Direction.BACKWARD, true),
+                                new ShortcutConfig("<C-]>a", Direction.FORWARD, true)
+                        },
+                        ArgumentParameterListMotionHandler::new
+                ),
 
-        // Map the default key bindings
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-n>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElement),
-                true);
+                // Statement navigation
+                new MotionHandlerConfig(
+                        "Statement",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[s", Direction.BACKWARD, false),
+                                new ShortcutConfig("]s", Direction.FORWARD, false),
+                                new ShortcutConfig("<C-[>s", Direction.BACKWARD, true),
+                                new ShortcutConfig("<C-]>s", Direction.FORWARD, true)
+                        },
+                        StatementMotionHandler::new
+                ),
 
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-n>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElement),
-                true);
+                // Loop/Conditional navigation
+                new MotionHandlerConfig(
+                        "LoopConditional",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[l", Direction.BACKWARD, false),
+                                new ShortcutConfig("]l", Direction.FORWARD, false),
+                                new ShortcutConfig("<C-[>l", Direction.BACKWARD, true),
+                                new ShortcutConfig("<C-]>l", Direction.FORWARD, true)
+                        },
+                        LoopConditionalMotionHandler::new
+                ),
 
-        // Selection-extending versions
-        String commandJumpToPrevElementExtend = "<Plug>ExtendJumpToPrevElement";
-        String commandJumpToNextElementExtend = "<Plug>ExtendJumpToNextElement";
+                // Method/Function navigation
+                new MotionHandlerConfig(
+                        "MethodFunction",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[f", Direction.BACKWARD, false),
+                                new ShortcutConfig("]f", Direction.FORWARD, false),
+                                new ShortcutConfig("<C-[>f", Direction.BACKWARD, true),
+                                new ShortcutConfig("<C-]>f", Direction.FORWARD, true)
+                        },
+                        MethodFunctionMotionHandler::new
+                )
+        };
 
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElementExtend),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, SameLevelElementsMotionHandler::new, true),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElementExtend),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, SameLevelElementsMotionHandler::new, true),
-                false);
-
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-n>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElementExtend),
-                true);
-
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-n>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElementExtend),
-                true);
+        for (MotionHandlerConfig config : motionConfigs) {
+            registerMotionHandler(config);
+        }
     }
 
+    /**
+     * Registers a single motion handler configuration.
+     */
+    private void registerMotionHandler(MotionHandlerConfig config) {
+        // Register backward handler
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getBackwardCommand()),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, config.handlerFactory()),
+                false);
+
+        // Register forward handler
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getForwardCommand()),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, config.handlerFactory()),
+                false);
+
+        // Register extend backward handler (for new caret)
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getExtendBackwardCommand()),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, config.handlerFactory(), true),
+                false);
+
+        // Register extend forward handler (for new caret)
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getExtendForwardCommand()),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, config.handlerFactory(), true),
+                false);
+
+        // Map all shortcuts to their respective commands
+        for (ShortcutConfig shortcut : config.shortcuts()) {
+            String targetCommand = shortcut.addNewCaret() ?
+                    (shortcut.direction() == Direction.FORWARD ? config.getExtendForwardCommand() : config.getExtendBackwardCommand()) :
+                    (shortcut.direction() == Direction.FORWARD ? config.getForwardCommand() : config.getBackwardCommand());
+
+            putKeyMappingIfMissing(
+                    EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                    VimInjectorKt.getInjector().getParser().parseKeys(shortcut.keySequence()),
+                    getOwner(),
+                    VimInjectorKt.getInjector().getParser().parseKeys(targetCommand),
+                    true);
+        }
+    }
+
+    /**
+     * Registers selection expansion/shrinking handlers.
+     */
     private void registerSelectionHandlers() {
         // Selection expansion/shrinking handlers
         String commandExpandSelection = "<Plug>ExpandSelection";
@@ -175,44 +240,6 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
      * Registers special handlers that don't follow the standard pattern.
      */
     private void registerSpecialHandlers() {
-        // SubWord motion handlers (special case - uses PsiFile directly)
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-w>"),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) -> {
-                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
-                }),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-w>"),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, (syntaxTree, direction) -> {
-                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
-                }),
-                false);
-
-        // Selection-extending versions of subword motions
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-w>"),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) -> {
-                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
-                }, true),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-w>"),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, (syntaxTree, direction) -> {
-                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
-                }, true),
-                false);
-
         // Highlighting toggle
         String commandToggleHighlighting = "<Plug>ToggleHighlighting";
         putExtensionHandlerMapping(
@@ -230,19 +257,19 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 true);
 
         // Sibling motion handlers (special case - doesn't use BiFunction pattern)
-        String commandJumpToPrevSibling = "<Plug>JumpToPrevSibling";
-        String commandJumpToNextSibling = "<Plug>JumpToNextSibling";
+        String commandMoveToPrevSibling = "<Plug>MoveToPrevSibling";
+        String commandMoveToNextSibling = "<Plug>MoveToNextSibling";
 
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevSibling),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToPrevSibling),
                 getOwner(),
                 new MoveSiblingHandler(Direction.BACKWARD),
                 false);
 
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextSibling),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToNextSibling),
                 getOwner(),
                 new MoveSiblingHandler(Direction.FORWARD),
                 false);
@@ -251,14 +278,14 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-[>"),
                 getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevSibling),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToPrevSibling),
                 true);
 
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-]>"),
                 getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextSibling),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToNextSibling),
                 true);
 
         // Repeat last motion
@@ -276,59 +303,6 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-r>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
-                true);
-    }
-
-    /**
-     * Registers motion handlers using the structured configuration approach.
-     */
-    private void registerStructuredMotionHandlers() {
-        MotionHandlerConfig[] motionConfigs = {
-                new MotionHandlerConfig("ArgumentList", "a", ArgumentParameterListMotionHandler::new),
-                new MotionHandlerConfig("Statement", "s", StatementMotionHandler::new),
-                new MotionHandlerConfig("LoopConditional", "l", LoopConditionalMotionHandler::new),
-                new MotionHandlerConfig("MethodFunction", "f", MethodFunctionMotionHandler::new)
-        };
-
-        for (MotionHandlerConfig config : motionConfigs) {
-            registerMotionHandler(config);
-        }
-    }
-
-    /**
-     * Registers a single motion handler configuration.
-     */
-    private void registerMotionHandler(MotionHandlerConfig config) {
-        // Register backward handler
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(config.getBackwardCommand()),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, config.handlerFactory()),
-                false);
-
-        // Register forward handler
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(config.getForwardCommand()),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, config.handlerFactory()),
-                false);
-
-        // Map backward shortcut
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(config.getBackwardShortcut()),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(config.getBackwardCommand()),
-                true);
-
-        // Map forward shortcut
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(config.getForwardShortcut()),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(config.getForwardCommand()),
                 true);
     }
 
