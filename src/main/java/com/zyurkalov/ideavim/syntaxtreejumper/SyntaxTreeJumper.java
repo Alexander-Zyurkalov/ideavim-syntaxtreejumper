@@ -40,6 +40,8 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
 
         registerBasicElementNavigation();
 
+        registerSelectionHandlers();
+
         // Note: SubWordMotionHandler still uses PsiFile directly, so we need a wrapper
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
@@ -57,60 +59,6 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                     return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
                 }),
                 false);
-
-        // Selection expansion/shrinking handlers
-        String commandExpandSelection = "<Plug>ExpandSelection";
-        String commandShrinkSelection = "<Plug>ShrinkSelection";
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
-                        SyntaxNodeTreeHandler.createExpandHandler(syntaxTree)),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
-                        SyntaxNodeTreeHandler.createShrinkHandler(syntaxTree)),
-                false);
-
-        // Map the default key bindings (Alt-o and Alt-i like in Helix)
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-o>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
-                true);
-
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-i>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
-                true);
-
-        // Smart Selection Extend Handler (A-e shortcut)
-        String commandSmartSelectionExtend = "<Plug>SmartSelectionExtend";
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandSmartSelectionExtend),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
-                        new SmartSelectionExtendHandler(syntaxTree)),
-                false);
-
-        // Map Alt-e to smart selection extend
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-e>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandSmartSelectionExtend),
-                true);
 
         // Highlighting toggle functionality
         String commandToggleHighlighting = "<Plug>ToggleHighlighting";
@@ -411,6 +359,60 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-n>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElementExtend),
+                true);
+    }
+
+    private void registerSelectionHandlers() {
+// Selection expansion/shrinking handlers
+        String commandExpandSelection = "<Plug>ExpandSelection";
+        String commandShrinkSelection = "<Plug>ShrinkSelection";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
+                        SyntaxNodeTreeHandler.createExpandHandler(syntaxTree)),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
+                        SyntaxNodeTreeHandler.createShrinkHandler(syntaxTree)),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-o>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
+                true);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-i>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
+                true);
+
+        // Smart Selection Extend Handler
+        String commandSmartSelectionExtend = "<Plug>SmartSelectionExtend";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandSmartSelectionExtend),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
+                        new SmartSelectionExtendHandler(syntaxTree)),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-e>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandSmartSelectionExtend),
                 true);
     }
 
