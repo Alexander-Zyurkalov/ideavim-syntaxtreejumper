@@ -34,9 +34,9 @@ public abstract class AbstractFindNodeMotionHandler implements MotionHandler {
             return Optional.empty();
         }
 
-        // 2. Search for PARAMETER_LIST or ARGUMENT_LIST based on a direction
+        // 2. Search for nodes based on a direction and searching criteria
         Optional<SyntaxNode> targetListNode = syntaxTree.findNodeByDirection(
-                currentNode, direction, initialOffsets, createFunctionToFindNode(direction, initialOffsets));
+                currentNode, direction, initialOffsets, createFunctionToCheckSearchingCriteria(direction, initialOffsets));
         if (targetListNode.isPresent()) {
             // 3. Place caret at the first child
             SyntaxNode syntaxNode = targetListNode.get();
@@ -52,5 +52,5 @@ public abstract class AbstractFindNodeMotionHandler implements MotionHandler {
     }
 
     @NotNull
-    public abstract Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToFindNode(Direction direction, Offsets initialSelection);
+    public abstract Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection);
 }

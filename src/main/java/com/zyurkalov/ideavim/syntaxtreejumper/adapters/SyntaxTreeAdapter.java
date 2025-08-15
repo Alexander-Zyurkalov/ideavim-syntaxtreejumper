@@ -271,21 +271,21 @@ public abstract class SyntaxTreeAdapter {
      * @param currentNode                  The starting node
      * @param direction                    The direction to search
      * @param initialSelection             The initial selection
-     * @param functionToFindNode The function to find parameter nodes based on specific criteria
+     * @param functionToCheckSearchCriteria The function to find parameter nodes based on specific criteria
      * @return The found parameter/argument list node or null if not found
      */
     public Optional<SyntaxNode> findNodeByDirection(
             SyntaxNode currentNode, Direction direction, Offsets initialSelection,
-            @NotNull Function<SyntaxNode, Optional<SyntaxNode>> functionToFindNode) {
+            @NotNull Function<SyntaxNode, Optional<SyntaxNode>> functionToCheckSearchCriteria) {
         Optional<SyntaxNode> found = findWithinNeighbours(
-                currentNode, direction, initialSelection, functionToFindNode, WhileSearching.DO_NOT_SKIP_FIRST_NODE);
+                currentNode, direction, initialSelection, functionToCheckSearchCriteria, WhileSearching.DO_NOT_SKIP_FIRST_NODE);
 
         while (found.isEmpty()) {
             currentNode = currentNode.getParent();
             if (currentNode == null || currentNode.isPsiFile()) {
                 break;
             }
-            found = findWithinNeighbours(currentNode, direction, initialSelection, functionToFindNode, WhileSearching.DO_NOT_SKIP_FIRST_NODE);
+            found = findWithinNeighbours(currentNode, direction, initialSelection, functionToCheckSearchCriteria, WhileSearching.DO_NOT_SKIP_FIRST_NODE);
         }
         return found;
     }

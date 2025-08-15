@@ -21,7 +21,7 @@ public class ArgumentParameterListMotionHandler extends AbstractFindNodeMotionHa
     }
     @Override
     @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToFindNode(Direction direction, Offsets initialSelection) {
+    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection) {
         return node -> {
             if (node.isFunctionParameter() || node.isFunctionArgument() || node.isTypeParameter()) {
                 return Optional.of(node);

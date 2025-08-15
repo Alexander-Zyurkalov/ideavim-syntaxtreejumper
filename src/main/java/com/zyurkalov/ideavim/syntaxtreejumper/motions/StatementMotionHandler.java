@@ -22,7 +22,7 @@ public class StatementMotionHandler extends AbstractFindNodeMotionHandler {
 
     @Override
     @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToFindNode(Direction direction, Offsets initialSelection) {
+    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection) {
         return node -> {
             if (node.isDeclarationStatement() || node.isExpressionStatement() || node.isReturnStatement()) {
                 return Optional.of(node);

@@ -21,7 +21,7 @@ public class OperatorMotionHandler extends AbstractFindNodeMotionHandler {
 
     @Override
     @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToFindNode(Direction direction, Offsets initialSelection) {
+    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection) {
         return node -> {
             var parent = node.getParent();
             if (parent == null) {

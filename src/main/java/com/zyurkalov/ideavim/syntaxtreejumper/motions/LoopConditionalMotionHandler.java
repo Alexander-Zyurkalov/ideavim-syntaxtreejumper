@@ -23,7 +23,7 @@ public class LoopConditionalMotionHandler extends AbstractFindNodeMotionHandler 
 
     @Override
     @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToFindNode(Direction direction, Offsets initialSelection) {
+    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection) {
         return node -> {
             if (node.isLoopOrConditionalStatement()) {
                 return Optional.of(node);

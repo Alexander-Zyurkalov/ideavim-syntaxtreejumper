@@ -22,7 +22,7 @@ public class MethodFunctionMotionHandler extends AbstractFindNodeMotionHandler {
 
     @Override
     @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToFindNode(Direction direction, Offsets initialSelection) {
+    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection) {
         return node -> {
             if (node.isMethodDefinition() || node.isFunctionDefinition()) {
                 return Optional.of(node);
