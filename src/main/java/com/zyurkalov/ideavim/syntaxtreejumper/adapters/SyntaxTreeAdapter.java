@@ -228,6 +228,7 @@ public abstract class SyntaxTreeAdapter {
 
         return result;
     }
+
     public enum WhileSearching {
         SKIP_FIRST_NODE, DO_NOT_SKIP_FIRST_NODE // TODO: probably it is redundant
     }
@@ -242,21 +243,18 @@ public abstract class SyntaxTreeAdapter {
             next = nextNeighbour(currentNode, direction);
         }
         while (next.isPresent()) {
-
             currentNode = next.get();
-            if (!currentNode.isInRightDirection(initialSelection, direction)) {
-                next = nextNeighbour(currentNode, direction);
-                continue;
-            }
 
             found = findNodeType.apply(currentNode);
-            if (found.isPresent()) {
+            if (isNodeFound(direction, initialSelection, found)
+            ) {
                 return found;
             }
             if (!currentNode.getChildren().isEmpty()) {
                 found = findWithinNeighbours(
                         getChild(currentNode, direction), direction, initialSelection, findNodeType, WhileSearching.DO_NOT_SKIP_FIRST_NODE);
-                if (found.isPresent()) {
+                if (isNodeFound(direction, initialSelection, found)
+                ) {
                     return found;
                 }
             }
@@ -265,12 +263,18 @@ public abstract class SyntaxTreeAdapter {
         return found;
     }
 
+    private static boolean isNodeFound(Direction direction, Offsets initialSelection, Optional<SyntaxNode> found) {
+        return found.isPresent() &&
+                found.get().isInRightDirection(initialSelection, direction) &&
+                !found.get().areBordersEqual(initialSelection);
+    }
+
     /**
      * Finds a PARAMETER_LIST or ARGUMENT_LIST node based on the direction from the current node.
      *
-     * @param currentNode                  The starting node
-     * @param direction                    The direction to search
-     * @param initialSelection             The initial selection
+     * @param currentNode                   The starting node
+     * @param direction                     The direction to search
+     * @param initialSelection              The initial selection
      * @param functionToCheckSearchCriteria The function to find parameter nodes based on specific criteria
      * @return The found parameter/argument list node or null if not found
      */

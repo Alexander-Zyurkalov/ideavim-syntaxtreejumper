@@ -219,7 +219,8 @@ public abstract class SyntaxNode {
         return switch (direction) {
             case BACKWARD -> currentRange.getEndOffset() <= initialSelection.leftOffset() ||
                     currentRange.getStartOffset() < initialSelection.leftOffset();
-            case FORWARD -> currentRange.getStartOffset() >= initialSelection.rightOffset();
+            case FORWARD -> currentRange.getStartOffset() > initialSelection.leftOffset() ||
+                    currentRange.getEndOffset() > initialSelection.rightOffset();
         };
     }
 
@@ -295,5 +296,14 @@ public abstract class SyntaxNode {
                 typeName.equals("TEMPLATE_FUNCTION_DECLARATION") ||
                 typeName.equals("FUNCTION") ||
                 typeName.equals("LAMBDA_EXPRESSION");
+    }
+
+    public boolean areBordersEqual(Offsets initialSelection) {
+        TextRange currentRange = getTextRange();
+        if (currentRange == null) {
+            return false;
+        }
+        return currentRange.getEndOffset() == initialSelection.leftOffset() &&
+                currentRange.getStartOffset() == initialSelection.leftOffset();
     }
 }
