@@ -228,14 +228,17 @@ public abstract class SyntaxTreeAdapter {
 
         return result;
     }
+    public enum WhileSearching {
+        SKIP_FIRST_NODE, DO_NOT_SKIP_FIRST_NODE
+    }
 
     public Optional<SyntaxNode> findWithinNeighbours(
             @NotNull SyntaxNode currentNode, Direction direction, Offsets initialSelection,
             Function<SyntaxNode, Optional<SyntaxNode>> findNodeType,
-            boolean skipFirstNode) {
+            WhileSearching whileSearching) {
         Optional<SyntaxNode> found = Optional.empty();
         var next = Optional.of(currentNode);
-        if (skipFirstNode) {
+        if (whileSearching == WhileSearching.SKIP_FIRST_NODE) {
             next = nextNeighbour(currentNode, direction);
         }
         while (next.isPresent()) {
@@ -252,7 +255,7 @@ public abstract class SyntaxTreeAdapter {
             }
             if (!currentNode.getChildren().isEmpty()) {
                 found = findWithinNeighbours(
-                        getChild(currentNode, direction), direction, initialSelection, findNodeType, false);
+                        getChild(currentNode, direction), direction, initialSelection, findNodeType, WhileSearching.DO_NOT_SKIP_FIRST_NODE);
                 if (found.isPresent()) {
                     return found;
                 }
@@ -275,14 +278,14 @@ public abstract class SyntaxTreeAdapter {
             SyntaxNode currentNode, Direction direction, Offsets initialSelection,
             @NotNull Function<SyntaxNode, Optional<SyntaxNode>> functionToFindNode) {
         Optional<SyntaxNode> found = findWithinNeighbours(
-                currentNode, direction, initialSelection, functionToFindNode, false);
+                currentNode, direction, initialSelection, functionToFindNode, WhileSearching.DO_NOT_SKIP_FIRST_NODE);
 
         while (found.isEmpty()) {
             currentNode = currentNode.getParent();
             if (currentNode == null || currentNode.isPsiFile()) {
                 break;
             }
-            found = findWithinNeighbours(currentNode, direction, initialSelection, functionToFindNode, false);
+            found = findWithinNeighbours(currentNode, direction, initialSelection, functionToFindNode, WhileSearching.DO_NOT_SKIP_FIRST_NODE);
         }
         return found;
     }

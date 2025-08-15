@@ -34,7 +34,7 @@ public class OperatorMotionHandler extends AbstractFindNodeMotionHandler {
                                 return Optional.of(neighbour);
                             }
                             return Optional.empty();
-                        }, false
+                        }, SyntaxTreeAdapter.WhileSearching.DO_NOT_SKIP_FIRST_NODE
                 );
                 if (found.isPresent()) {
                     return found;
