@@ -37,21 +37,8 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
 
     @Override
     public void init() {
-        // Register the extension handlers with <Plug> mappings
-        String commandJumpToPrevElement = "<Plug>JumpToPrevElement";
-        String commandJumpToNextElement = "<Plug>JumpToNextElement";
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElement),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, SameLevelElementsMotionHandler::new),
-                false);
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElement),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, SameLevelElementsMotionHandler::new),
-                false);
+
+        registerBasicElementNavigation();
 
         // Note: SubWordMotionHandler still uses PsiFile directly, so we need a wrapper
         putExtensionHandlerMapping(
@@ -70,20 +57,6 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                     return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
                 }),
                 false);
-
-        // Map the default key bindings to the <Plug> mappings
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-n>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElement),
-                true);
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-n>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElement),
-                true);
 
         // Selection expansion/shrinking handlers
         String commandExpandSelection = "<Plug>ExpandSelection";
@@ -187,39 +160,6 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-]>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextSibling),
-                true);
-
-        // Selection-extending versions of motion commands
-        String commandJumpToPrevElementExtend = "<Plug>ExtendJumpToPrevElement";
-        String commandJumpToNextElementExtend = "<Plug>ExtendJumpToNextElement";
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElementExtend),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, SameLevelElementsMotionHandler::new, true),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElementExtend),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, SameLevelElementsMotionHandler::new, true),
-                false);
-
-        // Map Ctrl+Alt+N and Ctrl+Alt+Shift+N for selection extension
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-n>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElementExtend),
-                true);
-
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-n>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElementExtend),
                 true);
 
         // Selection-extending versions of subword motions
@@ -406,6 +346,72 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
 
         // Set up automatic highlighting for all editors
         setupAutomaticHighlighting();
+    }
+
+    private void registerBasicElementNavigation() {
+        String commandJumpToPrevElement = "<Plug>JumpToPrevElement";
+        String commandJumpToNextElement = "<Plug>JumpToNextElement";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElement),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, SameLevelElementsMotionHandler::new),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElement),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, SameLevelElementsMotionHandler::new),
+                false);
+
+        // Map the default key bindings
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-n>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElement),
+                true);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-n>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElement),
+                true);
+
+        // Selection-extending versions
+        String commandJumpToPrevElementExtend = "<Plug>ExtendJumpToPrevElement";
+        String commandJumpToNextElementExtend = "<Plug>ExtendJumpToNextElement";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElementExtend),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, SameLevelElementsMotionHandler::new, true),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElementExtend),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, SameLevelElementsMotionHandler::new, true),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-n>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElementExtend),
+                true);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-n>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElementExtend),
+                true);
     }
 
     /**
