@@ -211,14 +211,15 @@ public abstract class SyntaxNode {
         return getTypeName().equals("TYPE_PARAMETER");
     }
 
-    public boolean isInDirection(Offsets initialSelection, Direction direction) {
+    public boolean isInRightDirection(Offsets initialSelection, Direction direction) {
         TextRange currentRange = getTextRange();
         if (currentRange == null) {
             return false;
         }
         return switch (direction) {
+            case BACKWARD -> currentRange.getEndOffset() <= initialSelection.leftOffset() ||
+                    currentRange.getStartOffset() < initialSelection.leftOffset();
             case FORWARD -> currentRange.getStartOffset() >= initialSelection.rightOffset();
-            case BACKWARD -> currentRange.getEndOffset() <= initialSelection.leftOffset();
         };
     }
 

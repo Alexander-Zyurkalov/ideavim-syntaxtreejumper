@@ -244,7 +244,7 @@ public abstract class SyntaxTreeAdapter {
         while (next.isPresent()) {
 
             currentNode = next.get();
-            if (!currentNode.isInDirection(initialSelection, direction)) {
+            if (!currentNode.isInRightDirection(initialSelection, direction)) {
                 next = nextNeighbour(currentNode, direction);
                 continue;
             }
