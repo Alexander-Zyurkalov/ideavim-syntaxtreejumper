@@ -42,111 +42,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
 
         registerSelectionHandlers();
 
-        // Note: SubWordMotionHandler still uses PsiFile directly, so we need a wrapper
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-w>"),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) -> {
-                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
-                }),
-                false);
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-w>"),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, (syntaxTree, direction) -> {
-                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
-                }),
-                false);
-
-        // Highlighting toggle functionality
-        String commandToggleHighlighting = "<Plug>ToggleHighlighting";
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandToggleHighlighting),
-                getOwner(),
-                new ToggleHighlightingHandler(),
-                false);
-
-        // Map Alt-h to toggle highlighting
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-h>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandToggleHighlighting),
-                true);
-
-        // Register sibling motion handlers
-        String commandJumpToPrevSibling = "<Plug>JumpToPrevSibling";
-        String commandJumpToNextSibling = "<Plug>JumpToNextSibling";
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevSibling),
-                getOwner(),
-                new MoveSiblingHandler(Direction.BACKWARD),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextSibling),
-                getOwner(),
-                new MoveSiblingHandler(Direction.FORWARD),
-                false);
-
-        // Map Alt-[ and Alt-] to sibling motion handlers
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-[>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevSibling),
-                true);
-
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-]>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextSibling),
-                true);
-
-        // Selection-extending versions of subword motions
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-w>"),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) -> {
-                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
-                }, true),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-w>"),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, (syntaxTree, direction) -> {
-                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
-                }, true),
-                false);
-
-        // Repeat the last motion functionality
-        String commandRepeatLastMotion = "<Plug>RepeatLastMotion";
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
-                getOwner(),
-                new RepeatLastMotionHandler(),
-                false);
-
-        // Map A-r to repeat the last motion
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-r>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
-                true);
-
+        registerSpecialHandlers();
 
         // Argument/Parameter List navigation functionality
         String commandBackwardArgumentList = "<Plug>BackwardArgumentList";
@@ -363,7 +259,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
     }
 
     private void registerSelectionHandlers() {
-// Selection expansion/shrinking handlers
+        // Selection expansion/shrinking handlers
         String commandExpandSelection = "<Plug>ExpandSelection";
         String commandShrinkSelection = "<Plug>ShrinkSelection";
 
@@ -413,6 +309,114 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-e>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandSmartSelectionExtend),
+                true);
+    }
+
+    /**
+     * Registers special handlers that don't follow the standard pattern.
+     */
+    private void registerSpecialHandlers() {
+        // SubWord motion handlers (special case - uses PsiFile directly)
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-w>"),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) -> {
+                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
+                }),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-w>"),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, (syntaxTree, direction) -> {
+                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
+                }),
+                false);
+
+        // Selection-extending versions of subword motions
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-w>"),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) -> {
+                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
+                }, true),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-w>"),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, (syntaxTree, direction) -> {
+                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
+                }, true),
+                false);
+
+        // Highlighting toggle
+        String commandToggleHighlighting = "<Plug>ToggleHighlighting";
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandToggleHighlighting),
+                getOwner(),
+                new ToggleHighlightingHandler(),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-h>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandToggleHighlighting),
+                true);
+
+        // Sibling motion handlers (special case - doesn't use BiFunction pattern)
+        String commandJumpToPrevSibling = "<Plug>JumpToPrevSibling";
+        String commandJumpToNextSibling = "<Plug>JumpToNextSibling";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevSibling),
+                getOwner(),
+                new MoveSiblingHandler(Direction.BACKWARD),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextSibling),
+                getOwner(),
+                new MoveSiblingHandler(Direction.FORWARD),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-[>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevSibling),
+                true);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-]>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextSibling),
+                true);
+
+        // Repeat last motion
+        String commandRepeatLastMotion = "<Plug>RepeatLastMotion";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
+                getOwner(),
+                new RepeatLastMotionHandler(),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-r>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
                 true);
     }
 
