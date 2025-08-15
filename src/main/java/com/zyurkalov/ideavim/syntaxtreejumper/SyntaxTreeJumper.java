@@ -11,6 +11,7 @@ import com.maddyhome.idea.vim.api.VimInjectorKt;
 import com.maddyhome.idea.vim.command.MappingMode;
 import com.maddyhome.idea.vim.extension.VimExtension;
 import com.maddyhome.idea.vim.newapi.IjVimEditorKt;
+import com.zyurkalov.ideavim.syntaxtreejumper.config.MotionHandlerConfig;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.MoveSiblingHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.RepeatLastMotionHandler;
@@ -44,149 +45,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
 
         registerSpecialHandlers();
 
-        // Argument/Parameter List navigation functionality
-        String commandBackwardArgumentList = "<Plug>BackwardArgumentList";
-        String commandForwardArgumentList = "<Plug>ForwardArgumentList";
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardArgumentList),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, ArgumentParameterListMotionHandler::new),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardArgumentList),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, ArgumentParameterListMotionHandler::new),
-                false);
-
-        // Map [-a to backward argument/parameter list navigation
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("[a"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardArgumentList),
-                true);
-
-        // Map ]-a to forward argument/parameter list navigation
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("]a"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardArgumentList),
-                true);
-
-        // Map ]-a to forward argument/parameter list navigation
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("]a"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardArgumentList),
-                true);
-
-        // Statement navigation functionality
-        String commandBackwardStatement = "<Plug>BackwardStatement";
-        String commandForwardStatement = "<Plug>ForwardStatement";
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardStatement),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, StatementMotionHandler::new),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardStatement),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, StatementMotionHandler::new),
-                false);
-
-        // Map [-s to backward statement navigation
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("[s"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardStatement),
-                true);
-
-        // Map ]-s to forward statement navigation
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("]s"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardStatement),
-                true);
-
-        // Loop and conditional statement navigation functionality
-        String commandBackwardLoopConditional = "<Plug>BackwardLoopConditional";
-        String commandForwardLoopConditional = "<Plug>ForwardLoopConditional";
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardLoopConditional),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, LoopConditionalMotionHandler::new),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardLoopConditional),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, LoopConditionalMotionHandler::new),
-                false);
-
-        // Map [-l to backward loop/conditional statement navigation
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("[l"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardLoopConditional),
-                true);
-
-        // Map ]-l to forward loop/conditional statement navigation
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("]l"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardLoopConditional),
-                true);
-
-        // Method/Function navigation functionality
-        String commandBackwardMethodFunction = "<Plug>BackwardMethodFunction";
-        String commandForwardMethodFunction = "<Plug>ForwardMethodFunction";
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardMethodFunction),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, MethodFunctionMotionHandler::new),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardMethodFunction),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, MethodFunctionMotionHandler::new),
-                false);
-
-// Map [-f to backward method/function navigation
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("[f"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardMethodFunction),
-                true);
-
-// Map ]-f to forward method/function navigation
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("]f"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardMethodFunction),
-                true);
+        registerStructuredMotionHandlers();
 
         // Set up automatic highlighting for all editors
         setupAutomaticHighlighting();
@@ -417,6 +276,59 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-r>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
+                true);
+    }
+
+    /**
+     * Registers motion handlers using the structured configuration approach.
+     */
+    private void registerStructuredMotionHandlers() {
+        MotionHandlerConfig[] motionConfigs = {
+                new MotionHandlerConfig("ArgumentList", "a", ArgumentParameterListMotionHandler::new),
+                new MotionHandlerConfig("Statement", "s", StatementMotionHandler::new),
+                new MotionHandlerConfig("LoopConditional", "l", LoopConditionalMotionHandler::new),
+                new MotionHandlerConfig("MethodFunction", "f", MethodFunctionMotionHandler::new)
+        };
+
+        for (MotionHandlerConfig config : motionConfigs) {
+            registerMotionHandler(config);
+        }
+    }
+
+    /**
+     * Registers a single motion handler configuration.
+     */
+    private void registerMotionHandler(MotionHandlerConfig config) {
+        // Register backward handler
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getBackwardCommand()),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, config.handlerFactory()),
+                false);
+
+        // Register forward handler
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getForwardCommand()),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, config.handlerFactory()),
+                false);
+
+        // Map backward shortcut
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getBackwardShortcut()),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getBackwardCommand()),
+                true);
+
+        // Map forward shortcut
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getForwardShortcut()),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getForwardCommand()),
                 true);
     }
 
