@@ -17,14 +17,14 @@ import java.util.function.Function;
  * particularly useful for languages like C++ where the default PSI tree might be inconvenient.
  */
 public abstract class SyntaxTreeAdapter {
-    protected static Optional<SyntaxNode> nextNeighbour(SyntaxNode node, Direction direction) {
+    public static Optional<SyntaxNode> nextNeighbour(SyntaxNode node, Direction direction) {
         return switch (direction) {
             case Direction.FORWARD -> Optional.ofNullable(node.getNextSibling());
             case Direction.BACKWARD -> Optional.ofNullable(node.getPreviousSibling());
         };
     }
 
-    protected static SyntaxNode getChild(@NotNull SyntaxNode currentNode, Direction direction) {
+    public static SyntaxNode getChild(@NotNull SyntaxNode currentNode, Direction direction) {
         return switch (direction) {
             case Direction.FORWARD -> currentNode.getFirstChild();
             case Direction.BACKWARD -> currentNode.getLastChild();
