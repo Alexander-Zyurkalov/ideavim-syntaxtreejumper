@@ -18,7 +18,7 @@ import java.util.Optional;
  * Alt-o (EXPAND): Expands the current selection to encompass the parent syntax node
  * Alt-i (SHRINK): Shrinks the current selection to the largest child node that fits within the selection
  */
-public class SyntaxNodeTreeHandler implements MotionHandler {
+public class ShrinkExpandMotionHandler implements MotionHandler {
 
     public enum SyntaxNoteMotionType {
         EXPAND,  // Alt-o: expand selection to parent
@@ -28,7 +28,7 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
     private final SyntaxTreeAdapter syntaxTree;
     private final SyntaxNoteMotionType motionType;
 
-    public SyntaxNodeTreeHandler(SyntaxTreeAdapter syntaxTree, SyntaxNoteMotionType motionType) {
+    public ShrinkExpandMotionHandler(SyntaxTreeAdapter syntaxTree, SyntaxNoteMotionType motionType) {
         this.syntaxTree = syntaxTree;
         this.motionType = motionType;
     }
@@ -70,7 +70,7 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
         return Optional.of(new Offsets(parentRange.getStartOffset(), parentRange.getEndOffset()));
     }
 
-    private static @NotNull Optional<Offsets> findSubWordToExpand(Offsets initialOffsets, SyntaxNode targetElement) {
+    private static @NotNull Optional<Offsets> findSubWordToExpand(Offsets initialOffsets, SyntaxNode targetElement) { //TODO: move to sub
         int elementOffset = targetElement.getTextRange().getStartOffset();
         int offsetInParent = initialOffsets.leftOffset() - elementOffset;
         Offsets elementRelativeOffset = new Offsets(offsetInParent, offsetInParent);
@@ -167,11 +167,11 @@ public class SyntaxNodeTreeHandler implements MotionHandler {
     }
 
     // Factory methods for easier integration with your existing system
-    public static SyntaxNodeTreeHandler createExpandHandler(SyntaxTreeAdapter syntaxTree) {
-        return new SyntaxNodeTreeHandler(syntaxTree, SyntaxNoteMotionType.EXPAND);
+    public static ShrinkExpandMotionHandler createExpandHandler(SyntaxTreeAdapter syntaxTree) {
+        return new ShrinkExpandMotionHandler(syntaxTree, SyntaxNoteMotionType.EXPAND);
     }
 
-    public static SyntaxNodeTreeHandler createShrinkHandler(SyntaxTreeAdapter syntaxTree) {
-        return new SyntaxNodeTreeHandler(syntaxTree, SyntaxNoteMotionType.SHRINK);
+    public static ShrinkExpandMotionHandler createShrinkHandler(SyntaxTreeAdapter syntaxTree) {
+        return new ShrinkExpandMotionHandler(syntaxTree, SyntaxNoteMotionType.SHRINK);
     }
 }

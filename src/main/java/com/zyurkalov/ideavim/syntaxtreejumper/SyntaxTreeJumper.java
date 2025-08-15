@@ -204,7 +204,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
                 getOwner(),
                 new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
-                        SyntaxNodeTreeHandler.createExpandHandler(syntaxTree)),
+                        ShrinkExpandMotionHandler.createExpandHandler(syntaxTree)),
                 false);
 
         putExtensionHandlerMapping(
@@ -212,7 +212,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
                 getOwner(),
                 new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
-                        SyntaxNodeTreeHandler.createShrinkHandler(syntaxTree)),
+                        ShrinkExpandMotionHandler.createShrinkHandler(syntaxTree)),
                 false);
 
         putKeyMappingIfMissing(

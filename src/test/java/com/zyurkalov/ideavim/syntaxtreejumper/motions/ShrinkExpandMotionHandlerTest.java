@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class SyntaxNodeTreeHandlerTest {
+class ShrinkExpandMotionHandlerTest {
 
     private CodeInsightTestFixture myFixture;
 
@@ -44,7 +44,7 @@ class SyntaxNodeTreeHandlerTest {
             String initialText,
             Offsets expectedOffsets,
             String expectedText,
-            SyntaxNodeTreeHandler.SyntaxNoteMotionType motionType,
+            ShrinkExpandMotionHandler.SyntaxNoteMotionType motionType,
             String explanation
     ) {
         @Override
@@ -61,7 +61,7 @@ class SyntaxNodeTreeHandlerTest {
                         "",
                         new Offsets(94, 95), // select 'i'
                         "i",
-                        SyntaxNodeTreeHandler.SyntaxNoteMotionType.EXPAND,
+                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.EXPAND,
                         "Expand: cursor position to identifier"
                 ),
                 new HelixSelectionTestData(
@@ -69,7 +69,7 @@ class SyntaxNodeTreeHandlerTest {
                         "",
                         new Offsets(13, 22), // select 'Test' //subwords are not considered any more
                         "TestClass",
-                        SyntaxNodeTreeHandler.SyntaxNoteMotionType.EXPAND,
+                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.EXPAND,
                         "Expand: cursor position to SubWord"
                 ),
 
@@ -79,7 +79,7 @@ class SyntaxNodeTreeHandlerTest {
                         "i",
                         new Offsets(90, 100), // "int i = 0;"
                         "int i = 0;",
-                        SyntaxNodeTreeHandler.SyntaxNoteMotionType.EXPAND,
+                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.EXPAND,
                         "Expand: identifier to assignment expression"
                 ),
 
@@ -89,7 +89,7 @@ class SyntaxNodeTreeHandlerTest {
                         "int i = 0;",
                         new Offsets(85, 151), // full for loop
                         "for (int i = 0; i < 10; i++) { a[i] = 2 * i; }",
-                        SyntaxNodeTreeHandler.SyntaxNoteMotionType.EXPAND,
+                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.EXPAND,
                         "Expand: for loop initialization to entire for loop"
                 )
         );
@@ -102,7 +102,7 @@ class SyntaxNodeTreeHandlerTest {
                         "TestClass",
                         new Offsets(13, 22), // "Class"
                         "TestClass",
-                        SyntaxNodeTreeHandler.SyntaxNoteMotionType.SHRINK,
+                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.SHRINK,
                         "Shrink: an element to SubWord"
                 ),
 
@@ -112,7 +112,7 @@ class SyntaxNodeTreeHandlerTest {
                         "System.out.println(\"Test\")",
                         new Offsets(160, 178), // method name
                         "System.out.println",
-                        SyntaxNodeTreeHandler.SyntaxNoteMotionType.SHRINK,
+                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.SHRINK,
                         "Shrink: method call to method name"
                 ),
 
@@ -122,7 +122,7 @@ class SyntaxNodeTreeHandlerTest {
                         "System.out.println",
                         new Offsets(160, 170), // qualifier part
                         "System.out",
-                        SyntaxNodeTreeHandler.SyntaxNoteMotionType.SHRINK,
+                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.SHRINK,
                         "Shrink: qualified method name to qualifier"
                 ),
 
@@ -132,7 +132,7 @@ class SyntaxNodeTreeHandlerTest {
                         "a[i] = 2 * i;",
                         new Offsets(128, 140), // "a[i] = 2 * i"
                         "a[i] = 2 * i",
-                        SyntaxNodeTreeHandler.SyntaxNoteMotionType.SHRINK,
+                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.SHRINK,
                         "Shrink: statement to assignment expression"
                 )
         );
@@ -146,7 +146,7 @@ class SyntaxNodeTreeHandlerTest {
                         "",
                         new Offsets(124, 124), // same position
                         "",
-                        SyntaxNodeTreeHandler.SyntaxNoteMotionType.SHRINK,
+                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.SHRINK,
                         "Edge case: shrink with no selection should return same position"
                 ),
 
@@ -156,7 +156,7 @@ class SyntaxNodeTreeHandlerTest {
                         "}",
                         new Offsets(0, 195), // whole class body
                         "public class TestClass { void execute() { int[] a = new int[10]; for (int i = 0; i < 10; i++) { a[i] = 2 * i; } System.out.println(\"Test\"); } }",
-                        SyntaxNodeTreeHandler.SyntaxNoteMotionType.EXPAND,
+                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.EXPAND,
                         "Edge case: expand from closing brace"
                 ),
 
@@ -166,7 +166,7 @@ class SyntaxNodeTreeHandlerTest {
                         "public class TestClass { void execute() { int[] a = new int[10]; for (int i = 0; i < 10; i++) { a[i] = 2 * i; } System.out.println(\"Test\"); } }",
                         new Offsets(0, 196), // whole class body
                         "public class TestClass { void execute() { int[] a = new int[10]; for (int i = 0; i < 10; i++) { a[i] = 2 * i; } System.out.println(\"Test\"); } }",
-                        SyntaxNodeTreeHandler.SyntaxNoteMotionType.EXPAND,
+                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.EXPAND,
                         "Edge case: whole body to whole body"
                 )
         );
@@ -219,7 +219,7 @@ class SyntaxNodeTreeHandlerTest {
         }
 
         PsiFile javaFile = myFixture.configureByText("TestClass.java", javaCode);
-        SyntaxNodeTreeHandler handler = new SyntaxNodeTreeHandler( new PsiSyntaxTreeAdapter(javaFile), testData.motionType);
+        ShrinkExpandMotionHandler handler = new ShrinkExpandMotionHandler( new PsiSyntaxTreeAdapter(javaFile), testData.motionType);
 
         ApplicationManager.getApplication().runReadAction(() -> {
             Optional<Offsets> result = handler.findNext(testData.initialOffsets);

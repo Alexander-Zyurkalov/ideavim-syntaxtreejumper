@@ -229,7 +229,7 @@ public abstract class SyntaxTreeAdapter {
         return result;
     }
     public enum WhileSearching {
-        SKIP_FIRST_NODE, DO_NOT_SKIP_FIRST_NODE
+        SKIP_FIRST_NODE, DO_NOT_SKIP_FIRST_NODE // TODO: probably it is redundant
     }
 
     public Optional<SyntaxNode> findWithinNeighbours(
