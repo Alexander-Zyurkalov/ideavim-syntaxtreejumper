@@ -116,4 +116,15 @@ public class CppSyntaxNode extends SyntaxNode {
         } catch (NullPointerException ignored) {}
         return result;
     }
+
+    public boolean isMethodDefinition() {
+        return isFunctionDefinition();
+    }
+
+    public boolean isFunctionDefinition() {
+        String typeName = getTypeName();
+        return
+                typeName.equals("FUNCTION_DEFINITION") ||
+                typeName.equals("CPP_LAMBDA_EXPRESSION");
+    }
 }

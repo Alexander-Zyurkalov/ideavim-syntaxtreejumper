@@ -213,16 +213,6 @@ class ArgumentParameterListMotionHandlerTest {
         runArgumentParameterListTest(testData);
     }
 
-    class TestClass {
-        public void methodWithParams(int param1, String param2, boolean param3) {
-
-        }
-
-        public double anotherMethod(double x, double y) {
-            return (int) Math.max(x, 2);
-        }
-    }
-
     private void runArgumentParameterListTest(ArgumentParameterListTestData testData) {
         // TODO: Create appropriate test Java code with parameter lists and argument lists
         String javaCode = """

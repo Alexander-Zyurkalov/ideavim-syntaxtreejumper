@@ -370,6 +370,40 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandForwardLoopConditional),
                 true);
 
+        // Method/Function navigation functionality
+        String commandBackwardMethodFunction = "<Plug>BackwardMethodFunction";
+        String commandForwardMethodFunction = "<Plug>ForwardMethodFunction";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardMethodFunction),
+                getOwner(),
+                new FunctionHandler(Direction.BACKWARD, MethodFunctionMotionHandler::new),
+                false);
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardMethodFunction),
+                getOwner(),
+                new FunctionHandler(Direction.FORWARD, MethodFunctionMotionHandler::new),
+                false);
+
+// Map [-f to backward method/function navigation
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("[f"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardMethodFunction),
+                true);
+
+// Map ]-f to forward method/function navigation
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("]f"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardMethodFunction),
+                true);
+
         // Set up automatic highlighting for all editors
         setupAutomaticHighlighting();
     }

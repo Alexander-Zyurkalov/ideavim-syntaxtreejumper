@@ -276,4 +276,23 @@ public abstract class SyntaxNode {
         return isLoopStatement() || isConditionalStatement();
     }
 
+    public boolean isMethodDefinition() {
+        String typeName = getTypeName();
+        return typeName.equals("METHOD_DECLARATION") ||
+                typeName.equals("METHOD") ||
+                typeName.equals("METHOD_DEFINITION") ||
+                typeName.equals("CONSTRUCTOR_DECLARATION") ||
+                typeName.equals("DESTRUCTOR_DECLARATION") ||
+                typeName.equals("CONVERSION_FUNCTION_DECLARATION") ||
+                typeName.equals("CONSTRUCTOR");
+    }
+
+    public boolean isFunctionDefinition() {
+        String typeName = getTypeName();
+        return typeName.equals("FUNCTION_DECLARATION") ||
+                typeName.equals("FUNCTION_DEFINITION") ||
+                typeName.equals("TEMPLATE_FUNCTION_DECLARATION") ||
+                typeName.equals("FUNCTION") ||
+                typeName.equals("LAMBDA_EXPRESSION");
+    }
 }
