@@ -8,6 +8,8 @@ import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class SameLevelElementsMotionHandler implements MotionHandler {
@@ -50,4 +52,56 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
         };
     }
 
+    /**
+     * Recursively collects children that fit within the selection
+     */
+    void collectChildrenWithinSelection(SyntaxNode element, Offsets selection, List<SyntaxNode> candidates) {
+        for (SyntaxNode child : element.getChildren()) {
+            if (child.isWhitespace()) {
+                continue;
+            }
+
+            TextRange childRange = child.getTextRange();
+
+            // Check if the child fits completely within the selection
+            if (childRange.getStartOffset() >= selection.leftOffset() &&
+                    childRange.getEndOffset() <= selection.rightOffset()) {
+
+                // If the child is smaller than the current selection, it's a candidate
+                if (childRange.getStartOffset() > selection.leftOffset() ||
+                        childRange.getEndOffset() < selection.rightOffset()) {
+                    candidates.add(child);
+                }
+
+                // Also check this child's children
+                collectChildrenWithinSelection(child, selection, candidates);
+            }
+        }
+    }
+
+    /**
+     * Finds the largest meaningful child that fits within the current selection
+     */
+    @Nullable SyntaxNode findLargestChildWithinSelection(SyntaxNode parent, Offsets selection) {
+        List<SyntaxNode> candidateChildren = new ArrayList<>();
+
+        // Collect all meaningful children that fit within the selection
+        collectChildrenWithinSelection(parent, selection, candidateChildren);
+
+        // Find the largest child by text range
+        SyntaxNode largestChild = null;
+        int largestSize = 0;
+
+        for (SyntaxNode child : candidateChildren) {
+            TextRange range = child.getTextRange();
+            int size = range.getLength();
+
+            if (size > largestSize) {
+                largestSize = size;
+                largestChild = child;
+            }
+        }
+
+        return largestChild;
+    }
 }

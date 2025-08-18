@@ -76,12 +76,16 @@ public class PsiElementHighlighter {
         }
 
         // Highlight previous sibling
-        if (config.showPreviousSibling && elementWithSiblings.previousSibling() != null) {
+        if (config.showPreviousSibling && elementWithSiblings.previousSibling() != null &&
+                !elementWithSiblings.previousSibling().isPsiFile()
+        ) {
             highlightElement(elementWithSiblings.previousSibling(), PREVIOUS_SIBLING_COLOR, "Previous Sibling");
         }
 
         // Highlight next sibling
-        if (config.showNextSibling && elementWithSiblings.nextSibling() != null) {
+        if (config.showNextSibling && elementWithSiblings.nextSibling() != null &&
+                !elementWithSiblings.nextSibling().isPsiFile()
+        ) {
             highlightElement(elementWithSiblings.nextSibling(), NEXT_SIBLING_COLOR, "Next Sibling");
         }
     }

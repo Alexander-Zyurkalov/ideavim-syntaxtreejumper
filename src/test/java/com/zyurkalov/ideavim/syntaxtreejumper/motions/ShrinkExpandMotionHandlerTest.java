@@ -103,12 +103,12 @@ class ShrinkExpandMotionHandlerTest {
                         new Offsets(13, 22), // "Class"
                         "TestClass",
                         ShrinkExpandMotionHandler.SyntaxNoteMotionType.SHRINK,
-                        "Shrink: an element to SubWord"
+                        "Shrink: an element to itself"
                 ),
 
                 // Shrink from method call to method name
                 new HelixSelectionTestData(
-                        new Offsets(160, 185), // full method call
+                        new Offsets(160, 186), // full method call
                         "System.out.println(\"Test\")",
                         new Offsets(160, 178), // method name
                         "System.out.println",

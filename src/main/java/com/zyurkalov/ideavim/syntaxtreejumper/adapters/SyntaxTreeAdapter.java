@@ -108,7 +108,10 @@ public abstract class SyntaxTreeAdapter {
      * Finds the next non-whitespace sibling of the given node.
      */
     @Nullable
-    public SyntaxNode findNextNonWhitespaceSibling(@NotNull SyntaxNode node) {
+    public SyntaxNode findNextNonWhitespaceSibling(SyntaxNode node) {
+        if (node == null) {
+            return null;
+        }
         SyntaxNode sibling = node.getNextSibling();
         while (sibling != null && isASymbolToSkip(sibling)) {
             sibling = sibling.getNextSibling();
@@ -124,7 +127,10 @@ public abstract class SyntaxTreeAdapter {
      * @return The first non-whitespace child, or null if not found
      */
     @Nullable
-    public SyntaxNode findFirstChildOfItsParent(@NotNull SyntaxNode node) {
+    public SyntaxNode findFirstChildOfItsParent(SyntaxNode node) {
+        if (node == null) {
+            return null;
+        }
         SyntaxNode parent = node.getParent();
         if (parent == null) return null;
         SyntaxNode firstChild = parent.getFirstChild();
@@ -287,7 +293,7 @@ public abstract class SyntaxTreeAdapter {
      */
     public ElementWithSiblings findElementWithSiblings(Offsets initialOffsets, Direction direction) {
         SyntaxNode currentElement = findCurrentElement(initialOffsets, direction);
-        if (currentElement == null) {
+        if (currentElement == null || currentElement.isPsiFile()) {
             return new ElementWithSiblings(null, null, null);
         }
 

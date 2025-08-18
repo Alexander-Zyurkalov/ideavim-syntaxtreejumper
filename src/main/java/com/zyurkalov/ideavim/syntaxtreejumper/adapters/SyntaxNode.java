@@ -18,8 +18,8 @@ import java.util.Objects;
 public abstract class SyntaxNode {
     final protected PsiElement psiElement;
 
-    public SyntaxNode(@NotNull PsiElement psiElement) {
-        this.psiElement = Objects.requireNonNull(psiElement);
+    public SyntaxNode(PsiElement psiElement) {
+        this.psiElement = psiElement;
     }
 
     /**

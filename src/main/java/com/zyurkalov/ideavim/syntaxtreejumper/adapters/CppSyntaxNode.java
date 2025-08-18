@@ -15,7 +15,7 @@ import java.util.Objects;
 public class CppSyntaxNode extends SyntaxNode {
 
 
-    public CppSyntaxNode(@NotNull PsiElement psiElement) {
+    public CppSyntaxNode(PsiElement psiElement) {
         super(psiElement);
     }
 
@@ -64,12 +64,21 @@ public class CppSyntaxNode extends SyntaxNode {
 
     @Override
     public SyntaxNode getFirstChild() {
-        return new CppSyntaxNode(psiElement.getFirstChild());
+
+        PsiElement firstChild = psiElement.getFirstChild();
+        if (firstChild == null) {
+            return  null;
+        }
+        return new CppSyntaxNode(firstChild);
     }
 
     @Override
     public SyntaxNode getLastChild() {
-        return new CppSyntaxNode(psiElement.getLastChild());
+        PsiElement lastChild = psiElement.getLastChild();
+        if (lastChild == null) {
+            return  null;
+        }
+        return new CppSyntaxNode(lastChild);
     }
 
     @Override
