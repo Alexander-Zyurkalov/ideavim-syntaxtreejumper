@@ -12,7 +12,7 @@ import java.util.function.Function;
 public abstract class AbstractFindNodeMotionHandler implements MotionHandler {
     protected final SyntaxTreeAdapter syntaxTree;
     protected final Direction direction;
-    private SyntaxTreeAdapter.WhileSearching whileSearching;
+    private final SyntaxTreeAdapter.WhileSearching whileSearching;
 
     public AbstractFindNodeMotionHandler(SyntaxTreeAdapter syntaxTree, Direction direction,
                                          SyntaxTreeAdapter.WhileSearching whileSearching) {
@@ -23,18 +23,12 @@ public abstract class AbstractFindNodeMotionHandler implements MotionHandler {
 
     @Override
     public Optional<Offsets> findNext(Offsets initialOffsets) {
-        // 1. Get the current element at the caret position
-        SyntaxNode leftNode = syntaxTree.findNodeAt(initialOffsets.leftOffset());
-        SyntaxNode rightNode = syntaxTree.findNodeAt(Math.max(initialOffsets.leftOffset(), initialOffsets.rightOffset() - 1));
-        if (leftNode == null || rightNode == null) {
+        SyntaxNode currentNode = syntaxTree.findCurrentElement(initialOffsets, direction);
+        if (currentNode == null) {
             return Optional.empty();
         }
         if (initialOffsets.leftOffset() == initialOffsets.rightOffset()) {
-            initialOffsets = new Offsets(leftNode.getTextRange().getStartOffset(), leftNode.getTextRange().getEndOffset());
-        }
-        SyntaxNode currentNode = syntaxTree.findLargestParentWithinSelection(leftNode, rightNode, initialOffsets);
-        if (currentNode == null) {
-            return Optional.empty();
+            initialOffsets = new Offsets(currentNode.getTextRange().getStartOffset(), currentNode.getTextRange().getEndOffset());
         }
 
         // 2. Search for nodes based on a direction and searching criteria

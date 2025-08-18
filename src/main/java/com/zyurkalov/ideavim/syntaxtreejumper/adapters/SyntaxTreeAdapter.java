@@ -229,6 +229,55 @@ public abstract class SyntaxTreeAdapter {
         return result;
     }
 
+    @NotNull
+    public SyntaxNode findParentElementIfInitialElementsAreAtEdgesOrChooseOne(
+            SyntaxNode initElementAtLeft, SyntaxNode initElementAtRight, Direction direction) {
+        SyntaxNode initialElement = initElementAtLeft;
+        SyntaxNode commonParent = findCommonParent(initElementAtLeft, initElementAtRight);
+        if (commonParent == null) {
+            return initialElement;
+        }
+        boolean areOurElementsAtTheEdges =
+                commonParent.getTextRange().getStartOffset() == initElementAtLeft.getTextRange().getStartOffset() &&
+                        commonParent.getTextRange().getEndOffset() == initElementAtRight.getTextRange().getEndOffset();
+        if (areOurElementsAtTheEdges) {
+            initialElement = commonParent;
+        } else {
+            initialElement = switch (direction) {
+                case BACKWARD -> initElementAtLeft;
+                case FORWARD -> initElementAtRight;
+            };
+        }
+        return initialElement;
+    }
+
+    /**
+     * Finds the current syntax node based on the given offsets.
+     * Extracted from the original findNext method for reuse.
+     *
+     * @param initialOffsets
+     * @param direction
+     */
+    @Nullable
+    public SyntaxNode findCurrentElement(Offsets initialOffsets, Direction direction) {
+        boolean isOnlyCaretButNoSelection = initialOffsets.leftOffset() >= initialOffsets.rightOffset() - 1;
+
+        if (isOnlyCaretButNoSelection) {
+            return findNodeAt(initialOffsets.leftOffset());
+        } else {
+            SyntaxNode initElementAtLeft = findNodeAt(initialOffsets.leftOffset());
+            SyntaxNode initElementAtRight = findNodeAt(initialOffsets.rightOffset() - 1);
+            if (initElementAtLeft == null || initElementAtRight == null) {
+                return null;
+            }
+            if (initElementAtLeft.isEquivalentTo(initElementAtRight)) {
+                return initElementAtLeft;
+            } else {
+                return findParentElementIfInitialElementsAreAtEdgesOrChooseOne(initElementAtLeft, initElementAtRight, direction);
+            }
+        }
+    }
+
     public enum WhileSearching {
         SKIP_INITIAL_SELECTION, DO_NOT_SKIP_INITIAL_SELECTION
     }

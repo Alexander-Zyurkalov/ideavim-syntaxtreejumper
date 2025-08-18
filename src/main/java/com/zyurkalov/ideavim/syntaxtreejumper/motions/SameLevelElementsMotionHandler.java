@@ -5,7 +5,6 @@ import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
@@ -31,7 +30,7 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
      * This method can be reused by other classes like PsiElementHighlighter.
      */
     public ElementWithSiblings findElementWithSiblings(Offsets initialOffsets) {
-        SyntaxNode currentElement = findCurrentElement(initialOffsets);
+        SyntaxNode currentElement = syntaxTree.findCurrentElement(initialOffsets, direction);
         if (currentElement == null) {
             return new ElementWithSiblings(null, null, null);
         }
@@ -64,29 +63,6 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
     }
 
     /**
-     * Finds the current syntax node based on the given offsets.
-     * Extracted from the original findNext method for reuse.
-     */
-    private @Nullable SyntaxNode findCurrentElement(Offsets initialOffsets) {
-        boolean isOnlyCaretButNoSelection = initialOffsets.leftOffset() >= initialOffsets.rightOffset() - 1;
-
-        if (isOnlyCaretButNoSelection) {
-            return syntaxTree.findNodeAt(initialOffsets.leftOffset());
-        } else {
-            SyntaxNode initElementAtLeft = syntaxTree.findNodeAt(initialOffsets.leftOffset());
-            SyntaxNode initElementAtRight = syntaxTree.findNodeAt(initialOffsets.rightOffset() - 1);
-            if (initElementAtLeft == null || initElementAtRight == null) {
-                return null;
-            }
-            if (initElementAtLeft.isEquivalentTo(initElementAtRight)) {
-                return initElementAtLeft;
-            } else {
-                return findParentElementIfInitialElementsAreAtEdgesOrChooseOne(initElementAtLeft, initElementAtRight);
-            }
-        }
-    }
-
-    /**
      * Gets the next element based on a direction from the ElementWithSiblings.
      */
     private @Nullable SyntaxNode getNextElementFromSiblings(ElementWithSiblings elementWithSiblings) {
@@ -100,24 +76,4 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
         };
     }
 
-    private @NotNull SyntaxNode findParentElementIfInitialElementsAreAtEdgesOrChooseOne(
-            SyntaxNode initElementAtLeft, SyntaxNode initElementAtRight) {
-        SyntaxNode initialElement = initElementAtLeft;
-        SyntaxNode commonParent = syntaxTree.findCommonParent(initElementAtLeft, initElementAtRight);
-        if (commonParent == null) {
-            return initialElement;
-        }
-        boolean areOurElementsAtTheEdges =
-                commonParent.getTextRange().getStartOffset() == initElementAtLeft.getTextRange().getStartOffset() &&
-                        commonParent.getTextRange().getEndOffset() == initElementAtRight.getTextRange().getEndOffset();
-        if (areOurElementsAtTheEdges) {
-            initialElement = commonParent;
-        } else {
-            initialElement = switch (direction) {
-                case BACKWARD -> initElementAtLeft;
-                case FORWARD -> initElementAtRight;
-            };
-        }
-        return initialElement;
-    }
 }
