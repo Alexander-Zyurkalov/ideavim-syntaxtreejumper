@@ -8,9 +8,9 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.JBColor;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.ElementWithSiblings;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
-import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsMotionHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -27,18 +27,18 @@ public class PsiElementHighlighter {
 
     // Color definitions with transparency
     private static final Color CURRENT_ELEMENT_COLOR = new JBColor(
-        new Color(0, 150, 255, 18),    // Light blue with transparency (normal theme)
-        new Color(100, 180, 255, 18)   // Brighter blue with transparency (dark theme)
+            new Color(0, 150, 255, 18),    // Light blue with transparency (normal theme)
+            new Color(100, 180, 255, 18)   // Brighter blue with transparency (dark theme)
     );
 
     private static final Color PREVIOUS_SIBLING_COLOR = new JBColor(
-        new Color(255, 150, 0, 18),    // Orange with transparency (normal theme)
-        new Color(255, 180, 100, 18)   // Brighter orange with transparency (dark theme)
+            new Color(255, 150, 0, 18),    // Orange with transparency (normal theme)
+            new Color(255, 180, 100, 18)   // Brighter orange with transparency (dark theme)
     );
 
     private static final Color NEXT_SIBLING_COLOR = new JBColor(
-        new Color(0, 200, 100, 18),    // Green with transparency (normal theme)
-        new Color(100, 220, 150, 18)   // Brighter green with transparency (dark theme)
+            new Color(0, 200, 100, 18),    // Green with transparency (normal theme)
+            new Color(100, 220, 150, 18)   // Brighter green with transparency (dark theme)
     );
 
     private final MarkupModel markupModel;
@@ -63,9 +63,8 @@ public class PsiElementHighlighter {
         clearHighlights();
 
         // Use SameLevelElementsMotionHandler to find the current element and its siblings
-        SameLevelElementsMotionHandler motionHandler = new SameLevelElementsMotionHandler(syntaxTree, Direction.FORWARD);
         Offsets offsets = new Offsets(startOffset, endOffset);
-        SameLevelElementsMotionHandler.ElementWithSiblings elementWithSiblings = motionHandler.findElementWithSiblings(offsets);
+        ElementWithSiblings elementWithSiblings = syntaxTree.findElementWithSiblings(offsets, Direction.BACKWARD);
 
         if (elementWithSiblings.currentElement() == null) {
             return;
@@ -107,11 +106,11 @@ public class PsiElementHighlighter {
         attributes.setBackgroundColor(backgroundColor);
 
         RangeHighlighter highlighter = markupModel.addRangeHighlighter(
-            element.getTextRange().getStartOffset(),
-            element.getTextRange().getEndOffset(),
-            HighlighterLayer.SELECTION - 1, // Layer below selection but above syntax highlighting
-            attributes,
-            com.intellij.openapi.editor.markup.HighlighterTargetArea.EXACT_RANGE
+                element.getTextRange().getStartOffset(),
+                element.getTextRange().getEndOffset(),
+                HighlighterLayer.SELECTION - 1, // Layer below selection but above syntax highlighting
+                attributes,
+                com.intellij.openapi.editor.markup.HighlighterTargetArea.EXACT_RANGE
         );
 
         if (config.showTooltips) {

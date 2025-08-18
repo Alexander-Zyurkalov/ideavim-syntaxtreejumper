@@ -278,6 +278,30 @@ public abstract class SyntaxTreeAdapter {
         }
     }
 
+    /**
+     * Public method to find the current element and its siblings based on the given offsets.
+     * This method can be reused by other classes like PsiElementHighlighter.
+     *
+     * @param initialOffsets
+     * @param direction
+     */
+    public ElementWithSiblings findElementWithSiblings(Offsets initialOffsets, Direction direction) {
+        SyntaxNode currentElement = findCurrentElement(initialOffsets, direction);
+        if (currentElement == null) {
+            return new ElementWithSiblings(null, null, null);
+        }
+
+        currentElement = replaceWithParentIfParentEqualsTheNode(currentElement);
+        if (currentElement == null) {
+            return new ElementWithSiblings(null, null, null);
+        }
+
+        SyntaxNode previousSibling = findPreviousNonWhitespaceSibling(currentElement);
+        SyntaxNode nextSibling = findNextNonWhitespaceSibling(currentElement);
+
+        return new ElementWithSiblings(currentElement, previousSibling, nextSibling);
+    }
+
     public enum WhileSearching {
         SKIP_INITIAL_SELECTION, DO_NOT_SKIP_INITIAL_SELECTION
     }
