@@ -17,12 +17,12 @@ import java.util.function.Function;
 public class MethodFunctionMotionHandler extends AbstractFindNodeMotionHandler {
 
     public MethodFunctionMotionHandler(SyntaxTreeAdapter syntaxTree, Direction direction) {
-        super(syntaxTree, direction);
+        super(syntaxTree, direction, SyntaxTreeAdapter.WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION);
     }
 
     @Override
     @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection) {
+    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection, SyntaxTreeAdapter.WhileSearching whileSearching) {
         return node -> {
             if (node.isMethodDefinition() || node.isFunctionDefinition()) {
                 return Optional.of(node);

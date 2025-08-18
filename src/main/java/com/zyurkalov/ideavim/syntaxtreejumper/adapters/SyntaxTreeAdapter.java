@@ -230,7 +230,7 @@ public abstract class SyntaxTreeAdapter {
     }
 
     public enum WhileSearching {
-        SKIP_FIRST_NODE, DO_NOT_SKIP_FIRST_NODE // TODO: probably it is redundant
+        SKIP_INITIAL_SELECTION, DO_NOT_SKIP_INITIAL_SELECTION
     }
 
     public Optional<SyntaxNode> findWithinNeighbours(
@@ -239,12 +239,9 @@ public abstract class SyntaxTreeAdapter {
             WhileSearching whileSearching) {
         Optional<SyntaxNode> found = Optional.empty();
         var next = Optional.of(currentNode);
-        if (whileSearching == WhileSearching.SKIP_FIRST_NODE) {
-            next = nextNeighbour(currentNode, direction);
-        }
         while (next.isPresent()) {
             currentNode = next.get();
-            if (!currentNode.isInRightDirection(initialSelection, direction)) {
+            if ( whileSearching == WhileSearching.SKIP_INITIAL_SELECTION && !currentNode.isInRightDirection(initialSelection, direction)) {
                 next = nextNeighbour(currentNode, direction);
                 continue;
             }
@@ -255,7 +252,7 @@ public abstract class SyntaxTreeAdapter {
             }
             if (!currentNode.getChildren().isEmpty()) {
                 found = findWithinNeighbours(
-                        getChild(currentNode, direction), direction, initialSelection, findNodeType, WhileSearching.DO_NOT_SKIP_FIRST_NODE);
+                        getChild(currentNode, direction), direction, initialSelection, findNodeType, WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION);
                 if (isNodeFound(direction, initialSelection, found)
                 ) {
                     return found;
@@ -279,20 +276,21 @@ public abstract class SyntaxTreeAdapter {
      * @param direction                     The direction to search
      * @param initialSelection              The initial selection
      * @param functionToCheckSearchCriteria The function to find parameter nodes based on specific criteria
+     * @param whileSearching
      * @return The found parameter/argument list node or null if not found
      */
     public Optional<SyntaxNode> findNodeByDirection(
             SyntaxNode currentNode, Direction direction, Offsets initialSelection,
-            @NotNull Function<SyntaxNode, Optional<SyntaxNode>> functionToCheckSearchCriteria) {
+            @NotNull Function<SyntaxNode, Optional<SyntaxNode>> functionToCheckSearchCriteria, WhileSearching whileSearching) {
         Optional<SyntaxNode> found = findWithinNeighbours(
-                currentNode, direction, initialSelection, functionToCheckSearchCriteria, WhileSearching.DO_NOT_SKIP_FIRST_NODE);
+                currentNode, direction, initialSelection, functionToCheckSearchCriteria, whileSearching);
 
         while (found.isEmpty()) {
             currentNode = currentNode.getParent();
             if (currentNode == null || currentNode.isPsiFile()) {
                 break;
             }
-            found = findWithinNeighbours(currentNode, direction, initialSelection, functionToCheckSearchCriteria, WhileSearching.DO_NOT_SKIP_FIRST_NODE);
+            found = findWithinNeighbours(currentNode, direction, initialSelection, functionToCheckSearchCriteria, whileSearching);
         }
         return found;
     }

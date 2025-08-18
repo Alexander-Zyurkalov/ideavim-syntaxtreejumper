@@ -9,6 +9,7 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.PsiSyntaxTreeAdapter;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +47,8 @@ class LoopConditionalMotionHandlerTest {
             Offsets expectedOffsets,
             String expectedText,
             Direction direction,
-            String explanation
+            String explanation,
+            SyntaxTreeAdapter.WhileSearching whileSearching
     ) {
         @Override
         public @NotNull String toString() {
@@ -59,21 +61,39 @@ class LoopConditionalMotionHandlerTest {
                 new LoopConditionalTestData(
                         new Offsets(29, 149), // Select the entire first function (methodWithLoop)
                         """
-                            public void methodWithLoop() {
+                                public void methodWithLoop() {
+                                    for (int i = 0; i < 10; i++) {
+                                        System.out.println(i);
+                                    }
+                                }""",
+                        new Offsets(68, 143), // Jump to while loop in the second function
+                        """
                                 for (int i = 0; i < 10; i++) {
-                                    System.out.println(i);
-                                }
-                            }""",
+                                            System.out.println(i);
+                                        }""",
+                        Direction.FORWARD,
+                        "Forward: Should not skip loop inside selected function and jump to it",
+                        SyntaxTreeAdapter.WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION
+                ),
+                new LoopConditionalTestData(
+                        new Offsets(29, 149), // Select the entire first function (methodWithLoop)
+                        """
+                                public void methodWithLoop() {
+                                    for (int i = 0; i < 10; i++) {
+                                        System.out.println(i);
+                                    }
+                                }""",
                         new Offsets(224, 341), // Jump to while loop in the second function
                         """
-                            while (count < 5) {
-                                        count++;
-                                        if (count == 3) {
-                                            break;
-                                        }
-                                    }""",
+                                while (count < 5) {
+                                            count++;
+                                            if (count == 3) {
+                                                break;
+                                            }
+                                        }""",
                         Direction.FORWARD,
-                        "Forward: Should skip loop inside selected function and jump to loop in next function"
+                        "Forward: Should skip loop inside selected function and jump to loop in next function",
+                        SyntaxTreeAdapter.WhileSearching.SKIP_INITIAL_SELECTION
                 )
         );
     }
@@ -92,7 +112,7 @@ class LoopConditionalMotionHandlerTest {
                             System.out.println(i);
                         }
                     }
-
+                
                     public void anotherMethodWithLoop() {
                         int count = 0;
                         while (count < 5) {
@@ -107,7 +127,7 @@ class LoopConditionalMotionHandlerTest {
 
         PsiFile javaFile = myFixture.configureByText("TestClass.java", javaCode);
         LoopConditionalMotionHandler handler = new LoopConditionalMotionHandler(
-                new PsiSyntaxTreeAdapter(javaFile), testData.direction);
+                new PsiSyntaxTreeAdapter(javaFile), testData.direction, testData.whileSearching);
 
         ApplicationManager.getApplication().runReadAction(() -> {
             Optional<Offsets> result = handler.findNext(testData.initialOffsets);

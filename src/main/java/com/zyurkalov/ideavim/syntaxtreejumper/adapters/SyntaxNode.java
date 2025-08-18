@@ -303,7 +303,7 @@ public abstract class SyntaxNode {
         if (currentRange == null) {
             return false;
         }
-        return currentRange.getEndOffset() == initialSelection.leftOffset() &&
-                currentRange.getStartOffset() == initialSelection.leftOffset();
+        return currentRange.getStartOffset() == initialSelection.leftOffset() &&
+                currentRange.getEndOffset() == initialSelection.rightOffset();
     }
 }

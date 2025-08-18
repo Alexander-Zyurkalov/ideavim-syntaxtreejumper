@@ -11,6 +11,7 @@ import com.maddyhome.idea.vim.api.VimInjectorKt;
 import com.maddyhome.idea.vim.command.MappingMode;
 import com.maddyhome.idea.vim.extension.VimExtension;
 import com.maddyhome.idea.vim.newapi.IjVimEditorKt;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import com.zyurkalov.ideavim.syntaxtreejumper.config.MotionHandlerConfig;
 import com.zyurkalov.ideavim.syntaxtreejumper.config.ShortcutConfig;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler;
@@ -107,7 +108,9 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                                 new ShortcutConfig("<C-[>l", Direction.BACKWARD, true),
                                 new ShortcutConfig("<C-]>l", Direction.FORWARD, true)
                         },
-                        LoopConditionalMotionHandler::new
+                        (syntaxTree1, direction1) -> new LoopConditionalMotionHandler(
+                                syntaxTree1, direction1,
+                                SyntaxTreeAdapter.WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION)
                 ),
 
                 // Method/Function navigation

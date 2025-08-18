@@ -17,11 +17,11 @@ import java.util.function.Function;
 public class ArgumentParameterListMotionHandler extends AbstractFindNodeMotionHandler {
 
     public ArgumentParameterListMotionHandler(SyntaxTreeAdapter syntaxTree, Direction direction) {
-        super(syntaxTree, direction);
+        super(syntaxTree, direction, SyntaxTreeAdapter.WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION);
     }
     @Override
     @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection) {
+    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection, SyntaxTreeAdapter.WhileSearching whileSearching) {
         return node -> {
             if (node.isFunctionParameter() || node.isFunctionArgument() || node.isTypeParameter()) {
                 return Optional.of(node);

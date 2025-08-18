@@ -70,7 +70,8 @@ public class ShrinkExpandMotionHandler implements MotionHandler {
         return Optional.of(new Offsets(parentRange.getStartOffset(), parentRange.getEndOffset()));
     }
 
-    private static @NotNull Optional<Offsets> findSubWordToExpand(Offsets initialOffsets, SyntaxNode targetElement) { //TODO: move to sub
+    //TODO: move to subwords
+    private static @NotNull Optional<Offsets> findSubWordToExpand(Offsets initialOffsets, SyntaxNode targetElement) {
         int elementOffset = targetElement.getTextRange().getStartOffset();
         int offsetInParent = initialOffsets.leftOffset() - elementOffset;
         Offsets elementRelativeOffset = new Offsets(offsetInParent, offsetInParent);

@@ -17,13 +17,13 @@ import java.util.function.Function;
  */
 public class LoopConditionalMotionHandler extends AbstractFindNodeMotionHandler {
 
-    public LoopConditionalMotionHandler(SyntaxTreeAdapter syntaxTree, Direction direction) {
-        super(syntaxTree, direction);
+    public LoopConditionalMotionHandler(SyntaxTreeAdapter syntaxTree, Direction direction, SyntaxTreeAdapter.WhileSearching whileSearching) {
+        super(syntaxTree, direction, whileSearching);
     }
 
     @Override
     @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection) {
+    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection, SyntaxTreeAdapter.WhileSearching whileSearching) {
         return node -> {
             if (node.isLoopOrConditionalStatement()) {
                 return Optional.of(node);

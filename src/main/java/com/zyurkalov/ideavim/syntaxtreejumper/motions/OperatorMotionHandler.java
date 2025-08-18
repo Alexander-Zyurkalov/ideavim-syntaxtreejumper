@@ -16,12 +16,15 @@ import java.util.function.Function;
 public class OperatorMotionHandler extends AbstractFindNodeMotionHandler {
 
     public OperatorMotionHandler(SyntaxTreeAdapter syntaxTree, Direction direction) {
-        super(syntaxTree, direction);
+        super(syntaxTree, direction, SyntaxTreeAdapter.WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION);
     }
 
     @Override
     @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection) {
+    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(
+            Direction direction, Offsets initialSelection,
+            SyntaxTreeAdapter.WhileSearching whileSearching
+    ) {
         return node -> {
             var parent = node.getParent();
             if (parent == null) {
@@ -34,7 +37,7 @@ public class OperatorMotionHandler extends AbstractFindNodeMotionHandler {
                                 return Optional.of(neighbour);
                             }
                             return Optional.empty();
-                        }, SyntaxTreeAdapter.WhileSearching.DO_NOT_SKIP_FIRST_NODE
+                        }, whileSearching
                 );
                 if (found.isPresent()) {
                     return found;
