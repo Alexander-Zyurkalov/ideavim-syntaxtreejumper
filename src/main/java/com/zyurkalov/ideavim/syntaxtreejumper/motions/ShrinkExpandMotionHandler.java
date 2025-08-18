@@ -1,6 +1,5 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 
-import com.intellij.openapi.util.TextRange;
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
@@ -22,12 +21,10 @@ public class ShrinkExpandMotionHandler implements MotionHandler {
         SHRINK   // Alt-i: shrink selection to children
     }
 
-    private final SyntaxTreeAdapter syntaxTree;
-    private final SyntaxNoteMotionType motionType;
-    private final SameLevelElementsMotionHandler sameLevelElementsMotionHandler;
+    public final SyntaxNoteMotionType motionType;
+    public final SameLevelElementsMotionHandler sameLevelElementsMotionHandler;
 
     public ShrinkExpandMotionHandler(SyntaxTreeAdapter syntaxTree, SyntaxNoteMotionType motionType) {
-        this.syntaxTree = syntaxTree;
         this.motionType = motionType;
         this.sameLevelElementsMotionHandler = new SameLevelElementsMotionHandler(syntaxTree, Direction.FORWARD);
     }
@@ -35,38 +32,9 @@ public class ShrinkExpandMotionHandler implements MotionHandler {
     @Override
     public Optional<Offsets> findNext(Offsets initialOffsets) {
         return switch (motionType) {
-            case EXPAND -> expandSelection(initialOffsets);
-            case SHRINK -> shrinkSelection(initialOffsets);
+            case EXPAND -> sameLevelElementsMotionHandler.expandSelection(initialOffsets);
+            case SHRINK -> sameLevelElementsMotionHandler.shrinkSelection(initialOffsets);
         };
-    }
-
-    /**
-     * Expands the selection to the parent syntax node (Alt-o behavior)
-     */
-    private Optional<Offsets> expandSelection(Offsets initialOffsets) {
-        // Find the current selection boundaries
-        SyntaxNode leftElement = syntaxTree.findNodeAt(initialOffsets.leftOffset());
-        SyntaxNode rightElement = syntaxTree.findNodeAt(Math.max(0, initialOffsets.rightOffset() - 1));
-
-        if (leftElement == null || initialOffsets.rightOffset() >= syntaxTree.getDocumentLength()) {
-            return Optional.of(initialOffsets);
-        }
-
-        // If we have a selection, find the common parent that encompasses it
-        SyntaxNode targetElement;
-        if (initialOffsets.leftOffset() == initialOffsets.rightOffset()) {
-            targetElement = leftElement;
-        } else {
-            // Find the smallest common parent that encompasses the current selection
-            targetElement = syntaxTree.findSmallestCommonParent(leftElement, rightElement, initialOffsets);
-        }
-
-        if (targetElement == null  || targetElement.isPsiFile()) {
-            return Optional.of(initialOffsets);
-        }
-
-        TextRange parentRange = targetElement.getTextRange();
-        return Optional.of(new Offsets(parentRange.getStartOffset(), parentRange.getEndOffset()));
     }
 
     //TODO: move to subwords
@@ -79,25 +47,6 @@ public class ShrinkExpandMotionHandler implements MotionHandler {
         Offsets left = finderBackward.findNext(elementRelativeOffset, targetElement.getText());
         Offsets right = finderForward.findNext(elementRelativeOffset, targetElement.getText());
         return Optional.of(new Offsets(left.leftOffset() + elementOffset, right.rightOffset() + elementOffset));
-    }
-
-    /**
-     * Shrinks the selection to the largest meaningful child (Alt-i behavior)
-     */
-    private Optional<Offsets> shrinkSelection(Offsets initialOffsets) {
-        SyntaxNode currentElement = syntaxTree.findCurrentElement(initialOffsets, Direction.FORWARD);
-        if (currentElement == null) {
-            return Optional.of(initialOffsets);
-        }
-
-        // Find the largest meaningful child that fits within the current selection
-        SyntaxNode childElement = sameLevelElementsMotionHandler.findLargestChildWithinSelection(currentElement, initialOffsets);
-        if (childElement == null || childElement.isEquivalentTo(currentElement)) {
-            return Optional.of(initialOffsets);
-        }
-
-        TextRange childRange = childElement.getTextRange();
-        return Optional.of(new Offsets(childRange.getStartOffset(), childRange.getEndOffset()));
     }
 
     // Factory methods for easier integration with your existing system
