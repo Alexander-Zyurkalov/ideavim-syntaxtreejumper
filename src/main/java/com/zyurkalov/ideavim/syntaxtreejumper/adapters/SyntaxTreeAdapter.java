@@ -152,11 +152,8 @@ public abstract class SyntaxTreeAdapter {
      * Helper method to replace a node with its parent if they have the same text content.
      * This is useful for handling cases where leaf nodes and their parents represent the same construct.
      */
-    @Nullable
-    public SyntaxNode replaceWithParentIfParentEqualsTheNode(@Nullable SyntaxNode node) {
-        if (node == null) {
-            return null;
-        }
+    @NotNull
+    public SyntaxNode replaceWithParentIfParentEqualsTheNode(@NotNull SyntaxNode node) {
         SyntaxNode parent = node.getParent();
         while (parent != null && parent.getText().equals(node.getText())) {
             node = parent;

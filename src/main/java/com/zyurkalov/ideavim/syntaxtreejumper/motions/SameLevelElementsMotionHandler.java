@@ -3,10 +3,8 @@ package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 import com.intellij.openapi.util.TextRange;
 import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
-import com.zyurkalov.ideavim.syntaxtreejumper.adapters.ElementWithSiblings;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,9 +27,10 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
             return Optional.of(initialOffsets);
         }
         Optional<SyntaxNode> foundElement = switch (direction) {
-            case BACKWARD, FORWARD -> getBackwardOrForward(currentElement);
+            case BACKWARD -> getBackward(currentElement);
+            case FORWARD -> getForward(currentElement);
             case EXPAND -> expandSelection(currentElement, initialOffsets);
-            case SHRINK -> shrinkSelection(currentElement, initialOffsets);
+            case SHRINK -> shrinkSelection(currentElement);
         };
         if (foundElement.isPresent()) {
             TextRange textRange = foundElement.get().getTextRange();
@@ -43,33 +42,20 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
 
     }
 
-    private Optional<SyntaxNode> getBackwardOrForward(SyntaxNode currentElement) {
-        TextRange textRange = currentElement.getTextRange();
-        Offsets initialOffsets = new Offsets(textRange.getStartOffset(), textRange.getEndOffset());
-        ElementWithSiblings elementWithSiblings = syntaxTree.findElementWithSiblings(initialOffsets, direction);
-        if (elementWithSiblings.currentElement() == null) {
-            return Optional.empty();
-        }
-        SyntaxNode nextElement = getNextElementFromSiblings(elementWithSiblings);
-        return Optional.ofNullable(nextElement);
-
+    private Optional<SyntaxNode> getForward(SyntaxNode currentElement) {
+        currentElement = syntaxTree.replaceWithParentIfParentEqualsTheNode(currentElement);
+        SyntaxNode nextNonWhitespaceSibling = syntaxTree.findNextNonWhitespaceSibling(currentElement);
+        return Optional.ofNullable(nextNonWhitespaceSibling == null ?
+                syntaxTree.findFirstChildOfItsParent(currentElement) : nextNonWhitespaceSibling);
     }
 
-    /**
-     * Gets the next element based on a direction from the ElementWithSiblings.
-     */
-    private @Nullable SyntaxNode getNextElementFromSiblings(ElementWithSiblings elementWithSiblings) {
-        return switch (direction) {
-            case BACKWARD -> elementWithSiblings.previousSibling() == null ?
-                    syntaxTree.findLastChildOfItsParent(elementWithSiblings.currentElement()) :
-                    elementWithSiblings.previousSibling();
-            case FORWARD -> elementWithSiblings.nextSibling() == null ?
-                    syntaxTree.findFirstChildOfItsParent(elementWithSiblings.currentElement()) :
-                    elementWithSiblings.nextSibling();
-            case EXPAND -> null; //TODO: come up with better options
-            case SHRINK -> null;
-        };
+    private Optional<SyntaxNode> getBackward(SyntaxNode currentElement) {
+        currentElement = syntaxTree.replaceWithParentIfParentEqualsTheNode(currentElement);
+        SyntaxNode nextNonWhitespaceSibling = syntaxTree.findPreviousNonWhitespaceSibling(currentElement);
+        return Optional.ofNullable(nextNonWhitespaceSibling == null ?
+                syntaxTree.findLastChildOfItsParent(currentElement) : nextNonWhitespaceSibling);
     }
+
 
     /**
      * Expands the selection to the parent syntax node (Alt-o behaviour)
@@ -92,7 +78,7 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
     /**
      * Shrinks the selection to the largest meaningful child (Alt-i behaviour)
      */
-    Optional<SyntaxNode> shrinkSelection(SyntaxNode currentElement, Offsets initialOffsets) {
+    Optional<SyntaxNode> shrinkSelection(SyntaxNode currentElement) {
         // Find the largest meaningful child that fits within the current selection
         List<SyntaxNode> candidateChildren = currentElement.getChildren();
         while (candidateChildren.size() == 1 && candidateChildren.getFirst().getTextRange().equals(currentElement.getTextRange())) {

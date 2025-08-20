@@ -108,7 +108,7 @@ public class SmartSelectionExtendHandler implements MotionHandler {
         if (leftNode.getTextRange().getStartOffset() >= rightNode.getTextRange().getStartOffset() &&
                 leftNode.getTextRange().getEndOffset() <= rightNode.getTextRange().getEndOffset()
         ) {
-           leftNode = rightNode;
+            leftNode = rightNode;
         }
         return leftNode;
     }
@@ -243,7 +243,8 @@ public class SmartSelectionExtendHandler implements MotionHandler {
             whiteSpace = current;
             current = nextSyntaxNode.apply(current);
         }
-        current = syntaxTree.replaceWithParentIfParentEqualsTheNode(current);
+        if (current != null)
+            current = syntaxTree.replaceWithParentIfParentEqualsTheNode(current);
         return new FindResult(whiteSpace, current, isWhiteSpaceFound, isOperatorFound);
     }
 
