@@ -6,6 +6,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.PsiSyntaxTreeAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ class ShrinkExpandMotionHandlerTest {
             String initialText,
             Offsets expectedOffsets,
             String expectedText,
-            ShrinkExpandMotionHandler.SyntaxNoteMotionType motionType,
+            MotionDirection motionType,
             String explanation
     ) {
         @Override
@@ -61,7 +62,7 @@ class ShrinkExpandMotionHandlerTest {
                         "",
                         new Offsets(94, 95), // select 'i'
                         "i",
-                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.EXPAND,
+                        MotionDirection.EXPAND,
                         "Expand: cursor position to identifier"
                 ),
                 new HelixSelectionTestData(
@@ -69,7 +70,7 @@ class ShrinkExpandMotionHandlerTest {
                         "",
                         new Offsets(13, 22), // select 'Test' //subwords are not considered any more
                         "TestClass",
-                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.EXPAND,
+                        MotionDirection.EXPAND,
                         "Expand: cursor position to SubWord"
                 ),
 
@@ -79,7 +80,7 @@ class ShrinkExpandMotionHandlerTest {
                         "i",
                         new Offsets(90, 100), // "int i = 0;"
                         "int i = 0;",
-                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.EXPAND,
+                        MotionDirection.EXPAND,
                         "Expand: identifier to assignment expression"
                 ),
 
@@ -89,7 +90,7 @@ class ShrinkExpandMotionHandlerTest {
                         "int i = 0;",
                         new Offsets(85, 151), // full for loop
                         "for (int i = 0; i < 10; i++) { a[i] = 2 * i; }",
-                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.EXPAND,
+                        MotionDirection.EXPAND,
                         "Expand: for loop initialization to entire for loop"
                 )
         );
@@ -102,7 +103,7 @@ class ShrinkExpandMotionHandlerTest {
                         "TestClass",
                         new Offsets(13, 22), // "Class"
                         "TestClass",
-                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.SHRINK,
+                        MotionDirection.SHRINK,
                         "Shrink: an element to itself"
                 ),
 
@@ -112,7 +113,7 @@ class ShrinkExpandMotionHandlerTest {
                         "System.out.println(\"Test\")",
                         new Offsets(160, 178), // method name
                         "System.out.println",
-                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.SHRINK,
+                        MotionDirection.SHRINK,
                         "Shrink: method call to method name"
                 ),
 
@@ -122,7 +123,7 @@ class ShrinkExpandMotionHandlerTest {
                         "System.out.println",
                         new Offsets(160, 170), // qualifier part
                         "System.out",
-                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.SHRINK,
+                        MotionDirection.SHRINK,
                         "Shrink: qualified method name to qualifier"
                 ),
 
@@ -132,7 +133,7 @@ class ShrinkExpandMotionHandlerTest {
                         "a[i] = 2 * i;",
                         new Offsets(128, 140), // "a[i] = 2 * i"
                         "a[i] = 2 * i",
-                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.SHRINK,
+                        MotionDirection.SHRINK,
                         "Shrink: statement to assignment expression"
                 )
         );
@@ -146,7 +147,7 @@ class ShrinkExpandMotionHandlerTest {
                         "",
                         new Offsets(124, 124), // same position
                         "",
-                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.SHRINK,
+                        MotionDirection.SHRINK,
                         "Edge case: shrink with no selection should return same position"
                 ),
 
@@ -156,7 +157,7 @@ class ShrinkExpandMotionHandlerTest {
                         "}",
                         new Offsets(0, 195), // whole class body
                         "public class TestClass { void execute() { int[] a = new int[10]; for (int i = 0; i < 10; i++) { a[i] = 2 * i; } System.out.println(\"Test\"); } }",
-                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.EXPAND,
+                        MotionDirection.EXPAND,
                         "Edge case: expand from closing brace"
                 ),
 
@@ -166,7 +167,7 @@ class ShrinkExpandMotionHandlerTest {
                         "public class TestClass { void execute() { int[] a = new int[10]; for (int i = 0; i < 10; i++) { a[i] = 2 * i; } System.out.println(\"Test\"); } }",
                         new Offsets(0, 196), // whole class body
                         "public class TestClass { void execute() { int[] a = new int[10]; for (int i = 0; i < 10; i++) { a[i] = 2 * i; } System.out.println(\"Test\"); } }",
-                        ShrinkExpandMotionHandler.SyntaxNoteMotionType.EXPAND,
+                        MotionDirection.EXPAND,
                         "Edge case: whole body to whole body"
                 )
         );

@@ -1,6 +1,7 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 
 import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
@@ -16,22 +17,19 @@ import java.util.Optional;
  */
 public class ShrinkExpandMotionHandler implements MotionHandler {
 
-    public enum SyntaxNoteMotionType {
-        EXPAND,  // Alt-o: expand selection to parent
-        SHRINK   // Alt-i: shrink selection to children
-    }
-
-    public final SyntaxNoteMotionType motionType;
+    public final MotionDirection motionType;
     public final SameLevelElementsMotionHandler sameLevelElementsMotionHandler;
 
-    public ShrinkExpandMotionHandler(SyntaxTreeAdapter syntaxTree, SyntaxNoteMotionType motionType) {
+    public ShrinkExpandMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection motionType) {
         this.motionType = motionType;
-        this.sameLevelElementsMotionHandler = new SameLevelElementsMotionHandler(syntaxTree, Direction.FORWARD);
+        this.sameLevelElementsMotionHandler = new SameLevelElementsMotionHandler(syntaxTree,
+                motionType == MotionDirection.BACKWARD ? Direction.BACKWARD : Direction.FORWARD);
     }
 
     @Override
     public Optional<Offsets> findNext(Offsets initialOffsets) {
         return switch (motionType) {
+            case BACKWARD, FORWARD -> sameLevelElementsMotionHandler.findNext(initialOffsets);
             case EXPAND -> sameLevelElementsMotionHandler.expandSelection(initialOffsets);
             case SHRINK -> sameLevelElementsMotionHandler.shrinkSelection(initialOffsets);
         };
@@ -51,10 +49,10 @@ public class ShrinkExpandMotionHandler implements MotionHandler {
 
     // Factory methods for easier integration with your existing system
     public static ShrinkExpandMotionHandler createExpandHandler(SyntaxTreeAdapter syntaxTree) {
-        return new ShrinkExpandMotionHandler(syntaxTree, SyntaxNoteMotionType.EXPAND);
+        return new ShrinkExpandMotionHandler(syntaxTree, MotionDirection.EXPAND);
     }
 
     public static ShrinkExpandMotionHandler createShrinkHandler(SyntaxTreeAdapter syntaxTree) {
-        return new ShrinkExpandMotionHandler(syntaxTree, SyntaxNoteMotionType.SHRINK);
+        return new ShrinkExpandMotionHandler(syntaxTree, MotionDirection.SHRINK);
     }
 }

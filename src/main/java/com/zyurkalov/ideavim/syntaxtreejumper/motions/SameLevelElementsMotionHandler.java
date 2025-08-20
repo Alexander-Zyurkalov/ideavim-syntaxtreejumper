@@ -73,8 +73,6 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
                     candidates.add(child);
                 }
 
-                // Also check this child's children
-                collectChildrenWithinSelection(child, selection, candidates);
             }
         }
     }
