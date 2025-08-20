@@ -18,22 +18,15 @@ import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.FORWARD;
  * Alt-i (SHRINK): Shrinks the current selection to the largest child node that fits within the selection
  */
 public class ShrinkExpandMotionHandler implements MotionHandler {
-
-    public final MotionDirection motionType;
     public final SameLevelElementsMotionHandler sameLevelElementsMotionHandler;
 
     public ShrinkExpandMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection motionType) {
-        this.motionType = motionType;
         this.sameLevelElementsMotionHandler = new SameLevelElementsMotionHandler(syntaxTree, motionType);
     }
 
     @Override
     public Optional<Offsets> findNext(Offsets initialOffsets) {
-        return switch (motionType) {
-            case BACKWARD, FORWARD -> sameLevelElementsMotionHandler.findNext(initialOffsets);
-            case EXPAND -> sameLevelElementsMotionHandler.expandSelection(initialOffsets);
-            case SHRINK -> sameLevelElementsMotionHandler.shrinkSelection(initialOffsets);
-        };
+        return sameLevelElementsMotionHandler.findNext(initialOffsets);
     }
 
     //TODO: move to subwords

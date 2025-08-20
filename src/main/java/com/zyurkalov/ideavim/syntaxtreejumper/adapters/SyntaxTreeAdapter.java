@@ -164,6 +164,18 @@ public abstract class SyntaxTreeAdapter {
         }
         return node;
     }
+    @Nullable
+    public SyntaxNode findParentThatIsNotEqualToTheNode(@Nullable SyntaxNode node) {
+        if (node == null || node.isPsiFile()) {
+            return null;
+        }
+        SyntaxNode parent = node.getParent();
+        while (parent != null && parent.getText().equals(node.getText())) {
+            node = parent;
+            parent = node.getParent();
+        }
+        return parent;
+    }
 
     /**
      * Finds the smallest common parent that fully encompasses the current selection

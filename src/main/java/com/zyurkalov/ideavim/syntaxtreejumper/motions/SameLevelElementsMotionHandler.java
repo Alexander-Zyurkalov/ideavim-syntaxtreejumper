@@ -6,6 +6,7 @@ import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.ElementWithSiblings;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -25,6 +26,14 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
 
     @Override
     public Optional<Offsets> findNext(Offsets initialOffsets) {
+        return switch (direction) {
+            case BACKWARD, FORWARD -> getBackwardOrForward(initialOffsets);
+            case EXPAND -> expandSelection(initialOffsets);
+            case SHRINK -> shrinkSelection(initialOffsets);
+        };
+    }
+
+    private @NotNull Optional<Offsets> getBackwardOrForward(Offsets initialOffsets) {
         ElementWithSiblings elementWithSiblings = syntaxTree.findElementWithSiblings(initialOffsets, direction);
         if (elementWithSiblings.currentElement() == null) {
             return Optional.of(initialOffsets);
@@ -56,34 +65,54 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
     }
 
     /**
-     * Recursively collects children that fit within the selection
+     * Expands the selection to the parent syntax node (Alt-o behaviour)
      */
-    void collectChildrenWithinSelection(SyntaxNode element, Offsets selection, List<SyntaxNode> candidates) {
-        for (SyntaxNode child : element.getChildren()) {
-            if (child.isWhitespace()) {
-                continue;
-            }
-
-            TextRange childRange = child.getTextRange();
-
-            // Check if the child fits completely within the selection
-            if (childRange.getStartOffset() >= selection.leftOffset() &&
-                    childRange.getEndOffset() <= selection.rightOffset()) {
-
-                // If the child is smaller than the current selection, it's a candidate
-                if (childRange.getStartOffset() > selection.leftOffset() ||
-                        childRange.getEndOffset() < selection.rightOffset()) {
-                    candidates.add(child);
-                }
-
-            }
+    Optional<Offsets> expandSelection(Offsets initialOffsets) {
+        // Find the current selection boundaries
+        var currentElement = syntaxTree.findCurrentElement(initialOffsets, direction);
+        if (currentElement == null) {
+            return Optional.of(initialOffsets);
         }
+        // If we have a selection, find the common parent that encompasses it
+        SyntaxNode targetElement;
+        if (initialOffsets.leftOffset() == initialOffsets.rightOffset()) {
+            targetElement = currentElement;
+        } else {
+            // Find the smallest common parent that encompasses the current selection
+            targetElement = syntaxTree.findParentThatIsNotEqualToTheNode(currentElement);
+        }
+
+        if (targetElement == null || targetElement.isPsiFile()) {
+            return Optional.of(initialOffsets);
+        }
+
+        TextRange parentRange = targetElement.getTextRange();
+        return Optional.of(new Offsets(parentRange.getStartOffset(), parentRange.getEndOffset()));
+    }
+
+    /**
+     * Shrinks the selection to the largest meaningful child (Alt-i behaviour)
+     */
+    Optional<Offsets> shrinkSelection(Offsets initialOffsets) {
+        SyntaxNode currentElement = syntaxTree.findCurrentElement(initialOffsets, MotionDirection.FORWARD);
+        if (currentElement == null) {
+            return Optional.of(initialOffsets);
+        }
+
+        // Find the largest meaningful child that fits within the current selection
+        SyntaxNode childElement = findChildWithinSelection(currentElement, initialOffsets);
+        if (childElement == null || childElement.isEquivalentTo(currentElement)) {
+            return Optional.of(initialOffsets);
+        }
+
+        TextRange childRange = childElement.getTextRange();
+        return Optional.of(new Offsets(childRange.getStartOffset(), childRange.getEndOffset()));
     }
 
     /**
      * Finds the largest meaningful child that fits within the current selection
      */
-    @Nullable SyntaxNode findLargestChildWithinSelection(SyntaxNode parent, Offsets selection) {
+    @Nullable SyntaxNode findChildWithinSelection(SyntaxNode parent, Offsets selection) {
         List<SyntaxNode> candidateChildren = new ArrayList<>();
 
         // Collect all meaningful children that fit within the selection
@@ -107,50 +136,27 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
     }
 
     /**
-     * Expands the selection to the parent syntax node (Alt-o behaviour)
+     * Recursively collects children that fit within the selection
      */
-    Optional<Offsets> expandSelection(Offsets initialOffsets) {
-        // Find the current selection boundaries
-        SyntaxNode leftElement = syntaxTree.findNodeAt(initialOffsets.leftOffset());
-        SyntaxNode rightElement = syntaxTree.findNodeAt(Math.max(0, initialOffsets.rightOffset() - 1));
+    void collectChildrenWithinSelection(SyntaxNode element, Offsets selection, List<SyntaxNode> candidates) {
+        for (SyntaxNode child : element.getChildren()) {
+            if (child.isWhitespace()) {
+                continue;
+            }
 
-        if (leftElement == null || initialOffsets.rightOffset() >= syntaxTree.getDocumentLength()) {
-            return Optional.of(initialOffsets);
+            TextRange childRange = child.getTextRange();
+
+            // Check if the child fits completely within the selection
+            if (childRange.getStartOffset() >= selection.leftOffset() &&
+                    childRange.getEndOffset() <= selection.rightOffset()) {
+
+                // If the child is smaller than the current selection, it's a candidate
+                if (childRange.getStartOffset() > selection.leftOffset() ||
+                        childRange.getEndOffset() < selection.rightOffset()) {
+                    candidates.add(child);
+                }
+
+            }
         }
-
-        // If we have a selection, find the common parent that encompasses it
-        SyntaxNode targetElement;
-        if (initialOffsets.leftOffset() == initialOffsets.rightOffset()) {
-            targetElement = leftElement;
-        } else {
-            // Find the smallest common parent that encompasses the current selection
-            targetElement = syntaxTree.findSmallestCommonParent(leftElement, rightElement, initialOffsets);
-        }
-
-        if (targetElement == null  || targetElement.isPsiFile()) {
-            return Optional.of(initialOffsets);
-        }
-
-        TextRange parentRange = targetElement.getTextRange();
-        return Optional.of(new Offsets(parentRange.getStartOffset(), parentRange.getEndOffset()));
-    }
-
-    /**
-     * Shrinks the selection to the largest meaningful child (Alt-i behaviour)
-     */
-    Optional<Offsets> shrinkSelection(Offsets initialOffsets) {
-        SyntaxNode currentElement = syntaxTree.findCurrentElement(initialOffsets, MotionDirection.FORWARD);
-        if (currentElement == null) {
-            return Optional.of(initialOffsets);
-        }
-
-        // Find the largest meaningful child that fits within the current selection
-        SyntaxNode childElement = findLargestChildWithinSelection(currentElement, initialOffsets);
-        if (childElement == null || childElement.isEquivalentTo(currentElement)) {
-            return Optional.of(initialOffsets);
-        }
-
-        TextRange childRange = childElement.getTextRange();
-        return Optional.of(new Offsets(childRange.getStartOffset(), childRange.getEndOffset()));
     }
 }
