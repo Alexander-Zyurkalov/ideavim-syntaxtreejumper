@@ -268,20 +268,25 @@ public abstract class SyntaxTreeAdapter {
     @Nullable
     public SyntaxNode findCurrentElement(Offsets initialOffsets, MotionDirection direction) {
         boolean isOnlyCaretButNoSelection = initialOffsets.leftOffset() >= initialOffsets.rightOffset() - 1;
-
         if (isOnlyCaretButNoSelection) {
-            return findNodeAt(initialOffsets.leftOffset());
+            SyntaxNode nodeAt = findNodeAt(initialOffsets.leftOffset());
+            if (nodeAt == null) {
+                return null;
+            }
+            return replaceWithParentIfParentEqualsTheNode(nodeAt);
         } else {
             SyntaxNode initElementAtLeft = findNodeAt(initialOffsets.leftOffset());
             SyntaxNode initElementAtRight = findNodeAt(initialOffsets.rightOffset() - 1);
             if (initElementAtLeft == null || initElementAtRight == null) {
                 return null;
             }
+            SyntaxNode target = null;
             if (initElementAtLeft.isEquivalentTo(initElementAtRight)) {
-                return initElementAtLeft;
+                target = initElementAtLeft;
             } else {
-                return findParentElementIfInitialElementsAreAtEdgesOrChooseOne(initElementAtLeft, initElementAtRight, direction);
+                target =  findParentElementIfInitialElementsAreAtEdgesOrChooseOne(initElementAtLeft, initElementAtRight, direction);
             }
+            return replaceWithParentIfParentEqualsTheNode(target);
         }
     }
 

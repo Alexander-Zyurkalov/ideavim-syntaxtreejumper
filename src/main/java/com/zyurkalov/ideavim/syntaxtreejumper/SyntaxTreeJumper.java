@@ -11,7 +11,6 @@ import com.maddyhome.idea.vim.api.VimInjectorKt;
 import com.maddyhome.idea.vim.command.MappingMode;
 import com.maddyhome.idea.vim.extension.VimExtension;
 import com.maddyhome.idea.vim.newapi.IjVimEditorKt;
-import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import com.zyurkalov.ideavim.syntaxtreejumper.config.MotionHandlerConfig;
 import com.zyurkalov.ideavim.syntaxtreejumper.config.ShortcutConfig;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler;
@@ -60,7 +59,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                                 new ShortcutConfig("<C-A-n>", MotionDirection.FORWARD, true),
                                 new ShortcutConfig("<C-A-S-n>", MotionDirection.BACKWARD, true)
                         },
-                        ShrinkExpandMotionHandler::new
+                        SyntaxTreeNodesMotionHandler::new
                 ),
 
                 // SubWord motion (special wrapper needed)
@@ -207,7 +206,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
                 getOwner(),
                 new FunctionHandler(MotionDirection.FORWARD, (syntaxTree, direction) ->
-                        ShrinkExpandMotionHandler.createExpandHandler(syntaxTree)),
+                        SyntaxTreeNodesMotionHandler.createExpandHandler(syntaxTree)),
                 false);
 
         putExtensionHandlerMapping(
@@ -215,7 +214,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
                 getOwner(),
                 new FunctionHandler(MotionDirection.FORWARD, (syntaxTree, direction) ->
-                        ShrinkExpandMotionHandler.createShrinkHandler(syntaxTree)),
+                        SyntaxTreeNodesMotionHandler.createShrinkHandler(syntaxTree)),
                 false);
 
         putKeyMappingIfMissing(

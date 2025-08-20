@@ -220,7 +220,7 @@ class ShrinkExpandMotionHandlerTest {
         }
 
         PsiFile javaFile = myFixture.configureByText("TestClass.java", javaCode);
-        ShrinkExpandMotionHandler handler = new ShrinkExpandMotionHandler( new PsiSyntaxTreeAdapter(javaFile), testData.motionType);
+        SyntaxTreeNodesMotionHandler handler = new SyntaxTreeNodesMotionHandler( new PsiSyntaxTreeAdapter(javaFile), testData.motionType);
 
         ApplicationManager.getApplication().runReadAction(() -> {
             Optional<Offsets> result = handler.findNext(testData.initialOffsets);
