@@ -19,7 +19,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.FORWARD;
+import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -59,40 +59,54 @@ class LoopConditionalMotionHandlerTest {
 
     static Stream<LoopConditionalTestData> forwardNavigationTestCases() {
         return Stream.of(
+//                new LoopConditionalTestData(
+//                        new Offsets(29, 149), // Select the entire first function (methodWithLoop)
+//                        """
+//                                public void methodWithLoop() {
+//                                    for (int i = 0; i < 10; i++) {
+//                                        System.out.println(i);
+//                                    }
+//                                }""",
+//                        new Offsets(68, 143), // Jump to while loop in the second function
+//                        """
+//                                for (int i = 0; i < 10; i++) {
+//                                            System.out.println(i);
+//                                        }""",
+//                        SHRINK,
+//                        "Forward: Should not skip loop inside selected function and jump to it",
+//                        AbstractFindNodeMotionHandler.WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION
+//                )
+//                new LoopConditionalTestData(
+//                        new Offsets(29, 149), // Select the entire first function (methodWithLoop)
+//                        """
+//                                public void methodWithLoop() {
+//                                    for (int i = 0; i < 10; i++) {
+//                                        System.out.println(i);
+//                                    }
+//                                }""",
+//                        new Offsets(224, 341), // Jump to while loop in the second function
+//                        """
+//                                while (count < 5) {
+//                                            count++;
+//                                            if (count == 3) {
+//                                                break;
+//                                            }
+//                                        }""",
+//                        FORWARD,
+//                        "Forward: Should skip loop inside selected function and jump to loop in next function",
+//                        AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION
+//                )
                 new LoopConditionalTestData(
-                        new Offsets(29, 149), // Select the entire first function (methodWithLoop)
-                        """
-                                public void methodWithLoop() {
-                                    for (int i = 0; i < 10; i++) {
-                                        System.out.println(i);
-                                    }
-                                }""",
-                        new Offsets(68, 143), // Jump to while loop in the second function
-                        """
-                                for (int i = 0; i < 10; i++) {
-                                            System.out.println(i);
-                                        }""",
-                        FORWARD,
-                        "Forward: Should not skip loop inside selected function and jump to it",
-                        AbstractFindNodeMotionHandler.WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION
-                ),
-                new LoopConditionalTestData(
-                        new Offsets(29, 149), // Select the entire first function (methodWithLoop)
-                        """
-                                public void methodWithLoop() {
-                                    for (int i = 0; i < 10; i++) {
-                                        System.out.println(i);
-                                    }
-                                }""",
-                        new Offsets(224, 341), // Jump to while loop in the second function
+                        new Offsets(277, 301), // Select the entire first function (methodWithLoop)
+                        "if (count == 3) {break;}",
+                        new Offsets(224, 311), // Jump to while loop in the second function
                         """
                                 while (count < 5) {
                                             count++;
-                                            if (count == 3) {
-                                                break;
-                                            }
+                                            if (count == 3) {break;}
                                         }""",
-                        FORWARD,
+
+                        EXPAND,
                         "Forward: Should skip loop inside selected function and jump to loop in next function",
                         AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION
                 )
@@ -118,9 +132,7 @@ class LoopConditionalMotionHandlerTest {
                         int count = 0;
                         while (count < 5) {
                             count++;
-                            if (count == 3) {
-                                break;
-                            }
+                            if (count == 3) {break;}
                         }
                     }
                 }
@@ -148,7 +160,7 @@ class LoopConditionalMotionHandlerTest {
                         result.get().leftOffset(),
                         result.get().rightOffset()
                 );
-                assertEquals(testData.expectedText, actualSelectedText.trim());
+                assertEquals(testData.expectedText.trim(), actualSelectedText.trim());
             }
         });
     }

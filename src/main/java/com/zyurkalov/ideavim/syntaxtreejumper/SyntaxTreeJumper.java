@@ -104,6 +104,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                         new ShortcutConfig[]{
                                 new ShortcutConfig("[l", MotionDirection.BACKWARD, false),
                                 new ShortcutConfig("]l", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[L", MotionDirection.EXPAND, false),
                                 new ShortcutConfig("<C-[>l", MotionDirection.BACKWARD, true),
                                 new ShortcutConfig("<C-]>l", MotionDirection.FORWARD, true)
                         },
@@ -162,6 +163,22 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new FunctionHandler(MotionDirection.FORWARD, config.handlerFactory()),
                 false);
 
+        // Register expand handler
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getExpandCommand()),
+                getOwner(),
+                new FunctionHandler(MotionDirection.EXPAND, config.handlerFactory()),
+                false);
+
+        // Register shrink handler
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getShrinkCommand()),
+                getOwner(),
+                new FunctionHandler(MotionDirection.SHRINK, config.handlerFactory()),
+                false);
+
         // Register extend backward handler (for new caret)
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
@@ -178,11 +195,30 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new FunctionHandler(MotionDirection.FORWARD, config.handlerFactory(), true),
                 false);
 
+        // Register extend expand handler (for new caret)
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getExtendExpandCommand()),
+                getOwner(),
+                new FunctionHandler(MotionDirection.EXPAND, config.handlerFactory(), true),
+                false);
+
+        // Register extend shrink handler (for new caret)
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getExtendShrinkCommand()),
+                getOwner(),
+                new FunctionHandler(MotionDirection.SHRINK, config.handlerFactory(), true),
+                false);
+
         // Map all shortcuts to their respective commands
         for (ShortcutConfig shortcut : config.shortcuts()) {
-            String targetCommand = shortcut.addNewCaret() ?
-                    (shortcut.direction() == MotionDirection.FORWARD ? config.getExtendForwardCommand() : config.getExtendBackwardCommand()) :
-                    (shortcut.direction() == MotionDirection.FORWARD ? config.getForwardCommand() : config.getBackwardCommand());
+            String targetCommand = switch (shortcut.direction()) {
+                case FORWARD -> shortcut.addNewCaret() ? config.getExtendForwardCommand() : config.getForwardCommand();
+                case BACKWARD -> shortcut.addNewCaret() ? config.getExtendBackwardCommand() : config.getBackwardCommand();
+                case EXPAND -> shortcut.addNewCaret() ? config.getExtendExpandCommand() : config.getExpandCommand();
+                case SHRINK -> shortcut.addNewCaret() ? config.getExtendShrinkCommand() : config.getShrinkCommand();
+            };
 
             putKeyMappingIfMissing(
                     EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),

@@ -4,10 +4,6 @@ import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * MotionHandler that finds PsiElements of type loop statements (FOR_STATEMENT, WHILE_STATEMENT, etc.)
@@ -15,20 +11,19 @@ import java.util.function.Function;
  * in accordance to the given Direction from the caret, then places the caret
  * at the found element.
  */
-public class LoopConditionalMotionHandler extends AbstractFindNodeMotionHandler {
+public class LoopConditionalMotionHandler extends SyntaxTreeNodesMotionHandler {
 
-    public LoopConditionalMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction, WhileSearching whileSearching) {
-        super(syntaxTree, direction, whileSearching);
+    private final AbstractFindNodeMotionHandler.WhileSearching whileSearching;
+
+    public LoopConditionalMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction, AbstractFindNodeMotionHandler.WhileSearching whileSearching) {
+        super(syntaxTree, direction);
+        this.whileSearching = whileSearching;
     }
 
-    @Override
-    @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(MotionDirection direction, Offsets initialSelection, WhileSearching whileSearching) {
-        return node -> {
-            if (node.isLoopOrConditionalStatement()) {
-                return Optional.of(node);
-            }
-            return Optional.empty();
-        };
+@Override
+    public boolean doesTargetFollowRequirements(SyntaxNode initialElement, SyntaxNode targetElement, Offsets initialOffsets) {
+    boolean loopOrConditionalStatement = targetElement.isLoopOrConditionalStatement();
+    boolean equivalent = !targetElement.isEquivalentTo(initialElement);
+    return loopOrConditionalStatement && equivalent;
     }
 }

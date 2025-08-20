@@ -84,16 +84,20 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
      */
     Optional<SyntaxNode> expandSelection(SyntaxNode currentElement, Offsets initialOffsets) {
         SyntaxNode targetElement;
-        if (initialOffsets.leftOffset() == initialOffsets.rightOffset()) {
-            targetElement = currentElement;
-        } else {
-            targetElement = syntaxTree.findParentThatIsNotEqualToTheNode(currentElement);
+        targetElement = currentElement;
+        while (targetElement != null && !doesTargetFollowRequirements(currentElement, targetElement, initialOffsets)) {
+            targetElement = syntaxTree.findParentThatIsNotEqualToTheNode(targetElement);
         }
+        ;
         if (targetElement == null || targetElement.isPsiFile()) {
             targetElement = null;
         }
         return Optional.ofNullable(targetElement);
 
+    }
+
+    public boolean doesTargetFollowRequirements(SyntaxNode initialElement, SyntaxNode targetElement, Offsets initialOffsets) {
+        return initialOffsets.leftOffset() == initialOffsets.rightOffset() || !targetElement.isEquivalentTo(initialElement);
     }
 
     /**

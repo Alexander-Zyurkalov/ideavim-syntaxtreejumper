@@ -30,4 +30,20 @@ public record MotionHandlerConfig(
     public String getExtendForwardCommand() {
         return "<Plug>ExtendForward" + name;
     }
+
+    public String getExpandCommand() {
+        return "<Plug>" + "Expand" + name;
+    }
+
+    public String getShrinkCommand() {
+        return "<Plug>" + "Shrink" + name;
+    }
+
+    public String getExtendExpandCommand() {
+        return "<Plug>" + "ExtendExpand" + name;
+    }
+
+    public String getExtendShrinkCommand() {
+        return "<Plug>" + "ExtendShrink" + name;
+    }
 }
