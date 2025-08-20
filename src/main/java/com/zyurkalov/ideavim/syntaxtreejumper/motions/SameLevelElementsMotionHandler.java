@@ -6,10 +6,8 @@ import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.ElementWithSiblings;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,26 +24,35 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
 
     @Override
     public Optional<Offsets> findNext(Offsets initialOffsets) {
-        return switch (direction) {
-            case BACKWARD, FORWARD -> getBackwardOrForward(initialOffsets);
-            case EXPAND -> expandSelection(initialOffsets);
-            case SHRINK -> shrinkSelection(initialOffsets);
+        SyntaxNode currentElement = syntaxTree.findCurrentElement(initialOffsets, MotionDirection.FORWARD);
+        if (currentElement == null) {
+            return Optional.of(initialOffsets);
+        }
+        Optional<SyntaxNode> foundElement = switch (direction) {
+            case BACKWARD, FORWARD -> getBackwardOrForward(currentElement);
+            case EXPAND -> expandSelection(currentElement, initialOffsets);
+            case SHRINK -> shrinkSelection(currentElement, initialOffsets);
         };
+        if (foundElement.isPresent()) {
+            TextRange textRange = foundElement.get().getTextRange();
+            return Optional.of(new Offsets(textRange.getStartOffset(), textRange.getEndOffset()));
+
+        } else {
+            return Optional.of(initialOffsets);
+        }
+
     }
 
-    private @NotNull Optional<Offsets> getBackwardOrForward(Offsets initialOffsets) {
+    private Optional<SyntaxNode> getBackwardOrForward(SyntaxNode currentElement) {
+        TextRange textRange = currentElement.getTextRange();
+        Offsets initialOffsets = new Offsets(textRange.getStartOffset(), textRange.getEndOffset());
         ElementWithSiblings elementWithSiblings = syntaxTree.findElementWithSiblings(initialOffsets, direction);
         if (elementWithSiblings.currentElement() == null) {
-            return Optional.of(initialOffsets);
+            return Optional.empty();
         }
-
         SyntaxNode nextElement = getNextElementFromSiblings(elementWithSiblings);
-        if (nextElement == null) {
-            return Optional.of(initialOffsets);
-        }
+        return Optional.ofNullable(nextElement);
 
-        TextRange nextElementTextRange = nextElement.getTextRange();
-        return Optional.of(new Offsets(nextElementTextRange.getStartOffset(), nextElementTextRange.getEndOffset()));
     }
 
     /**
@@ -67,61 +74,34 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
     /**
      * Expands the selection to the parent syntax node (Alt-o behaviour)
      */
-    Optional<Offsets> expandSelection(Offsets initialOffsets) {
-        // Find the current selection boundaries
-        var currentElement = syntaxTree.findCurrentElement(initialOffsets, direction);
-        if (currentElement == null) {
-            return Optional.of(initialOffsets);
-        }
-        // If we have a selection, find the common parent that encompasses it
+    Optional<SyntaxNode> expandSelection(SyntaxNode currentElement, Offsets initialOffsets) {
+
         SyntaxNode targetElement;
         if (initialOffsets.leftOffset() == initialOffsets.rightOffset()) {
             targetElement = currentElement;
         } else {
-            // Find the smallest common parent that encompasses the current selection
             targetElement = syntaxTree.findParentThatIsNotEqualToTheNode(currentElement);
         }
-
         if (targetElement == null || targetElement.isPsiFile()) {
-            return Optional.of(initialOffsets);
+            targetElement = null;
         }
+        return Optional.ofNullable(targetElement);
 
-        TextRange parentRange = targetElement.getTextRange();
-        return Optional.of(new Offsets(parentRange.getStartOffset(), parentRange.getEndOffset()));
     }
 
     /**
      * Shrinks the selection to the largest meaningful child (Alt-i behaviour)
      */
-    Optional<Offsets> shrinkSelection(Offsets initialOffsets) {
-        SyntaxNode currentElement = syntaxTree.findCurrentElement(initialOffsets, MotionDirection.FORWARD);
-        if (currentElement == null) {
-            return Optional.of(initialOffsets);
-        }
-
+    Optional<SyntaxNode> shrinkSelection(SyntaxNode currentElement, Offsets initialOffsets) {
         // Find the largest meaningful child that fits within the current selection
-        SyntaxNode childElement = findChildWithinSelection(currentElement, initialOffsets);
-        if (childElement == null || childElement.isEquivalentTo(currentElement)) {
-            return Optional.of(initialOffsets);
+        List<SyntaxNode> candidateChildren = currentElement.getChildren();
+        while (candidateChildren.size() == 1 && candidateChildren.getFirst().getTextRange().equals(currentElement.getTextRange())) {
+            candidateChildren = candidateChildren.getFirst().getChildren();
         }
-
-        TextRange childRange = childElement.getTextRange();
-        return Optional.of(new Offsets(childRange.getStartOffset(), childRange.getEndOffset()));
-    }
-
-    /**
-     * Finds the largest meaningful child that fits within the current selection
-     */
-    @Nullable SyntaxNode findChildWithinSelection(SyntaxNode parent, Offsets selection) {
-        List<SyntaxNode> candidateChildren = new ArrayList<>();
-
-        // Collect all meaningful children that fit within the selection
-        collectChildrenWithinSelection(parent, selection, candidateChildren);
 
         // Find the largest child by text range
         SyntaxNode largestChild = null;
         int largestSize = 0;
-
         for (SyntaxNode child : candidateChildren) {
             TextRange range = child.getTextRange();
             int size = range.getLength();
@@ -132,31 +112,12 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
             }
         }
 
-        return largestChild;
-    }
-
-    /**
-     * Recursively collects children that fit within the selection
-     */
-    void collectChildrenWithinSelection(SyntaxNode element, Offsets selection, List<SyntaxNode> candidates) {
-        for (SyntaxNode child : element.getChildren()) {
-            if (child.isWhitespace()) {
-                continue;
-            }
-
-            TextRange childRange = child.getTextRange();
-
-            // Check if the child fits completely within the selection
-            if (childRange.getStartOffset() >= selection.leftOffset() &&
-                    childRange.getEndOffset() <= selection.rightOffset()) {
-
-                // If the child is smaller than the current selection, it's a candidate
-                if (childRange.getStartOffset() > selection.leftOffset() ||
-                        childRange.getEndOffset() < selection.rightOffset()) {
-                    candidates.add(child);
-                }
-
-            }
+        SyntaxNode foundElement = largestChild;
+        if (foundElement == null || foundElement.isEquivalentTo(currentElement)) {
+            return Optional.empty();
         }
+        return Optional.of(foundElement);
+
     }
+
 }

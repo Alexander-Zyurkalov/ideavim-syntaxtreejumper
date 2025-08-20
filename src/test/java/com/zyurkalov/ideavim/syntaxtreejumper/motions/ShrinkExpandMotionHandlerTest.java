@@ -56,23 +56,23 @@ class ShrinkExpandMotionHandlerTest {
 
     static Stream<HelixSelectionTestData> expandSelectionTestCases() {
         return Stream.of(
-//                // Basic expansion from the cursor position
-//                new HelixSelectionTestData(
-//                        new Offsets(94, 94), // cursor at 'i' in "int i = 0;"
-//                        "",
-//                        new Offsets(94, 95), // select 'i'
-//                        "i",
-//                        MotionDirection.EXPAND,
-//                        "Expand: cursor position to identifier"
-//                ),
-//                new HelixSelectionTestData(
-//                        new Offsets(13, 13), // cursor at 'T' in "TestClass"
-//                        "",
-//                        new Offsets(13, 22), // select 'Test' //subwords are not considered any more
-//                        "TestClass",
-//                        MotionDirection.EXPAND,
-//                        "Expand: cursor position to SubWord"
-//                ),
+                // Basic expansion from the cursor position
+                new HelixSelectionTestData(
+                        new Offsets(94, 94), // cursor at 'i' in "int i = 0;"
+                        "",
+                        new Offsets(94, 95), // select 'i'
+                        "i",
+                        MotionDirection.EXPAND,
+                        "Expand: cursor position to identifier"
+                ),
+                new HelixSelectionTestData(
+                        new Offsets(13, 13), // cursor at 'T' in "TestClass"
+                        "",
+                        new Offsets(13, 22), // select 'Test' //subwords are not considered any more
+                        "TestClass",
+                        MotionDirection.EXPAND,
+                        "Expand: cursor position to SubWord"
+                ),
 
                 // Expand from a single character to identifier
                 new HelixSelectionTestData(
