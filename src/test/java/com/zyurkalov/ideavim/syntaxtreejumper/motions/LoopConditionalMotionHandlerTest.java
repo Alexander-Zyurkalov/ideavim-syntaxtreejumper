@@ -49,7 +49,7 @@ class LoopConditionalMotionHandlerTest {
             String expectedText,
             MotionDirection direction,
             String explanation,
-            SyntaxTreeAdapter.WhileSearching whileSearching
+            AbstractFindNodeMotionHandler.WhileSearching whileSearching
     ) {
         @Override
         public @NotNull String toString() {
@@ -74,7 +74,7 @@ class LoopConditionalMotionHandlerTest {
                                         }""",
                         FORWARD,
                         "Forward: Should not skip loop inside selected function and jump to it",
-                        SyntaxTreeAdapter.WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION
+                        AbstractFindNodeMotionHandler.WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION
                 ),
                 new LoopConditionalTestData(
                         new Offsets(29, 149), // Select the entire first function (methodWithLoop)
@@ -94,7 +94,7 @@ class LoopConditionalMotionHandlerTest {
                                         }""",
                         FORWARD,
                         "Forward: Should skip loop inside selected function and jump to loop in next function",
-                        SyntaxTreeAdapter.WhileSearching.SKIP_INITIAL_SELECTION
+                        AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION
                 )
         );
     }

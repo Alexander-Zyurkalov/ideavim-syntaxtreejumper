@@ -110,7 +110,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                         },
                         (syntaxTree1, direction1) -> new LoopConditionalMotionHandler(
                                 syntaxTree1, direction1,
-                                SyntaxTreeAdapter.WhileSearching.SKIP_INITIAL_SELECTION)
+                                AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION)
                 ),
 
                 // Method/Function navigation

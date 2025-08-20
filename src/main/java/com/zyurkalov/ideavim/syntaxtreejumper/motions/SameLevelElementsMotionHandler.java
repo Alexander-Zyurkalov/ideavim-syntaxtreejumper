@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+//TODO: finish combining with ShrinkExpandMotionHandler
 public class SameLevelElementsMotionHandler implements MotionHandler {
 
     public final SyntaxTreeAdapter syntaxTree;

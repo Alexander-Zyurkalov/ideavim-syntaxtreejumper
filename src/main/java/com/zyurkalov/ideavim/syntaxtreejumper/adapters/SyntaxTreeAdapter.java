@@ -8,31 +8,17 @@ import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
-import java.util.function.Function;
-
 /**
  * Abstract adapter class for syntax tree operations.
  * This abstraction allows different implementations for various language parsers,
  * particularly useful for languages like C++ where the default PSI tree might be inconvenient.
  */
 public abstract class SyntaxTreeAdapter {
-    // TODO: rename this method and combine with get child and getParent
-    public static Optional<SyntaxNode> nextNeighbour(SyntaxNode node, MotionDirection direction) {
-        return switch (direction) {
-            case FORWARD -> Optional.ofNullable(node.getNextSibling());
-            case BACKWARD -> Optional.ofNullable(node.getPreviousSibling());
-            case EXPAND -> Optional.ofNullable(node.getParent());
-            case SHRINK -> Optional.ofNullable(node.getFirstChild());
-        };
-    }
 
     public static SyntaxNode getChild(@NotNull SyntaxNode currentNode, MotionDirection direction) {
         return switch (direction) {
-            case FORWARD -> currentNode.getFirstChild();
-            case BACKWARD -> currentNode.getLastChild();
-            case EXPAND -> null;
-            case SHRINK -> null;
+            case FORWARD, EXPAND -> currentNode.getFirstChild();
+            case BACKWARD, SHRINK -> currentNode.getLastChild();
         };
     }
 
@@ -314,70 +300,5 @@ public abstract class SyntaxTreeAdapter {
         return new ElementWithSiblings(currentElement, previousSibling, nextSibling);
     }
 
-    public enum WhileSearching {
-        SKIP_INITIAL_SELECTION, DO_NOT_SKIP_INITIAL_SELECTION
-    }
-
-    public Optional<SyntaxNode> findWithinNeighbours(
-            @NotNull SyntaxNode currentNode, MotionDirection direction, Offsets initialSelection,
-            Function<SyntaxNode, Optional<SyntaxNode>> findNodeType,
-            WhileSearching whileSearching) {
-        Optional<SyntaxNode> found = Optional.empty();
-        var next = Optional.of(currentNode);
-        while (next.isPresent()) {
-            currentNode = next.get();
-            if ( whileSearching == WhileSearching.SKIP_INITIAL_SELECTION && !currentNode.isInRightDirection(initialSelection, direction)) {
-                next = nextNeighbour(currentNode, direction); //TODO: I think we need to move it here as a virtual method
-                continue;
-            }
-            found = findNodeType.apply(currentNode);
-            if (isNodeFound(direction, initialSelection, found)
-            ) {
-                return found;
-            }
-            if (!currentNode.getChildren().isEmpty()) {
-                found = findWithinNeighbours(
-                        getChild(currentNode, direction), direction, initialSelection, findNodeType, WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION);
-                if (isNodeFound(direction, initialSelection, found)
-                ) {
-                    return found;
-                }
-            }
-            next = nextNeighbour(currentNode, direction);
-        }
-        return found;
-    }
-
-    private static boolean isNodeFound(MotionDirection direction, Offsets initialSelection, Optional<SyntaxNode> found) {
-        return found.isPresent() &&
-                found.get().isInRightDirection(initialSelection, direction) &&
-                !found.get().areBordersEqual(initialSelection);
-    }
-
-    /**
-     * Finds a PARAMETER_LIST or ARGUMENT_LIST node based on the direction from the current node.
-     *
-     * @param currentNode                   The starting node
-     * @param direction                     The direction to search
-     * @param initialSelection              The initial selection
-     * @param functionToCheckSearchCriteria The function to find parameter nodes based on specific criteria
-     * @param whileSearching
-     * @return The found parameter/argument list node or null if not found
-     */
-    public Optional<SyntaxNode> findNodeByDirection(
-            SyntaxNode currentNode, MotionDirection direction, Offsets initialSelection,
-            @NotNull Function<SyntaxNode, Optional<SyntaxNode>> functionToCheckSearchCriteria, WhileSearching whileSearching) {
-        Optional<SyntaxNode> found = findWithinNeighbours(
-                currentNode, direction, initialSelection, functionToCheckSearchCriteria, whileSearching);
-
-        while (found.isEmpty()) {
-            currentNode = currentNode.getParent();
-            if (currentNode == null || currentNode.isPsiFile()) {
-                break;
-            }
-            found = findWithinNeighbours(currentNode, direction, initialSelection, functionToCheckSearchCriteria, whileSearching);
-        }
-        return found;
-    }
 
 }
