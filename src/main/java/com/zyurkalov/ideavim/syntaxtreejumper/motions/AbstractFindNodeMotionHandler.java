@@ -1,6 +1,6 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
@@ -11,10 +11,10 @@ import java.util.function.Function;
 
 public abstract class AbstractFindNodeMotionHandler implements MotionHandler {
     protected final SyntaxTreeAdapter syntaxTree;
-    protected final Direction direction;
+    protected final MotionDirection direction;
     private final SyntaxTreeAdapter.WhileSearching whileSearching;
 
-    public AbstractFindNodeMotionHandler(SyntaxTreeAdapter syntaxTree, Direction direction,
+    public AbstractFindNodeMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction,
                                          SyntaxTreeAdapter.WhileSearching whileSearching) {
         this.syntaxTree = syntaxTree;
         this.direction = direction;
@@ -51,5 +51,5 @@ public abstract class AbstractFindNodeMotionHandler implements MotionHandler {
     }
 
     @NotNull
-    public abstract Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection, SyntaxTreeAdapter.WhileSearching whileSearching);
+    public abstract Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(MotionDirection direction, Offsets initialSelection, SyntaxTreeAdapter.WhileSearching whileSearching);
 }

@@ -1,6 +1,6 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.config;
 
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.MotionHandler;
 
@@ -12,7 +12,7 @@ import java.util.function.BiFunction;
 public record MotionHandlerConfig(
         String name,                    // Used for generating command names like "BackwardArgument", "ForwardArgument"
         ShortcutConfig[] shortcuts,     // Array of shortcut configurations
-        BiFunction<SyntaxTreeAdapter, Direction, MotionHandler> handlerFactory
+        BiFunction<SyntaxTreeAdapter, MotionDirection, MotionHandler> handlerFactory
 ) {
 
     public String getBackwardCommand() {

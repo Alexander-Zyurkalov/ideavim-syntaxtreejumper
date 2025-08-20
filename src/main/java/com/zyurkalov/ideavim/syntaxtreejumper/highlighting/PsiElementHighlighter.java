@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.JBColor;
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.ElementWithSiblings;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
@@ -64,7 +64,7 @@ public class PsiElementHighlighter {
 
         // Use SameLevelElementsMotionHandler to find the current element and its siblings
         Offsets offsets = new Offsets(startOffset, endOffset);
-        ElementWithSiblings elementWithSiblings = syntaxTree.findElementWithSiblings(offsets, Direction.BACKWARD);
+        ElementWithSiblings elementWithSiblings = syntaxTree.findElementWithSiblings(offsets, MotionDirection.BACKWARD);
 
         if (elementWithSiblings.currentElement() == null) {
             return;

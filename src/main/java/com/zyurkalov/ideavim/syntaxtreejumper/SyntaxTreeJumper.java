@@ -55,22 +55,22 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new MotionHandlerConfig(
                         "Element",
                         new ShortcutConfig[]{
-                                new ShortcutConfig("<A-n>", Direction.FORWARD, false),
-                                new ShortcutConfig("<A-S-n>", Direction.BACKWARD, false),
-                                new ShortcutConfig("<C-A-n>", Direction.FORWARD, true),
-                                new ShortcutConfig("<C-A-S-n>", Direction.BACKWARD, true)
+                                new ShortcutConfig("<A-n>", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("<A-S-n>", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("<C-A-n>", MotionDirection.FORWARD, true),
+                                new ShortcutConfig("<C-A-S-n>", MotionDirection.BACKWARD, true)
                         },
-                        SameLevelElementsMotionHandler::new
+                        ShrinkExpandMotionHandler::new
                 ),
 
                 // SubWord motion (special wrapper needed)
                 new MotionHandlerConfig(
                         "SubWord",
                         new ShortcutConfig[]{
-                                new ShortcutConfig("<A-w>", Direction.FORWARD, false),
-                                new ShortcutConfig("<A-S-w>", Direction.BACKWARD, false),
-                                new ShortcutConfig("<C-A-w>", Direction.FORWARD, true),
-                                new ShortcutConfig("<C-A-S-w>", Direction.BACKWARD, true)
+                                new ShortcutConfig("<A-w>", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("<A-S-w>", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("<C-A-w>", MotionDirection.FORWARD, true),
+                                new ShortcutConfig("<C-A-S-w>", MotionDirection.BACKWARD, true)
                         },
                         (syntaxTree, direction) -> new SubWordMotionHandler(syntaxTree.getPsiFile(), direction)
                 ),
@@ -79,10 +79,10 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new MotionHandlerConfig(
                         "ArgumentList",
                         new ShortcutConfig[]{
-                                new ShortcutConfig("[a", Direction.BACKWARD, false),
-                                new ShortcutConfig("]a", Direction.FORWARD, false),
-                                new ShortcutConfig("<C-[>a", Direction.BACKWARD, true),
-                                new ShortcutConfig("<C-]>a", Direction.FORWARD, true)
+                                new ShortcutConfig("[a", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]a", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("<C-[>a", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>a", MotionDirection.FORWARD, true)
                         },
                         ArgumentParameterListMotionHandler::new
                 ),
@@ -91,10 +91,10 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new MotionHandlerConfig(
                         "Statement",
                         new ShortcutConfig[]{
-                                new ShortcutConfig("[s", Direction.BACKWARD, false),
-                                new ShortcutConfig("]s", Direction.FORWARD, false),
-                                new ShortcutConfig("<C-[>s", Direction.BACKWARD, true),
-                                new ShortcutConfig("<C-]>s", Direction.FORWARD, true)
+                                new ShortcutConfig("[s", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]s", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("<C-[>s", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>s", MotionDirection.FORWARD, true)
                         },
                         StatementMotionHandler::new
                 ),
@@ -103,10 +103,10 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new MotionHandlerConfig(
                         "LoopConditional",
                         new ShortcutConfig[]{
-                                new ShortcutConfig("[l", Direction.BACKWARD, false),
-                                new ShortcutConfig("]l", Direction.FORWARD, false),
-                                new ShortcutConfig("<C-[>l", Direction.BACKWARD, true),
-                                new ShortcutConfig("<C-]>l", Direction.FORWARD, true)
+                                new ShortcutConfig("[l", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]l", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("<C-[>l", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>l", MotionDirection.FORWARD, true)
                         },
                         (syntaxTree1, direction1) -> new LoopConditionalMotionHandler(
                                 syntaxTree1, direction1,
@@ -117,10 +117,10 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new MotionHandlerConfig(
                         "MethodFunction",
                         new ShortcutConfig[]{
-                                new ShortcutConfig("[f", Direction.BACKWARD, false),
-                                new ShortcutConfig("]f", Direction.FORWARD, false),
-                                new ShortcutConfig("<C-[>f", Direction.BACKWARD, true),
-                                new ShortcutConfig("<C-]>f", Direction.FORWARD, true)
+                                new ShortcutConfig("[f", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]f", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("<C-[>f", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>f", MotionDirection.FORWARD, true)
                         },
                         MethodFunctionMotionHandler::new
                 ),
@@ -129,10 +129,10 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new MotionHandlerConfig(
                         "Operator",
                         new ShortcutConfig[]{
-                                new ShortcutConfig("[o", Direction.BACKWARD, false),
-                                new ShortcutConfig("]o", Direction.FORWARD, false),
-                                new ShortcutConfig("<C-[>o", Direction.BACKWARD, true),
-                                new ShortcutConfig("<C-]>o", Direction.FORWARD, true)
+                                new ShortcutConfig("[o", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]o", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("<C-[>o", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>o", MotionDirection.FORWARD, true)
                         },
                         OperatorMotionHandler::new
                 ),
@@ -152,7 +152,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(config.getBackwardCommand()),
                 getOwner(),
-                new FunctionHandler(Direction.BACKWARD, config.handlerFactory()),
+                new FunctionHandler(MotionDirection.BACKWARD, config.handlerFactory()),
                 false);
 
         // Register forward handler
@@ -160,7 +160,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(config.getForwardCommand()),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, config.handlerFactory()),
+                new FunctionHandler(MotionDirection.FORWARD, config.handlerFactory()),
                 false);
 
         // Register extend backward handler (for new caret)
@@ -168,7 +168,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(config.getExtendBackwardCommand()),
                 getOwner(),
-                new FunctionHandler(Direction.BACKWARD, config.handlerFactory(), true),
+                new FunctionHandler(MotionDirection.BACKWARD, config.handlerFactory(), true),
                 false);
 
         // Register extend forward handler (for new caret)
@@ -176,14 +176,14 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(config.getExtendForwardCommand()),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, config.handlerFactory(), true),
+                new FunctionHandler(MotionDirection.FORWARD, config.handlerFactory(), true),
                 false);
 
         // Map all shortcuts to their respective commands
         for (ShortcutConfig shortcut : config.shortcuts()) {
             String targetCommand = shortcut.addNewCaret() ?
-                    (shortcut.direction() == Direction.FORWARD ? config.getExtendForwardCommand() : config.getExtendBackwardCommand()) :
-                    (shortcut.direction() == Direction.FORWARD ? config.getForwardCommand() : config.getBackwardCommand());
+                    (shortcut.direction() == MotionDirection.FORWARD ? config.getExtendForwardCommand() : config.getExtendBackwardCommand()) :
+                    (shortcut.direction() == MotionDirection.FORWARD ? config.getForwardCommand() : config.getBackwardCommand());
 
             putKeyMappingIfMissing(
                     EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
@@ -206,7 +206,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
+                new FunctionHandler(MotionDirection.FORWARD, (syntaxTree, direction) ->
                         ShrinkExpandMotionHandler.createExpandHandler(syntaxTree)),
                 false);
 
@@ -214,7 +214,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
+                new FunctionHandler(MotionDirection.FORWARD, (syntaxTree, direction) ->
                         ShrinkExpandMotionHandler.createShrinkHandler(syntaxTree)),
                 false);
 
@@ -239,7 +239,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandSmartSelectionExtend),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
+                new FunctionHandler(MotionDirection.FORWARD, (syntaxTree, direction) ->
                         new SmartSelectionExtendHandler(syntaxTree)),
                 false);
 
@@ -279,14 +279,14 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToPrevSibling),
                 getOwner(),
-                new MoveSiblingHandler(Direction.BACKWARD),
+                new MoveSiblingHandler(MotionDirection.BACKWARD),
                 false);
 
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToNextSibling),
                 getOwner(),
-                new MoveSiblingHandler(Direction.FORWARD),
+                new MoveSiblingHandler(MotionDirection.FORWARD),
                 false);
 
         putKeyMappingIfMissing(

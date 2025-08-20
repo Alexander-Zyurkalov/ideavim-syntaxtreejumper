@@ -4,7 +4,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,7 +211,7 @@ public abstract class SyntaxNode {
         return getTypeName().equals("TYPE_PARAMETER");
     }
 
-    public boolean isInRightDirection(Offsets initialSelection, Direction direction) {
+    public boolean isInRightDirection(Offsets initialSelection, MotionDirection direction) {
         TextRange currentRange = getTextRange();
         if (currentRange == null) {
             return false;
@@ -221,6 +221,8 @@ public abstract class SyntaxNode {
                     currentRange.getStartOffset() < initialSelection.leftOffset();
             case FORWARD -> currentRange.getStartOffset() > initialSelection.leftOffset() ||
                     currentRange.getEndOffset() > initialSelection.rightOffset();
+            case EXPAND -> false; //TODO: what shall I do here?
+            case SHRINK -> false;
         };
     }
 

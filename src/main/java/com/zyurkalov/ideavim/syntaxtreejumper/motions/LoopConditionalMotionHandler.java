@@ -1,6 +1,6 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
@@ -17,13 +17,13 @@ import java.util.function.Function;
  */
 public class LoopConditionalMotionHandler extends AbstractFindNodeMotionHandler {
 
-    public LoopConditionalMotionHandler(SyntaxTreeAdapter syntaxTree, Direction direction, SyntaxTreeAdapter.WhileSearching whileSearching) {
+    public LoopConditionalMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction, SyntaxTreeAdapter.WhileSearching whileSearching) {
         super(syntaxTree, direction, whileSearching);
     }
 
     @Override
     @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(Direction direction, Offsets initialSelection, SyntaxTreeAdapter.WhileSearching whileSearching) {
+    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(MotionDirection direction, Offsets initialSelection, SyntaxTreeAdapter.WhileSearching whileSearching) {
         return node -> {
             if (node.isLoopOrConditionalStatement()) {
                 return Optional.of(node);

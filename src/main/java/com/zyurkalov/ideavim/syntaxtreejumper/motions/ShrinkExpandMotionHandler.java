@@ -1,6 +1,5 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
@@ -8,6 +7,9 @@ import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
+
+import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.BACKWARD;
+import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.FORWARD;
 
 /**
  * Implements Helix editor's Alt-o (expand selection) and Alt-i (shrink selection) motions.
@@ -22,8 +24,7 @@ public class ShrinkExpandMotionHandler implements MotionHandler {
 
     public ShrinkExpandMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection motionType) {
         this.motionType = motionType;
-        this.sameLevelElementsMotionHandler = new SameLevelElementsMotionHandler(syntaxTree,
-                motionType == MotionDirection.BACKWARD ? Direction.BACKWARD : Direction.FORWARD);
+        this.sameLevelElementsMotionHandler = new SameLevelElementsMotionHandler(syntaxTree, motionType);
     }
 
     @Override
@@ -40,8 +41,8 @@ public class ShrinkExpandMotionHandler implements MotionHandler {
         int elementOffset = targetElement.getTextRange().getStartOffset();
         int offsetInParent = initialOffsets.leftOffset() - elementOffset;
         Offsets elementRelativeOffset = new Offsets(offsetInParent, offsetInParent);
-        SubWordFinder finderBackward = new SubWordFinder(Direction.BACKWARD);
-        SubWordFinder finderForward = new SubWordFinder(Direction.FORWARD);
+        SubWordFinder finderBackward = new SubWordFinder(BACKWARD);
+        SubWordFinder finderForward = new SubWordFinder(FORWARD);
         Offsets left = finderBackward.findNext(elementRelativeOffset, targetElement.getText());
         Offsets right = finderForward.findNext(elementRelativeOffset, targetElement.getText());
         return Optional.of(new Offsets(left.leftOffset() + elementOffset, right.rightOffset() + elementOffset));

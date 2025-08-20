@@ -6,7 +6,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.PsiSyntaxTreeAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +18,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.BACKWARD;
+import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.FORWARD;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -45,7 +47,7 @@ class ArgumentParameterListMotionHandlerTest {
             String initialText,
             Offsets expectedOffsets,
             String expectedText,
-            Direction direction,
+            MotionDirection direction,
             String explanation
     ) {
         @Override
@@ -61,7 +63,7 @@ class ArgumentParameterListMotionHandlerTest {
                         "(",
                         new Offsets(58, 68),
                         "int param1",
-                        Direction.FORWARD,
+                        FORWARD,
                         "Forward: search within neighbours"
                 ),
                 new ArgumentParameterListTestData(
@@ -69,7 +71,7 @@ class ArgumentParameterListMotionHandlerTest {
                         "(",
                         new Offsets(58, 68),
                         "int param1",
-                        Direction.FORWARD,
+                        FORWARD,
                         "Forward: search within neighbours with no selection"
                 ),
                 new ArgumentParameterListTestData(
@@ -77,7 +79,7 @@ class ArgumentParameterListMotionHandlerTest {
                         "int param1",
                         new Offsets(70, 83),
                         "String param2",
-                        Direction.FORWARD,
+                        FORWARD,
                         "Forward: jump to next parameter"
                 ),
                 new ArgumentParameterListTestData(
@@ -85,7 +87,7 @@ class ArgumentParameterListMotionHandlerTest {
                         "methodWithParams",
                         new Offsets(58, 68),
                         "int param1",
-                        Direction.FORWARD,
+                        FORWARD,
                         "Forward: searching in the next element recursively"
                 ),
                 new ArgumentParameterListTestData(
@@ -93,7 +95,7 @@ class ArgumentParameterListMotionHandlerTest {
                         "TestClass",
                         new Offsets(58, 68),
                         "int param1",
-                        Direction.FORWARD,
+                        FORWARD,
                         "Forward: searching in the next element with deeper recursion"
                 ),
                 new ArgumentParameterListTestData(
@@ -101,7 +103,7 @@ class ArgumentParameterListMotionHandlerTest {
                         "boolean param3",
                         new Offsets(209, 217),
                         "double x",
-                        Direction.FORWARD,
+                        FORWARD,
                         "Forward: by going to the parent first"
                 ),
                 new ArgumentParameterListTestData(
@@ -109,7 +111,7 @@ class ArgumentParameterListMotionHandlerTest {
                         "double y",
                         new Offsets(261, 262),
                         "x",
-                        Direction.FORWARD,
+                        FORWARD,
                         "Forward: finding a function call "
                 ),
                 new ArgumentParameterListTestData(
@@ -117,7 +119,7 @@ class ArgumentParameterListMotionHandlerTest {
                         "x",
                         new Offsets(264, 265),
                         "y",
-                        Direction.FORWARD,
+                        FORWARD,
                         "Forward: finding the next function call argument"
                 )
         );
@@ -130,7 +132,7 @@ class ArgumentParameterListMotionHandlerTest {
                         ")",
                         new Offsets(85, 99),
                         "boolean param3",
-                        Direction.BACKWARD,
+                        BACKWARD,
                         "Backward: search within neighbours"
                 ),
                 new ArgumentParameterListTestData(
@@ -138,7 +140,7 @@ class ArgumentParameterListMotionHandlerTest {
                         ")",
                         new Offsets(85, 99),
                         "boolean param3",
-                        Direction.BACKWARD,
+                        BACKWARD,
                         "Backward: search within neighbours with no selection"
                 ),
                 new ArgumentParameterListTestData(
@@ -146,7 +148,7 @@ class ArgumentParameterListMotionHandlerTest {
                         "String param2",
                         new Offsets(58, 68),
                         "int param1",
-                        Direction.BACKWARD,
+                        BACKWARD,
                         "Backward: jump to previous parameter"
                 ),
 
@@ -158,7 +160,7 @@ class ArgumentParameterListMotionHandlerTest {
                                 "                    }",
                         new Offsets(85, 99),
                         "boolean param3",
-                        Direction.BACKWARD,
+                        BACKWARD,
                         "Backward: searching in the next element recursively"
                 ),
                 new ArgumentParameterListTestData(
@@ -166,7 +168,7 @@ class ArgumentParameterListMotionHandlerTest {
                         "y",
                         new Offsets(261, 262),
                         "x",
-                        Direction.BACKWARD,
+                        BACKWARD,
                         "Backward: finding the prev function call argument"
                 )
         );
@@ -180,7 +182,7 @@ class ArgumentParameterListMotionHandlerTest {
                         "",
                         new Offsets(0, 0), // should stay at the beginning
                         "",
-                        Direction.BACKWARD,
+                        BACKWARD,
                         "Edge case: no previous parameter/argument list"
                 ),
 
@@ -189,7 +191,7 @@ class ArgumentParameterListMotionHandlerTest {
                         "",
                         new Offsets(300, 300), // should stay at the end
                         "",
-                        Direction.FORWARD,
+                        FORWARD,
                         "Edge case: no next parameter/argument list"
                 )
         );

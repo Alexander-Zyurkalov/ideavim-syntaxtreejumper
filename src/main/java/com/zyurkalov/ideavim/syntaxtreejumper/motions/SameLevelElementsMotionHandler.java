@@ -1,7 +1,7 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 
 import com.intellij.openapi.util.TextRange;
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.ElementWithSiblings;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
@@ -15,9 +15,9 @@ import java.util.Optional;
 public class SameLevelElementsMotionHandler implements MotionHandler {
 
     public final SyntaxTreeAdapter syntaxTree;
-    private final Direction direction;
+    private final MotionDirection direction;
 
-    public SameLevelElementsMotionHandler(SyntaxTreeAdapter syntaxTree, Direction direction) {
+    public SameLevelElementsMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
         this.syntaxTree = syntaxTree;
         this.direction = direction;
     }
@@ -49,6 +49,8 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
             case FORWARD -> elementWithSiblings.nextSibling() == null ?
                     syntaxTree.findFirstChildOfItsParent(elementWithSiblings.currentElement()) :
                     elementWithSiblings.nextSibling();
+            case EXPAND -> null; //TODO: come up with better options
+            case SHRINK -> null;
         };
     }
 
@@ -136,7 +138,7 @@ public class SameLevelElementsMotionHandler implements MotionHandler {
      * Shrinks the selection to the largest meaningful child (Alt-i behaviour)
      */
     Optional<Offsets> shrinkSelection(Offsets initialOffsets) {
-        SyntaxNode currentElement = syntaxTree.findCurrentElement(initialOffsets, Direction.FORWARD);
+        SyntaxNode currentElement = syntaxTree.findCurrentElement(initialOffsets, MotionDirection.FORWARD);
         if (currentElement == null) {
             return Optional.of(initialOffsets);
         }

@@ -1,6 +1,6 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
@@ -15,14 +15,14 @@ import java.util.function.Function;
  */
 public class OperatorMotionHandler extends AbstractFindNodeMotionHandler {
 
-    public OperatorMotionHandler(SyntaxTreeAdapter syntaxTree, Direction direction) {
+    public OperatorMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
         super(syntaxTree, direction, SyntaxTreeAdapter.WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION);
     }
 
     @Override
     @NotNull
     public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(
-            Direction direction, Offsets initialSelection,
+            MotionDirection direction, Offsets initialSelection,
             SyntaxTreeAdapter.WhileSearching whileSearching
     ) {
         return node -> {

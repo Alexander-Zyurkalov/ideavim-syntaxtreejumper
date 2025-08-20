@@ -19,7 +19,7 @@ import com.maddyhome.idea.vim.extension.ExtensionHandler;
 import com.maddyhome.idea.vim.newapi.IjVimEditorKt;
 import com.maddyhome.idea.vim.state.mode.Mode;
 import com.maddyhome.idea.vim.state.mode.SelectionType;
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapterFactory;
@@ -36,10 +36,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.*;
+
 public class FunctionHandler implements ExtensionHandler {
 
-    private final Direction direction;
-    private final BiFunction<SyntaxTreeAdapter, Direction, MotionHandler> navigatorFactory;
+    private final MotionDirection direction;
+    private final BiFunction<SyntaxTreeAdapter, MotionDirection, MotionHandler> navigatorFactory;
     private final boolean addNewCaret;
 
     // Static variable to track the last executed FunctionHandler
@@ -61,7 +63,7 @@ public class FunctionHandler implements ExtensionHandler {
     /**
      * Constructor for motion without adding a new caret (backward compatibility).
      */
-    public FunctionHandler(Direction direction, BiFunction<SyntaxTreeAdapter, Direction, MotionHandler> navigatorFactory) {
+    public FunctionHandler(MotionDirection direction, BiFunction<SyntaxTreeAdapter, MotionDirection, MotionHandler> navigatorFactory) {
         this(direction, navigatorFactory, false);
     }
 
@@ -72,7 +74,9 @@ public class FunctionHandler implements ExtensionHandler {
      * @param navigatorFactory Factory to create the motion handler
      * @param addNewCaret      Whether to add a new caret with selection (true) or move existing carets (false)
      */
-    public FunctionHandler(Direction direction, BiFunction<SyntaxTreeAdapter, Direction, MotionHandler> navigatorFactory, boolean addNewCaret) {
+    public FunctionHandler(MotionDirection direction, BiFunction<SyntaxTreeAdapter, MotionDirection,
+            MotionHandler> navigatorFactory, boolean addNewCaret
+    ) {
         this.direction = direction;
         this.navigatorFactory = navigatorFactory;
         this.addNewCaret = addNewCaret;
@@ -109,9 +113,9 @@ public class FunctionHandler implements ExtensionHandler {
         // When creating new carets, we should only do that for frontier carets
         int start_caret = 0;
         int end_caret = carets.size() - 1;
-        if (addNewCaret && direction == Direction.BACKWARD) {
+        if (addNewCaret && (direction == EXPAND ||  direction == BACKWARD )) {
             end_caret = 0;
-        } else if (addNewCaret && direction == Direction.FORWARD) {
+        } else if (addNewCaret && (direction == SHRINK || direction == FORWARD)) {
             start_caret = carets.size() - 1;
         }
 
@@ -289,8 +293,8 @@ public class FunctionHandler implements ExtensionHandler {
 
     private void scrollToFirstOrLast(List<LogicalPosition> caretPositions, Editor editor) {
         Function<List<LogicalPosition>, LogicalPosition> getFirstOrLast = switch (direction) {
-            case FORWARD -> List::getLast;
-            case BACKWARD -> List::getFirst;
+            case FORWARD, EXPAND -> List::getLast;
+            case BACKWARD, SHRINK -> List::getFirst;
         };
         caretPositions.sort(Comparator.comparingInt(LogicalPosition::getLine));
         editor.getScrollingModel().scrollTo(getFirstOrLast.apply(caretPositions), ScrollType.MAKE_VISIBLE);

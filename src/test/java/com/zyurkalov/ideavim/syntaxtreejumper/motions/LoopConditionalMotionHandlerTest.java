@@ -6,7 +6,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.PsiSyntaxTreeAdapter;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
@@ -19,6 +19,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.FORWARD;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -46,7 +47,7 @@ class LoopConditionalMotionHandlerTest {
             String initialText,
             Offsets expectedOffsets,
             String expectedText,
-            Direction direction,
+            MotionDirection direction,
             String explanation,
             SyntaxTreeAdapter.WhileSearching whileSearching
     ) {
@@ -71,7 +72,7 @@ class LoopConditionalMotionHandlerTest {
                                 for (int i = 0; i < 10; i++) {
                                             System.out.println(i);
                                         }""",
-                        Direction.FORWARD,
+                        FORWARD,
                         "Forward: Should not skip loop inside selected function and jump to it",
                         SyntaxTreeAdapter.WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION
                 ),
@@ -91,7 +92,7 @@ class LoopConditionalMotionHandlerTest {
                                                 break;
                                             }
                                         }""",
-                        Direction.FORWARD,
+                        FORWARD,
                         "Forward: Should skip loop inside selected function and jump to loop in next function",
                         SyntaxTreeAdapter.WhileSearching.SKIP_INITIAL_SELECTION
                 )

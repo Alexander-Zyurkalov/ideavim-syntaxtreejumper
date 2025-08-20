@@ -3,7 +3,7 @@ package com.zyurkalov.ideavim.syntaxtreejumper.adapters;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,17 +17,22 @@ import java.util.function.Function;
  * particularly useful for languages like C++ where the default PSI tree might be inconvenient.
  */
 public abstract class SyntaxTreeAdapter {
-    public static Optional<SyntaxNode> nextNeighbour(SyntaxNode node, Direction direction) {
+    // TODO: rename this method and combine with get child and getParent
+    public static Optional<SyntaxNode> nextNeighbour(SyntaxNode node, MotionDirection direction) {
         return switch (direction) {
-            case Direction.FORWARD -> Optional.ofNullable(node.getNextSibling());
-            case Direction.BACKWARD -> Optional.ofNullable(node.getPreviousSibling());
+            case FORWARD -> Optional.ofNullable(node.getNextSibling());
+            case BACKWARD -> Optional.ofNullable(node.getPreviousSibling());
+            case EXPAND -> Optional.ofNullable(node.getParent());
+            case SHRINK -> Optional.ofNullable(node.getFirstChild());
         };
     }
 
-    public static SyntaxNode getChild(@NotNull SyntaxNode currentNode, Direction direction) {
+    public static SyntaxNode getChild(@NotNull SyntaxNode currentNode, MotionDirection direction) {
         return switch (direction) {
-            case Direction.FORWARD -> currentNode.getFirstChild();
-            case Direction.BACKWARD -> currentNode.getLastChild();
+            case FORWARD -> currentNode.getFirstChild();
+            case BACKWARD -> currentNode.getLastChild();
+            case EXPAND -> null;
+            case SHRINK -> null;
         };
     }
 
@@ -237,7 +242,7 @@ public abstract class SyntaxTreeAdapter {
 
     @NotNull
     public SyntaxNode findParentElementIfInitialElementsAreAtEdgesOrChooseOne(
-            SyntaxNode initElementAtLeft, SyntaxNode initElementAtRight, Direction direction) {
+            SyntaxNode initElementAtLeft, SyntaxNode initElementAtRight, MotionDirection direction) {
         SyntaxNode initialElement = initElementAtLeft;
         SyntaxNode commonParent = findCommonParent(initElementAtLeft, initElementAtRight);
         if (commonParent == null) {
@@ -250,8 +255,9 @@ public abstract class SyntaxTreeAdapter {
             initialElement = commonParent;
         } else {
             initialElement = switch (direction) {
-                case BACKWARD -> initElementAtLeft;
+                case BACKWARD, SHRINK -> initElementAtLeft;
                 case FORWARD -> initElementAtRight;
+                case EXPAND -> initElementAtLeft; //TODO what shall we do here?
             };
         }
         return initialElement;
@@ -265,7 +271,7 @@ public abstract class SyntaxTreeAdapter {
      * @param direction
      */
     @Nullable
-    public SyntaxNode findCurrentElement(Offsets initialOffsets, Direction direction) {
+    public SyntaxNode findCurrentElement(Offsets initialOffsets, MotionDirection direction) {
         boolean isOnlyCaretButNoSelection = initialOffsets.leftOffset() >= initialOffsets.rightOffset() - 1;
 
         if (isOnlyCaretButNoSelection) {
@@ -291,7 +297,7 @@ public abstract class SyntaxTreeAdapter {
      * @param initialOffsets
      * @param direction
      */
-    public ElementWithSiblings findElementWithSiblings(Offsets initialOffsets, Direction direction) {
+    public ElementWithSiblings findElementWithSiblings(Offsets initialOffsets, MotionDirection direction) {
         SyntaxNode currentElement = findCurrentElement(initialOffsets, direction);
         if (currentElement == null || currentElement.isPsiFile()) {
             return new ElementWithSiblings(null, null, null);
@@ -313,7 +319,7 @@ public abstract class SyntaxTreeAdapter {
     }
 
     public Optional<SyntaxNode> findWithinNeighbours(
-            @NotNull SyntaxNode currentNode, Direction direction, Offsets initialSelection,
+            @NotNull SyntaxNode currentNode, MotionDirection direction, Offsets initialSelection,
             Function<SyntaxNode, Optional<SyntaxNode>> findNodeType,
             WhileSearching whileSearching) {
         Optional<SyntaxNode> found = Optional.empty();
@@ -321,7 +327,7 @@ public abstract class SyntaxTreeAdapter {
         while (next.isPresent()) {
             currentNode = next.get();
             if ( whileSearching == WhileSearching.SKIP_INITIAL_SELECTION && !currentNode.isInRightDirection(initialSelection, direction)) {
-                next = nextNeighbour(currentNode, direction);
+                next = nextNeighbour(currentNode, direction); //TODO: I think we need to move it here as a virtual method
                 continue;
             }
             found = findNodeType.apply(currentNode);
@@ -342,7 +348,7 @@ public abstract class SyntaxTreeAdapter {
         return found;
     }
 
-    private static boolean isNodeFound(Direction direction, Offsets initialSelection, Optional<SyntaxNode> found) {
+    private static boolean isNodeFound(MotionDirection direction, Offsets initialSelection, Optional<SyntaxNode> found) {
         return found.isPresent() &&
                 found.get().isInRightDirection(initialSelection, direction) &&
                 !found.get().areBordersEqual(initialSelection);
@@ -359,7 +365,7 @@ public abstract class SyntaxTreeAdapter {
      * @return The found parameter/argument list node or null if not found
      */
     public Optional<SyntaxNode> findNodeByDirection(
-            SyntaxNode currentNode, Direction direction, Offsets initialSelection,
+            SyntaxNode currentNode, MotionDirection direction, Offsets initialSelection,
             @NotNull Function<SyntaxNode, Optional<SyntaxNode>> functionToCheckSearchCriteria, WhileSearching whileSearching) {
         Optional<SyntaxNode> found = findWithinNeighbours(
                 currentNode, direction, initialSelection, functionToCheckSearchCriteria, whileSearching);
