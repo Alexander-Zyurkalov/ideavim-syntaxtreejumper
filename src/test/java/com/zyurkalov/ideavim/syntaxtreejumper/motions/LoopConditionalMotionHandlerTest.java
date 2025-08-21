@@ -95,6 +95,23 @@ class LoopConditionalMotionHandlerTest {
                         AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION
                 ),
                 new LoopConditionalTestData(
+                        new Offsets(224, 311),
+                        """
+                                while (count < 5) {
+                                            count++;
+                                            if (count == 3) {break;}
+                                        }""",
+                        new Offsets(63, 147),
+                        """
+                                for (int i = 0; i < 10; i++) {
+                                        System.out.println(i);
+                                    }
+                                """,
+                        BACKWARD,
+                        "Backward: Should skip loop inside selected function and jump to loop in next function",
+                        AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION
+                ),
+                new LoopConditionalTestData(
                         new Offsets(277, 301), // Select the entire first function (methodWithLoop)
                         "if (count == 3) {break;}",
                         new Offsets(224, 311), // Jump to while loop in the second function
