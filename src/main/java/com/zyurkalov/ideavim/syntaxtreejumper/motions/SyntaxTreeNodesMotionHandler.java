@@ -6,6 +6,7 @@ import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,7 +53,7 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
         }
         Optional<SyntaxNode> foundElement = switch (direction) {
             case BACKWARD -> goBackward(currentElement);
-            case FORWARD -> goForward(currentElement, initialOffsets, true);
+            case FORWARD -> goForward(currentElement, initialOffsets, true, currentElement);
             case EXPAND -> expandSelection(currentElement, initialOffsets);
             case SHRINK -> shrinkSelection(currentElement, initialOffsets);
         };
@@ -66,23 +67,31 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
 
     }
 
-    private Optional<SyntaxNode> goForward(SyntaxNode currentElement, Offsets initialOffsets, boolean skipFirstStep) {
-//        SyntaxNode nextNonWhitespaceSibling = syntaxTree.findNextNonWhitespaceSibling(currentElement);
-        SyntaxNode sibling = skipFirstStep ? currentElement.getNextSibling() : currentElement;
+    private Optional<SyntaxNode> goForward(SyntaxNode currentElement, Offsets initialOffsets, boolean skipFirstStep, SyntaxNode startingPoint) {
+        SyntaxNode sibling = skipFirstStep ? getNextSibling(currentElement, startingPoint) : currentElement;
         while (sibling != null && !doesTargetFollowRequirements(currentElement, sibling, initialOffsets)) {
             if (shallGoDeeper() && !sibling.getChildren().isEmpty()) {
-                var found = goForward(sibling.getFirstChild(), initialOffsets, false);
+                var found = goForward(sibling.getFirstChild(), initialOffsets, false, startingPoint);
                 if (found.isPresent()) {
                     return found;
                 }
             }
-            sibling = sibling.getNextSibling();
+            sibling = getNextSibling(sibling, startingPoint);
         }
-        return Optional.ofNullable(
-                sibling == null && !shallGoDeeper() ?
-                        syntaxTree.findFirstChildOfItsParent( currentElement) :
-                        sibling
-        );
+        return Optional.ofNullable(sibling);
+    }
+
+    private @Nullable SyntaxNode getNextSibling(SyntaxNode element, SyntaxNode startingPoint) {
+        SyntaxNode nextSibling = element.getNextSibling();
+        if (!shallGoDeeper()) {
+            if (nextSibling == null) {
+                nextSibling = syntaxTree.findFirstChildOfItsParent(element);
+            }
+            if (nextSibling == null || nextSibling.isEquivalentTo(startingPoint)) {
+                return null;
+            }
+        }
+        return nextSibling;
     }
 
     private Optional<SyntaxNode> goBackward(SyntaxNode currentElement) {

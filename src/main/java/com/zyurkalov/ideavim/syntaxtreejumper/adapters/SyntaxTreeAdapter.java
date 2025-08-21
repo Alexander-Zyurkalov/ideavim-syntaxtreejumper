@@ -137,8 +137,10 @@ public abstract class SyntaxTreeAdapter {
      * @param node The node whose parent's last child to find
      * @return The last non-whitespace child, or null if not found
      */
-    @Nullable
-    public SyntaxNode findLastChildOfItsParent(@NotNull SyntaxNode node) {
+    public SyntaxNode findLastChildOfItsParent(SyntaxNode node) {
+        if (node == null) {
+            return null;
+        }
         SyntaxNode parent = node.getParent();
         if (parent == null) return null;
         SyntaxNode lastChild = parent.getLastChild();
