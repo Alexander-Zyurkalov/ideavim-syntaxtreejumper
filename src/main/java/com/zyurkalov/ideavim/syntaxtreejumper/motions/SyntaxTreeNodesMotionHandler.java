@@ -11,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.BACKWARD;
-import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.FORWARD;
+import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.*;
 
 public class SyntaxTreeNodesMotionHandler implements MotionHandler {
 
@@ -69,13 +68,13 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
 
     private Optional<SyntaxNode> goForward(SyntaxNode currentElement, Offsets initialOffsets, boolean skipFirstStep, SyntaxNode startingPoint) {
         SyntaxNode found = findWithingNeighbours(currentElement, initialOffsets, skipFirstStep, startingPoint);
-//        while (shallGoDeeper() && found == null && currentElement != null) {
-//            currentElement = currentElement.getParent();
-//            if (currentElement == null || currentElement.isPsiFile()) {
-//                break;
-//            }
-//            found = findWithingNeighbours(currentElement, initialOffsets, false, startingPoint);
-//        }
+        while (shallGoDeeper() && found == null && currentElement != null) {
+            currentElement = currentElement.getParent();
+            if (currentElement == null || currentElement.isPsiFile()) {
+                break;
+            }
+            found = findWithingNeighbours(currentElement, initialOffsets, true, startingPoint);
+        }
         return Optional.ofNullable(found);
     }
 
@@ -84,9 +83,9 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
         SyntaxNode sibling = skipFirstStep ? getNextSibling(currentElement, startingPoint) : currentElement;
         while (sibling != null && !doesTargetFollowRequirements(startingPoint, sibling, initialOffsets)) {
             if (shallGoDeeper() && !sibling.getChildren().isEmpty()) {
-                var found = goForward(sibling.getFirstChild(), initialOffsets, false, startingPoint);
-                if (found.isPresent()) {
-                    sibling = found.get();
+               var found = findWithingNeighbours(sibling.getFirstChild(), initialOffsets, false, startingPoint);
+                if (found != null ) {
+                    sibling = found;
                     break;
                 }
             }

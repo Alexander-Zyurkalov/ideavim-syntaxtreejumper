@@ -27,8 +27,8 @@ public class LoopConditionalMotionHandler extends SyntaxTreeNodesMotionHandler {
 
     @Override
     public boolean doesTargetFollowRequirements(SyntaxNode startingPoint, SyntaxNode targetElement, Offsets initialOffsets) {
-    boolean loopOrConditionalStatement = targetElement.isLoopOrConditionalStatement();
-    boolean equivalent = !targetElement.isEquivalentTo(startingPoint);
-    return loopOrConditionalStatement && equivalent;
+        boolean loopOrConditionalStatement = targetElement.isLoopOrConditionalStatement();
+        boolean equivalent = !targetElement.isEquivalentTo(startingPoint);
+        return loopOrConditionalStatement && equivalent;
     }
 }
