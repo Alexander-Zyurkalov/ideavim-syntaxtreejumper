@@ -14,20 +14,20 @@ import java.util.function.Function;
  * in accordance to the given Direction from the caret, then places the caret
  * at the found element.
  */
-public class MethodFunctionMotionHandler extends AbstractFindNodeMotionHandler {
+public class MethodFunctionMotionHandler extends SyntaxTreeNodesMotionHandler {
 
     public MethodFunctionMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
-        super(syntaxTree, direction, WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION);
+        super(syntaxTree, direction);
     }
 
     @Override
-    @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(MotionDirection direction, Offsets initialSelection, WhileSearching whileSearching) {
-        return node -> {
-            if (node.isMethodDefinition() || node.isFunctionDefinition()) {
-                return Optional.of(node);
-            }
-            return Optional.empty();
-        };
+    protected boolean shallGoDeeper() {
+        return true;
     }
+
+    @Override
+    protected boolean doesTargetFollowRequirements(SyntaxNode startingPoint, SyntaxNode targetElement, Offsets initialOffsets) {
+        return targetElement.isMethodDefinition() || targetElement.isFunctionDefinition();
+    }
+
 }
