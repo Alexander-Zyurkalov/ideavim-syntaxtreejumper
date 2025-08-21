@@ -68,17 +68,31 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
     }
 
     private Optional<SyntaxNode> goForward(SyntaxNode currentElement, Offsets initialOffsets, boolean skipFirstStep, SyntaxNode startingPoint) {
+        SyntaxNode found = findWithingNeighbours(currentElement, initialOffsets, skipFirstStep, startingPoint);
+//        while (shallGoDeeper() && found == null && currentElement != null) {
+//            currentElement = currentElement.getParent();
+//            if (currentElement == null || currentElement.isPsiFile()) {
+//                break;
+//            }
+//            found = findWithingNeighbours(currentElement, initialOffsets, false, startingPoint);
+//        }
+        return Optional.ofNullable(found);
+    }
+
+    private @Nullable SyntaxNode findWithingNeighbours(SyntaxNode currentElement, Offsets initialOffsets,
+                                                       boolean skipFirstStep, SyntaxNode startingPoint) {
         SyntaxNode sibling = skipFirstStep ? getNextSibling(currentElement, startingPoint) : currentElement;
-        while (sibling != null && !doesTargetFollowRequirements(currentElement, sibling, initialOffsets)) {
+        while (sibling != null && !doesTargetFollowRequirements(startingPoint, sibling, initialOffsets)) {
             if (shallGoDeeper() && !sibling.getChildren().isEmpty()) {
                 var found = goForward(sibling.getFirstChild(), initialOffsets, false, startingPoint);
                 if (found.isPresent()) {
-                    return found;
+                    sibling = found.get();
+                    break;
                 }
             }
             sibling = getNextSibling(sibling, startingPoint);
         }
-        return Optional.ofNullable(sibling);
+        return sibling;
     }
 
     private @Nullable SyntaxNode getNextSibling(SyntaxNode element, SyntaxNode startingPoint) {
@@ -118,8 +132,8 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
 
     }
 
-    protected boolean doesTargetFollowRequirements(SyntaxNode initialElement, SyntaxNode targetElement, Offsets initialOffsets) {
-        return (initialOffsets.leftOffset() == initialOffsets.rightOffset() || !targetElement.isEquivalentTo(initialElement)) &&
+    protected boolean doesTargetFollowRequirements(SyntaxNode startingPoint, SyntaxNode targetElement, Offsets initialOffsets) {
+        return (initialOffsets.leftOffset() == initialOffsets.rightOffset() || !targetElement.isEquivalentTo(startingPoint)) &&
                 !SyntaxTreeAdapter.isASymbolToSkip(targetElement);
     }
 
