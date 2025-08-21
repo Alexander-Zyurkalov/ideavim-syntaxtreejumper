@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.*;
+import static com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter.getChild;
 
 public class SyntaxTreeNodesMotionHandler implements MotionHandler {
 
@@ -51,8 +52,8 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
             return Optional.of(initialOffsets);
         }
         Optional<SyntaxNode> foundElement = switch (direction) {
-            case BACKWARD -> goBackward(currentElement);
-            case FORWARD -> goForward(currentElement, initialOffsets, true, currentElement);
+            case BACKWARD -> goBackwardOrForward(currentElement, initialOffsets, true, currentElement, BACKWARD);
+            case FORWARD -> goBackwardOrForward(currentElement, initialOffsets, true, currentElement, FORWARD);
             case EXPAND -> expandSelection(currentElement, initialOffsets);
             case SHRINK -> shrinkSelection(currentElement, initialOffsets);
         };
@@ -66,51 +67,54 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
 
     }
 
-    private Optional<SyntaxNode> goForward(SyntaxNode currentElement, Offsets initialOffsets, boolean skipFirstStep, SyntaxNode startingPoint) {
-        SyntaxNode found = findWithingNeighbours(currentElement, initialOffsets, skipFirstStep, startingPoint);
+    private Optional<SyntaxNode> goBackwardOrForward(SyntaxNode currentElement, Offsets initialOffsets,
+                                                     boolean skipFirstStep, SyntaxNode startingPoint,
+                                                     MotionDirection motionDirection
+    ) {
+        SyntaxNode found = findWithingNeighbours(currentElement, initialOffsets, skipFirstStep, startingPoint, motionDirection);
         while (shallGoDeeper() && found == null && currentElement != null) {
             currentElement = currentElement.getParent();
             if (currentElement == null || currentElement.isPsiFile()) {
                 break;
             }
-            found = findWithingNeighbours(currentElement, initialOffsets, true, startingPoint);
+            found = findWithingNeighbours(currentElement, initialOffsets, true, startingPoint, motionDirection);
         }
         return Optional.ofNullable(found);
     }
 
     private @Nullable SyntaxNode findWithingNeighbours(SyntaxNode currentElement, Offsets initialOffsets,
-                                                       boolean skipFirstStep, SyntaxNode startingPoint) {
-        SyntaxNode sibling = skipFirstStep ? getNextSibling(currentElement, startingPoint) : currentElement;
+                                                       boolean skipFirstStep, SyntaxNode startingPoint,
+                                                       MotionDirection motionDirection
+    ) {
+        SyntaxNode sibling = skipFirstStep ? getNextSibling(currentElement, startingPoint, motionDirection) : currentElement;
         while (sibling != null && !doesTargetFollowRequirements(startingPoint, sibling, initialOffsets)) {
             if (shallGoDeeper() && !sibling.getChildren().isEmpty()) {
-               var found = findWithingNeighbours(sibling.getFirstChild(), initialOffsets, false, startingPoint);
-                if (found != null ) {
+                var found = findWithingNeighbours(
+                        getChild(sibling, motionDirection), initialOffsets, false, startingPoint, motionDirection);
+                if (found != null) {
                     sibling = found;
                     break;
                 }
             }
-            sibling = getNextSibling(sibling, startingPoint);
+            sibling = getNextSibling(sibling, startingPoint, motionDirection);
         }
         return sibling;
     }
 
-    private @Nullable SyntaxNode getNextSibling(SyntaxNode element, SyntaxNode startingPoint) {
-        SyntaxNode nextSibling = element.getNextSibling();
+    private @Nullable SyntaxNode getNextSibling(SyntaxNode element, SyntaxNode startingPoint,
+                                                MotionDirection motionDirection) {
+        SyntaxNode nextSibling = motionDirection == FORWARD ? element.getNextSibling() : element.getPreviousSibling();
         if (!shallGoDeeper()) {
             if (nextSibling == null) {
-                nextSibling = syntaxTree.findFirstChildOfItsParent(element);
+                nextSibling = motionDirection == FORWARD ?
+                        syntaxTree.findFirstChildOfItsParent(element) :
+                        syntaxTree.findLastChildOfItsParent(element);
             }
             if (nextSibling == null || nextSibling.isEquivalentTo(startingPoint)) {
                 return null;
             }
         }
         return nextSibling;
-    }
-
-    private Optional<SyntaxNode> goBackward(SyntaxNode currentElement) {
-        SyntaxNode nextNonWhitespaceSibling = syntaxTree.findPreviousNonWhitespaceSibling(currentElement);
-        return Optional.ofNullable(nextNonWhitespaceSibling == null ?
-                syntaxTree.findLastChildOfItsParent(currentElement) : nextNonWhitespaceSibling);
     }
 
 
@@ -123,12 +127,10 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
         while (targetElement != null && !doesTargetFollowRequirements(initialElement, targetElement, initialOffsets)) {
             targetElement = syntaxTree.findParentThatIsNotEqualToTheNode(targetElement);
         }
-        ;
         if (targetElement == null || targetElement.isPsiFile()) {
             targetElement = null;
         }
         return Optional.ofNullable(targetElement);
-
     }
 
     protected boolean doesTargetFollowRequirements(SyntaxNode startingPoint, SyntaxNode targetElement, Offsets initialOffsets) {
