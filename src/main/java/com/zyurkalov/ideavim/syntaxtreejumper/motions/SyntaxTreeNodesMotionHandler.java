@@ -52,7 +52,7 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
         }
         Optional<SyntaxNode> foundElement = switch (direction) {
             case BACKWARD -> goBackward(currentElement);
-            case FORWARD -> goForward(currentElement);
+            case FORWARD -> goForward(currentElement, initialOffsets, true);
             case EXPAND -> expandSelection(currentElement, initialOffsets);
             case SHRINK -> shrinkSelection(currentElement, initialOffsets);
         };
@@ -66,10 +66,23 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
 
     }
 
-    private Optional<SyntaxNode> goForward(SyntaxNode currentElement) {
-        SyntaxNode nextNonWhitespaceSibling = syntaxTree.findNextNonWhitespaceSibling(currentElement);
-        return Optional.ofNullable(nextNonWhitespaceSibling == null ?
-                syntaxTree.findFirstChildOfItsParent(currentElement) : nextNonWhitespaceSibling);
+    private Optional<SyntaxNode> goForward(SyntaxNode currentElement, Offsets initialOffsets, boolean skipFirstStep) {
+//        SyntaxNode nextNonWhitespaceSibling = syntaxTree.findNextNonWhitespaceSibling(currentElement);
+        SyntaxNode sibling = skipFirstStep ? currentElement.getNextSibling() : currentElement;
+        while (sibling != null && !doesTargetFollowRequirements(currentElement, sibling, initialOffsets)) {
+            if (shallGoDeeper() && !sibling.getChildren().isEmpty()) {
+                var found = goForward(sibling.getFirstChild(), initialOffsets, false);
+                if (found.isPresent()) {
+                    return found;
+                }
+            }
+            sibling = sibling.getNextSibling();
+        }
+        return Optional.ofNullable(
+                sibling == null && !shallGoDeeper() ?
+                        syntaxTree.findFirstChildOfItsParent( currentElement) :
+                        sibling
+        );
     }
 
     private Optional<SyntaxNode> goBackward(SyntaxNode currentElement) {
@@ -82,10 +95,10 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
     /**
      * Expands the selection to the parent syntax node (Alt-o behaviour)
      */
-    Optional<SyntaxNode> expandSelection(SyntaxNode currentElement, Offsets initialOffsets) {
+    private Optional<SyntaxNode> expandSelection(SyntaxNode initialElement, Offsets initialOffsets) {
         SyntaxNode targetElement;
-        targetElement = currentElement;
-        while (targetElement != null && !doesTargetFollowRequirements(currentElement, targetElement, initialOffsets)) {
+        targetElement = initialElement;
+        while (targetElement != null && !doesTargetFollowRequirements(initialElement, targetElement, initialOffsets)) {
             targetElement = syntaxTree.findParentThatIsNotEqualToTheNode(targetElement);
         }
         ;
@@ -96,44 +109,44 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
 
     }
 
-    public boolean doesTargetFollowRequirements(SyntaxNode initialElement, SyntaxNode targetElement, Offsets initialOffsets) {
-        return ( initialOffsets.leftOffset() == initialOffsets.rightOffset() || !targetElement.isEquivalentTo(initialElement) ) &&
-                !targetElement.isWhitespace() && !targetElement.isBracket();
+    protected boolean doesTargetFollowRequirements(SyntaxNode initialElement, SyntaxNode targetElement, Offsets initialOffsets) {
+        return (initialOffsets.leftOffset() == initialOffsets.rightOffset() || !targetElement.isEquivalentTo(initialElement)) &&
+                !SyntaxTreeAdapter.isASymbolToSkip(targetElement);
     }
 
     /**
      * Shrinks the selection to the largest meaningful child (Alt-i behaviour)
      */
-    Optional<SyntaxNode> shrinkSelection(SyntaxNode currentElement, Offsets initialOffsets) {
+    private Optional<SyntaxNode> shrinkSelection(SyntaxNode initialElement, Offsets initialOffsets) {
         // Find the largest meaningful child that fits within the current selection
-        List<SyntaxNode> candidateChildren = currentElement.getChildren();
+        List<SyntaxNode> candidateChildren = initialElement.getChildren();
         while (candidateChildren.size() == 1 &&
-                candidateChildren.getFirst().getTextRange().equals(currentElement.getTextRange())) {
+                candidateChildren.getFirst().getTextRange().equals(initialElement.getTextRange())) {
             candidateChildren = candidateChildren.getFirst().getChildren();
         }
 
-        SyntaxNode foundElement  = null;
+        SyntaxNode foundElement = null;
         for (SyntaxNode child : candidateChildren) {
-            if (doesTargetFollowRequirements(currentElement, child, initialOffsets)) {
+            if (doesTargetFollowRequirements(initialElement, child, initialOffsets)) {
                 foundElement = child;
                 break;
             }
             Optional<SyntaxNode> found;
-            if (shallGoDeeper(currentElement, child, initialOffsets)) {
+            if (shallGoDeeper()) {
                 found = shrinkSelection(child, initialOffsets);
                 if (found.isPresent()) {
                     return found;
                 }
             }
         }
-        if (foundElement == null || foundElement.isEquivalentTo(currentElement)) {
+        if (foundElement == null || foundElement.isEquivalentTo(initialElement)) {
             return Optional.empty();
         }
         return Optional.of(foundElement);
 
     }
 
-    public boolean shallGoDeeper(SyntaxNode initialElement, SyntaxNode currentElement, Offsets initialOffsets) {
+    protected boolean shallGoDeeper() {
         return false;
     }
 

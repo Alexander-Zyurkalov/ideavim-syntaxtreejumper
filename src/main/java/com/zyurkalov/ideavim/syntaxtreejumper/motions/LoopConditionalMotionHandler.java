@@ -21,8 +21,8 @@ public class LoopConditionalMotionHandler extends SyntaxTreeNodesMotionHandler {
     }
 
     @Override
-    public boolean shallGoDeeper(SyntaxNode initialElement, SyntaxNode currentElement, Offsets initialOffsets) {
-        return !currentElement.getChildren().isEmpty();
+    public boolean shallGoDeeper() {
+        return true;
     }
 
     @Override

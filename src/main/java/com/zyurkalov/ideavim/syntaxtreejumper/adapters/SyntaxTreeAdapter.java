@@ -61,7 +61,7 @@ public abstract class SyntaxTreeAdapter {
         return sibling;
     }
 
-    private static boolean isASymbolToSkip(SyntaxNode sibling) {
+    public static boolean isASymbolToSkip(SyntaxNode sibling) {
         if (sibling.isOperator()) {
             return true;
         }
