@@ -54,7 +54,7 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
             case BACKWARD -> goBackward(currentElement);
             case FORWARD -> goForward(currentElement);
             case EXPAND -> expandSelection(currentElement, initialOffsets);
-            case SHRINK -> shrinkSelection(currentElement);
+            case SHRINK -> shrinkSelection(currentElement, initialOffsets);
         };
         if (foundElement.isPresent()) {
             TextRange textRange = foundElement.get().getTextRange();
@@ -97,13 +97,14 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
     }
 
     public boolean doesTargetFollowRequirements(SyntaxNode initialElement, SyntaxNode targetElement, Offsets initialOffsets) {
-        return initialOffsets.leftOffset() == initialOffsets.rightOffset() || !targetElement.isEquivalentTo(initialElement);
+        return ( initialOffsets.leftOffset() == initialOffsets.rightOffset() || !targetElement.isEquivalentTo(initialElement) ) &&
+                !targetElement.isWhitespace() && !targetElement.isBracket();
     }
 
     /**
      * Shrinks the selection to the largest meaningful child (Alt-i behaviour)
      */
-    Optional<SyntaxNode> shrinkSelection(SyntaxNode currentElement) {
+    Optional<SyntaxNode> shrinkSelection(SyntaxNode currentElement, Offsets initialOffsets) {
         // Find the largest meaningful child that fits within the current selection
         List<SyntaxNode> candidateChildren = currentElement.getChildren();
         while (candidateChildren.size() == 1 &&
@@ -111,25 +112,29 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
             candidateChildren = candidateChildren.getFirst().getChildren();
         }
 
-        // Find the largest child by text range
-        SyntaxNode largestChild = null;
-        int largestSize = 0;
+        SyntaxNode foundElement  = null;
         for (SyntaxNode child : candidateChildren) {
-            TextRange range = child.getTextRange();
-            int size = range.getLength();
-
-            if (size > largestSize) {
-                largestSize = size;
-                largestChild = child;
+            if (doesTargetFollowRequirements(currentElement, child, initialOffsets)) {
+                foundElement = child;
+                break;
+            }
+            Optional<SyntaxNode> found;
+            if (shallGoDeeper(currentElement, child, initialOffsets)) {
+                found = shrinkSelection(child, initialOffsets);
+                if (found.isPresent()) {
+                    return found;
+                }
             }
         }
-
-        SyntaxNode foundElement = largestChild;
         if (foundElement == null || foundElement.isEquivalentTo(currentElement)) {
             return Optional.empty();
         }
         return Optional.of(foundElement);
 
+    }
+
+    public boolean shallGoDeeper(SyntaxNode initialElement, SyntaxNode currentElement, Offsets initialOffsets) {
+        return false;
     }
 
 }

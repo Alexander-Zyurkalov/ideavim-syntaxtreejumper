@@ -95,7 +95,7 @@ class LoopConditionalMotionHandlerTest {
 //                        FORWARD,
 //                        "Forward: Should skip loop inside selected function and jump to loop in next function",
 //                        AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION
-//                )
+//                ),
                 new LoopConditionalTestData(
                         new Offsets(277, 301), // Select the entire first function (methodWithLoop)
                         "if (count == 3) {break;}",
@@ -107,7 +107,21 @@ class LoopConditionalMotionHandlerTest {
                                         }""",
 
                         EXPAND,
-                        "Forward: Should skip loop inside selected function and jump to loop in next function",
+                        "EXPAND: Should go from the inner condition to the outer loop",
+                        AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION
+                ),
+                new LoopConditionalTestData(
+                        new Offsets(224, 311),
+                        """
+                                while (count < 5) {
+                                            count++;
+                                            if (count == 3) {break;}
+                                        }""",
+                        new Offsets(277, 301),
+                        "if (count == 3) {break;}",
+
+                        SHRINK,
+                        "SHRINK: Should go from the outer loop to the inner condition",
                         AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION
                 )
         );

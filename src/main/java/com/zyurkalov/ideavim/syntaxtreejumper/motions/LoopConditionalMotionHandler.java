@@ -20,7 +20,12 @@ public class LoopConditionalMotionHandler extends SyntaxTreeNodesMotionHandler {
         this.whileSearching = whileSearching;
     }
 
-@Override
+    @Override
+    public boolean shallGoDeeper(SyntaxNode initialElement, SyntaxNode currentElement, Offsets initialOffsets) {
+        return !currentElement.getChildren().isEmpty();
+    }
+
+    @Override
     public boolean doesTargetFollowRequirements(SyntaxNode initialElement, SyntaxNode targetElement, Offsets initialOffsets) {
     boolean loopOrConditionalStatement = targetElement.isLoopOrConditionalStatement();
     boolean equivalent = !targetElement.isEquivalentTo(initialElement);
