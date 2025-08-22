@@ -14,20 +14,22 @@ import java.util.function.Function;
  * in accordance to the given Direction from the caret, then places the caret
  * at the first child of that element.
  */
-public class ArgumentParameterListMotionHandler extends AbstractFindNodeMotionHandler {
+public class ArgumentParameterListMotionHandler extends SyntaxTreeNodesMotionHandler {
 
     public ArgumentParameterListMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
-        super(syntaxTree, direction, WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION);
+        super(syntaxTree, direction);
     }
+
     @Override
-    @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(MotionDirection direction, Offsets initialSelection, WhileSearching whileSearching) {
-        return node -> {
-            if (node.isFunctionParameter() || node.isFunctionArgument() || node.isTypeParameter()) {
-                return Optional.of(node);
-            }
-            return Optional.empty();
-        };
+    protected boolean shallGoDeeper() {
+        return true;
+    }
+
+    @Override
+    protected boolean doesTargetFollowRequirements(SyntaxNode startingPoint, SyntaxNode targetElement, Offsets initialOffsets) {
+        return targetElement.isFunctionParameter() ||
+                targetElement.isFunctionArgument() ||
+                targetElement.isTypeParameter();
     }
 
 }
