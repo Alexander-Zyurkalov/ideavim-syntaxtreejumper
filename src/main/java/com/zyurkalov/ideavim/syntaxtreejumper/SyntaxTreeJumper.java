@@ -40,7 +40,6 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
     @Override
     public void init() {
         registerStructuredMotionHandlers();
-        registerSelectionHandlers();
         registerSpecialHandlers();
         setupAutomaticHighlighting();
     }
@@ -56,6 +55,8 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                         new ShortcutConfig[]{
                                 new ShortcutConfig("<A-n>", MotionDirection.FORWARD, false),
                                 new ShortcutConfig("<A-S-n>", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("<A-o>", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("<A-i>", MotionDirection.SHRINK, false),
                                 new ShortcutConfig("<C-A-n>", MotionDirection.FORWARD, true),
                                 new ShortcutConfig("<C-A-S-n>", MotionDirection.BACKWARD, true)
                         },
@@ -222,7 +223,8 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
         for (ShortcutConfig shortcut : config.shortcuts()) {
             String targetCommand = switch (shortcut.direction()) {
                 case FORWARD -> shortcut.addNewCaret() ? config.getExtendForwardCommand() : config.getForwardCommand();
-                case BACKWARD -> shortcut.addNewCaret() ? config.getExtendBackwardCommand() : config.getBackwardCommand();
+                case BACKWARD ->
+                        shortcut.addNewCaret() ? config.getExtendBackwardCommand() : config.getBackwardCommand();
                 case EXPAND -> shortcut.addNewCaret() ? config.getExtendExpandCommand() : config.getExpandCommand();
                 case SHRINK -> shortcut.addNewCaret() ? config.getExtendShrinkCommand() : config.getShrinkCommand();
             };
@@ -237,43 +239,9 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
     }
 
     /**
-     * Registers selection expansion/shrinking handlers.
+     * Registers special handlers that don't follow the standard pattern.
      */
-    private void registerSelectionHandlers() {
-        // Selection expansion/shrinking handlers
-        String commandExpandSelection = "<Plug>ExpandSelection";
-        String commandShrinkSelection = "<Plug>ShrinkSelection";
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
-                getOwner(),
-                new FunctionHandler(MotionDirection.FORWARD, (syntaxTree, direction) ->
-                        SyntaxTreeNodesMotionHandler.createExpandHandler(syntaxTree)),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
-                getOwner(),
-                new FunctionHandler(MotionDirection.FORWARD, (syntaxTree, direction) ->
-                        SyntaxTreeNodesMotionHandler.createShrinkHandler(syntaxTree)),
-                false);
-
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-o>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
-                true);
-
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-i>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
-                true);
-
+    private void registerSpecialHandlers() {
         // Smart Selection Extend Handler
         String commandSmartSelectionExtend = "<Plug>SmartSelectionExtend";
 
@@ -291,12 +259,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandSmartSelectionExtend),
                 true);
-    }
 
-    /**
-     * Registers special handlers that don't follow the standard pattern.
-     */
-    private void registerSpecialHandlers() {
         // Highlighting toggle
         String commandToggleHighlighting = "<Plug>ToggleHighlighting";
         putExtensionHandlerMapping(
@@ -352,7 +315,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
                 getOwner(),
-                new RepeatLastMotionHandler(),
+                new RepeatLastMotionHandler(false),
                 false);
 
         putKeyMappingIfMissing(
@@ -360,6 +323,23 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-r>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
+                true);
+
+        // Repeat the last motion
+        String commandRepeatLastOppositeMotion = "<Plug>RepeatLastOppositeMotion";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastOppositeMotion),
+                getOwner(),
+                new RepeatLastMotionHandler(true),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-r>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastOppositeMotion),
                 true);
     }
 

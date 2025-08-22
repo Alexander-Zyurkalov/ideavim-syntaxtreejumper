@@ -44,6 +44,16 @@ public class FunctionHandler implements ExtensionHandler {
     private final BiFunction<SyntaxTreeAdapter, MotionDirection, MotionHandler> navigatorFactory;
     private final boolean addNewCaret;
 
+    public FunctionHandler withOppositeDirection(){
+        MotionDirection oppositeDirection = switch( direction ) {
+            case BACKWARD -> FORWARD;
+            case FORWARD -> BACKWARD;
+            case EXPAND -> SHRINK;
+            case SHRINK -> EXPAND;
+        };
+        return new FunctionHandler(oppositeDirection, navigatorFactory, addNewCaret);
+    }
+
     // Static variable to track the last executed FunctionHandler
     public static Optional<FunctionHandler> lastExecutedHandler = Optional.empty();
     public static Optional<OperatorArguments> lastExecutedHandlerArguments = Optional.empty();
@@ -113,7 +123,7 @@ public class FunctionHandler implements ExtensionHandler {
         // When creating new carets, we should only do that for frontier carets
         int start_caret = 0;
         int end_caret = carets.size() - 1;
-        if (addNewCaret && (direction == EXPAND ||  direction == BACKWARD )) {
+        if (addNewCaret && (direction == EXPAND || direction == BACKWARD)) {
             end_caret = 0;
         } else if (addNewCaret && (direction == SHRINK || direction == FORWARD)) {
             start_caret = carets.size() - 1;

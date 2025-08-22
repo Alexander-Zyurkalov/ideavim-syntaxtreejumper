@@ -16,29 +16,42 @@ import static com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler.la
  * This handler does not store itself as the last executed motion to prevent infinite recursion.
  */
 public class RepeatLastMotionHandler implements ExtensionHandler {
-    
+    boolean isForOppositeMotion;
+
+    public RepeatLastMotionHandler(boolean isForOppositeMotion) {
+        this.isForOppositeMotion = isForOppositeMotion;
+    }
+
     @Override
     public void execute(
             @NotNull VimEditor vimEditor,
             @NotNull ExecutionContext context,
-            @NotNull OperatorArguments operatorArguments) {
-        
+            @NotNull OperatorArguments operatorArguments
+    ) {
+
         // Check if there's a last executed handler to repeat
         if (lastExecutedHandler.isEmpty() || lastExecutedHandlerArguments.isEmpty()) {
             // No motion to repeat - silently return
             return;
         }
-        
+
         FunctionHandler handlerToRepeat = lastExecutedHandler.get();
         OperatorArguments lastArguments = lastExecutedHandlerArguments.get();
-        
+
         lastExecutedHandler = Optional.empty();
         lastExecutedHandlerArguments = Optional.empty();
-        
+
+
         try {
             operatorArguments = new OperatorArguments(
-            operatorArguments.getCount1() * lastArguments.getCount1(), operatorArguments.component3());
-            handlerToRepeat.execute(vimEditor, context, operatorArguments);
+                    operatorArguments.getCount1() * lastArguments.getCount1(), operatorArguments.component3());
+
+            if (isForOppositeMotion) {
+                handlerToRepeat.withOppositeDirection().execute(vimEditor, context, operatorArguments);
+            } else {
+                handlerToRepeat.execute(vimEditor, context, operatorArguments);
+            }
+
         } finally {
             // Restore the original handler as the last executed motion
             // This ensures that later repeats will still work
