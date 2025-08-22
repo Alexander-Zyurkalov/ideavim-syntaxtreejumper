@@ -72,7 +72,8 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
                                                      boolean skipFirstStep, SyntaxNode startingPoint,
                                                      MotionDirection motionDirection
     ) {
-        SyntaxNode found = findWithingNeighbours(currentElement, initialOffsets, skipFirstStep, startingPoint, motionDirection);
+        SyntaxNode found = findWithingNeighbours(
+                currentElement, initialOffsets, skipFirstStep, startingPoint, motionDirection);
         while (shallGoDeeper() && found == null && currentElement != null) {
             currentElement = currentElement.getParent();
             if (currentElement == null || currentElement.isPsiFile()) {
@@ -87,8 +88,13 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
                                                        boolean skipFirstStep, SyntaxNode startingPoint,
                                                        MotionDirection motionDirection
     ) {
-        SyntaxNode sibling = skipFirstStep ? getNextSibling(currentElement, startingPoint, motionDirection) : currentElement;
-        while (sibling != null && !doesTargetFollowRequirements(startingPoint, sibling, initialOffsets)) {
+        SyntaxNode sibling = skipFirstStep ?
+                getNextSibling(currentElement, startingPoint, motionDirection) :
+                currentElement;
+        boolean isFirstStep = true;
+        while (
+                sibling != null && !doesTargetFollowRequirements(startingPoint, sibling, initialOffsets)
+        ) {
             if (shallGoDeeper() && !sibling.getChildren().isEmpty()) {
                 var found = findWithingNeighbours(
                         getChild(sibling, motionDirection), initialOffsets, false, startingPoint, motionDirection);
@@ -98,6 +104,10 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
                 }
             }
             sibling = getNextSibling(sibling, startingPoint, motionDirection);
+            if (!isFirstStep && sibling!=null && sibling.areBordersEqual(initialOffsets)) {
+                break;
+            }
+            isFirstStep = false;
         }
         return sibling;
     }
@@ -126,10 +136,12 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
         SyntaxNode targetElement;
         targetElement = initialElement;
         while (targetElement != null &&
-                (!doesTargetFollowRequirements(initialElement, targetElement, initialOffsets) ||
-                        targetElement.isEquivalentTo(initialElement))
+                (!doesTargetFollowRequirements(initialElement, targetElement, initialOffsets))
         ) {
             targetElement = syntaxTree.findParentThatIsNotEqualToTheNode(targetElement);
+            if (targetElement !=null && targetElement.areBordersEqual(initialOffsets)) {
+                break;
+            }
         }
         if (targetElement == null || targetElement.isPsiFile()) {
             targetElement = null;

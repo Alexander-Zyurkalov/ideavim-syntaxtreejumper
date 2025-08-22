@@ -136,6 +136,8 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                         new ShortcutConfig[]{
                                 new ShortcutConfig("[o", MotionDirection.BACKWARD, false),
                                 new ShortcutConfig("]o", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("]O", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("[O", MotionDirection.EXPAND, false),
                                 new ShortcutConfig("<C-[>o", MotionDirection.BACKWARD, true),
                                 new ShortcutConfig("<C-]>o", MotionDirection.FORWARD, true)
                         },

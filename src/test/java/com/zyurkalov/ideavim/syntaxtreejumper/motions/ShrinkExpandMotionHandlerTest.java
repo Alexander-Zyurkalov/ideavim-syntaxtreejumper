@@ -71,7 +71,7 @@ class ShrinkExpandMotionHandlerTest {
                         new Offsets(13, 22), // select 'Test' //subwords are not considered any more
                         "TestClass",
                         MotionDirection.EXPAND,
-                        "Expand: cursor position to SubWord"
+                        "Expand: cursor position to ClassName"
                 ),
 
                 // Expand from a single character to identifier
