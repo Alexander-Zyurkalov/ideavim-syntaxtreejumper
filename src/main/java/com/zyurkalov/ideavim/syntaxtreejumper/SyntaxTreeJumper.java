@@ -137,12 +137,26 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                         new ShortcutConfig[]{
                                 new ShortcutConfig("[o", MotionDirection.BACKWARD, false),
                                 new ShortcutConfig("]o", MotionDirection.FORWARD, false),
-                                new ShortcutConfig("]O", MotionDirection.SHRINK, false),
                                 new ShortcutConfig("[O", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]O", MotionDirection.SHRINK, false),
                                 new ShortcutConfig("<C-[>o", MotionDirection.BACKWARD, true),
                                 new ShortcutConfig("<C-]>o", MotionDirection.FORWARD, true)
                         },
                         OperatorMotionHandler::new
+                ),
+
+                // Variable navigation (only forward/backward)
+                new MotionHandlerConfig(
+                        "Variable",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[v", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]v", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[V", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]V", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>v", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>v", MotionDirection.FORWARD, true)
+                        },
+                        VariableMotionHandler::new
                 ),
         };
 

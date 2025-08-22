@@ -308,4 +308,23 @@ public abstract class SyntaxNode {
         return currentRange.getStartOffset() == initialSelection.leftOffset() &&
                 currentRange.getEndOffset() == initialSelection.rightOffset();
     }
+
+    public boolean isVariable() {
+        SyntaxNode parent = getParent();
+        if (parent == null) {
+            return false;
+        }
+        SyntaxNode grandParent = parent.getParent();
+        if (grandParent == null) {
+            return false;
+        }
+        return getTypeName().equals("IDENTIFIER") && (
+                parent.getTypeName().equals("LOCAL_VARIABLE") ||
+                parent.getTypeName().equals("FIELD") ||
+                        (parent.getTypeName().equals("REFERENCE_EXPRESSION") &&
+                                parent.getTextRange().equals(getTextRange())
+                        )
+        );
+    }
+
 }

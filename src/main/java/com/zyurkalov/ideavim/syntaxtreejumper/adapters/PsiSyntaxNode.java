@@ -98,4 +98,6 @@ public class PsiSyntaxNode extends SyntaxNode {
         return "PsiSyntaxNode{" + psiElement.getClass().getSimpleName() +
                 ", text='" + getText() + "'}";
     }
+
+
 }
