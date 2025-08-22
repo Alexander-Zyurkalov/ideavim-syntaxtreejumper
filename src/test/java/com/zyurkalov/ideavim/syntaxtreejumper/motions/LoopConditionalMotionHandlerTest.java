@@ -9,7 +9,6 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.PsiSyntaxTreeAdapter;
-import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

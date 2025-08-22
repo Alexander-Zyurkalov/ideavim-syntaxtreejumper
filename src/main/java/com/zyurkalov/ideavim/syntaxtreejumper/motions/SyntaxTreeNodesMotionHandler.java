@@ -11,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.*;
+import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.BACKWARD;
+import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.FORWARD;
 import static com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter.getChild;
 
 public class SyntaxTreeNodesMotionHandler implements MotionHandler {
@@ -124,7 +125,10 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
     private Optional<SyntaxNode> expandSelection(SyntaxNode initialElement, Offsets initialOffsets) {
         SyntaxNode targetElement;
         targetElement = initialElement;
-        while (targetElement != null && !doesTargetFollowRequirements(initialElement, targetElement, initialOffsets)) {
+        while (targetElement != null &&
+                (!doesTargetFollowRequirements(initialElement, targetElement, initialOffsets) ||
+                        targetElement.isEquivalentTo(initialElement))
+        ) {
             targetElement = syntaxTree.findParentThatIsNotEqualToTheNode(targetElement);
         }
         if (targetElement == null || targetElement.isPsiFile()) {
