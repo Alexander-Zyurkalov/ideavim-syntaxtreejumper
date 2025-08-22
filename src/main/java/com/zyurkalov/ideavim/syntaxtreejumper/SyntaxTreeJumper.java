@@ -93,7 +93,9 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                         "Statement",
                         new ShortcutConfig[]{
                                 new ShortcutConfig("[s", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("[S", MotionDirection.EXPAND, false),
                                 new ShortcutConfig("]s", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("]S", MotionDirection.SHRINK, false),
                                 new ShortcutConfig("<C-[>s", MotionDirection.BACKWARD, true),
                                 new ShortcutConfig("<C-]>s", MotionDirection.FORWARD, true)
                         },
@@ -111,9 +113,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                                 new ShortcutConfig("<C-[>l", MotionDirection.BACKWARD, true),
                                 new ShortcutConfig("<C-]>l", MotionDirection.FORWARD, true)
                         },
-                        (syntaxTree1, direction1) -> new LoopConditionalMotionHandler(
-                                syntaxTree1, direction1,
-                                AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION)
+                        LoopConditionalMotionHandler::new
                 ),
 
                 // Method/Function navigation

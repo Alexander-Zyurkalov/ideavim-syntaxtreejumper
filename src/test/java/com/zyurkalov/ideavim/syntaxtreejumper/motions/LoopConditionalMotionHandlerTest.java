@@ -47,8 +47,7 @@ class LoopConditionalMotionHandlerTest {
             Offsets expectedOffsets,
             String expectedText,
             MotionDirection direction,
-            String explanation,
-            AbstractFindNodeMotionHandler.WhileSearching whileSearching
+            String explanation
     ) {
         @Override
         public @NotNull String toString() {
@@ -72,8 +71,7 @@ class LoopConditionalMotionHandlerTest {
                                             System.out.println(i);
                                         }""",
                         SHRINK,
-                        "Forward: Should not skip loop inside selected function and jump to it",
-                        AbstractFindNodeMotionHandler.WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION
+                        "Forward: Should not skip loop inside selected function and jump to it"
                 ),
                 new LoopConditionalTestData(
                         new Offsets(29, 149), // Select the entire first function (methodWithLoop)
@@ -90,8 +88,7 @@ class LoopConditionalMotionHandlerTest {
                                             if (count == 3) {break;}
                                         }""",
                         FORWARD,
-                        "Forward: Should skip loop inside selected function and jump to loop in next function",
-                        AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION
+                        "Forward: Should skip loop inside selected function and jump to loop in next function"
                 ),
                 new LoopConditionalTestData(
                         new Offsets(122, 129), // Select the entire first function (methodWithLoop)
@@ -103,8 +100,7 @@ class LoopConditionalMotionHandlerTest {
                                             if (count == 3) {break;}
                                         }""",
                         FORWARD,
-                        "Forward: Checking going-to-parents and jump to loop in next function",
-                        AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION
+                        "Forward: Checking going-to-parents and jump to loop in next function"
                 ),
                 new LoopConditionalTestData(
                         new Offsets(277, 301), // Select the entire first function (methodWithLoop)
@@ -117,8 +113,7 @@ class LoopConditionalMotionHandlerTest {
                                         }""",
 
                         EXPAND,
-                        "EXPAND: Should go from the inner condition to the outer loop",
-                        AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION
+                        "EXPAND: Should go from the inner condition to the outer loop"
                 ),
 
                 new LoopConditionalTestData(
@@ -132,8 +127,7 @@ class LoopConditionalMotionHandlerTest {
                         "if (count == 3) {break;}",
 
                         SHRINK,
-                        "SHRINK: Should go from the outer loop to the inner condition",
-                        AbstractFindNodeMotionHandler.WhileSearching.SKIP_INITIAL_SELECTION
+                        "SHRINK: Should go from the outer loop to the inner condition"
                 )
         );
     }
@@ -165,7 +159,7 @@ class LoopConditionalMotionHandlerTest {
 
         PsiFile javaFile = myFixture.configureByText("TestClass.java", javaCode);
         LoopConditionalMotionHandler handler = new LoopConditionalMotionHandler(
-                new PsiSyntaxTreeAdapter(javaFile), testData.direction, testData.whileSearching);
+                new PsiSyntaxTreeAdapter(javaFile), testData.direction);
 
         ApplicationManager.getApplication().runReadAction(() -> {
             Optional<Offsets> result = handler.findNext(testData.initialOffsets);

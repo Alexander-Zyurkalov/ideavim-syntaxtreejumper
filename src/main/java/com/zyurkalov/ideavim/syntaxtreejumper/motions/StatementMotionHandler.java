@@ -4,30 +4,26 @@ import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * MotionHandler that finds PsiElements of type DECLARATION_STATEMENT, EXPRESSION_STATEMENT, or RETURN_STATEMENT
  * in accordance to the given Direction from the caret, then places the caret
  * at the statement element.
  */
-public class StatementMotionHandler extends AbstractFindNodeMotionHandler {
+public class StatementMotionHandler extends SyntaxTreeNodesMotionHandler {
 
     public StatementMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
-        super(syntaxTree, direction, WhileSearching.DO_NOT_SKIP_INITIAL_SELECTION);
+        super(syntaxTree, direction);
     }
 
     @Override
-    @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToCheckSearchingCriteria(MotionDirection direction, Offsets initialSelection, WhileSearching whileSearching) {
-        return node -> {
-            if (node.isDeclarationStatement() || node.isExpressionStatement() || node.isReturnStatement()) {
-                return Optional.of(node);
-            }
-            return Optional.empty();
-        };
+    protected boolean shallGoDeeper() {
+        return true;
     }
+
+    @Override
+    protected boolean doesTargetFollowRequirements(SyntaxNode startingPoint, SyntaxNode targetElement, Offsets initialOffsets) {
+        return targetElement.isDeclarationStatement() || targetElement.isExpressionStatement() || targetElement.isReturnStatement();
+    }
+
 }

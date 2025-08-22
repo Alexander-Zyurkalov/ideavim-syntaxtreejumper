@@ -13,11 +13,9 @@ import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
  */
 public class LoopConditionalMotionHandler extends SyntaxTreeNodesMotionHandler {
 
-    private final AbstractFindNodeMotionHandler.WhileSearching whileSearching;
 
-    public LoopConditionalMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction, AbstractFindNodeMotionHandler.WhileSearching whileSearching) {
+    public LoopConditionalMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
         super(syntaxTree, direction);
-        this.whileSearching = whileSearching;
     }
 
     @Override
