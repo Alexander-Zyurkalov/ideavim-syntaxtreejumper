@@ -136,7 +136,8 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
         SyntaxNode targetElement;
         targetElement = initialElement;
         while (targetElement != null &&
-                (!doesTargetFollowRequirements(initialElement, targetElement, initialOffsets))
+                ( targetElement.getTextRange().equals(initialElement.getTextRange()) ||
+                (!doesTargetFollowRequirements(initialElement, targetElement, initialOffsets)) )
         ) {
             targetElement = syntaxTree.findParentThatIsNotEqualToTheNode(targetElement);
             if (targetElement !=null && targetElement.areBordersEqual(initialOffsets)) {

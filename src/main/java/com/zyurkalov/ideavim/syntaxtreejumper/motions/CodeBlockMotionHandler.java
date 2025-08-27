@@ -10,9 +10,9 @@ import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
  * in accordance to the given Direction from the caret, then places the caret
  * at the found element.
  */
-public class MethodFunctionMotionHandler extends SyntaxTreeNodesMotionHandler {
+public class CodeBlockMotionHandler extends SyntaxTreeNodesMotionHandler {
 
-    public MethodFunctionMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
+    public CodeBlockMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
         super(syntaxTree, direction);
     }
 
@@ -23,7 +23,7 @@ public class MethodFunctionMotionHandler extends SyntaxTreeNodesMotionHandler {
 
     @Override
     protected boolean doesTargetFollowRequirements(SyntaxNode startingPoint, SyntaxNode targetElement, Offsets initialOffsets) {
-        return targetElement.isMethodDefinition() || targetElement.isFunctionDefinition();
+        return targetElement.isCodeBlock();
     }
 
 }

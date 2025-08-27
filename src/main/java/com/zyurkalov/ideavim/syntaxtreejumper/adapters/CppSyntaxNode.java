@@ -139,4 +139,12 @@ public class CppSyntaxNode extends SyntaxNode {
                 typeName.equals("FUNCTION_DEFINITION") ||
                 typeName.equals("CPP_LAMBDA_EXPRESSION");
     }
+
+    @Override
+    public boolean isCodeBlock() {
+        String typeName= getTypeName();
+
+        return typeName.equals("LAZY_BLOCK") ||
+                typeName.equals("EAGER_BLOCK");
+    }
 }

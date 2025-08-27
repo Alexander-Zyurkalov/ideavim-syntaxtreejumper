@@ -327,4 +327,9 @@ public abstract class SyntaxNode {
         );
     }
 
+    public boolean isCodeBlock() {
+        String typeName= getTypeName();
+        return typeName.equals("CODE_BLOCK") ||
+                typeName.equals("BLOCK_STATEMENT");
+    }
 }

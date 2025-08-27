@@ -158,6 +158,20 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                         },
                         VariableMotionHandler::new
                 ),
+
+                new MotionHandlerConfig(
+                        "CodeBlock",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[b", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]b", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[B", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]B", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>B", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>B", MotionDirection.FORWARD, true)
+                        },
+                        CodeBlockMotionHandler::new
+                ),
+
         };
 
         for (MotionHandlerConfig config : motionConfigs) {
