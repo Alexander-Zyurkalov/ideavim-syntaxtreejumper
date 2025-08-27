@@ -320,7 +320,7 @@ public abstract class SyntaxNode {
         }
         return getTypeName().equals("IDENTIFIER") && (
                 parent.getTypeName().equals("LOCAL_VARIABLE") ||
-                parent.getTypeName().equals("FIELD") ||
+                        parent.getTypeName().equals("FIELD") ||
                         (parent.getTypeName().equals("REFERENCE_EXPRESSION") &&
                                 parent.getTextRange().equals(getTextRange())
                         )
@@ -328,8 +328,13 @@ public abstract class SyntaxNode {
     }
 
     public boolean isCodeBlock() {
-        String typeName= getTypeName();
+        String typeName = getTypeName();
         return typeName.equals("CODE_BLOCK") ||
                 typeName.equals("BLOCK_STATEMENT");
+    }
+
+    public boolean isAStatement() {
+        String typeName = getTypeName();
+        return typeName.contains("_STATEMENT");
     }
 }

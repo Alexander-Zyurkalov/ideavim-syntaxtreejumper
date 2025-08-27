@@ -23,7 +23,8 @@ public class StatementMotionHandler extends SyntaxTreeNodesMotionHandler {
 
     @Override
     protected boolean doesTargetFollowRequirements(SyntaxNode startingPoint, SyntaxNode targetElement, Offsets initialOffsets) {
-        return targetElement.isDeclarationStatement() || targetElement.isExpressionStatement() || targetElement.isReturnStatement();
+        return targetElement.isDeclarationStatement() || targetElement.isExpressionStatement() ||
+                targetElement.isReturnStatement() || targetElement.isAStatement();
     }
 
 }
