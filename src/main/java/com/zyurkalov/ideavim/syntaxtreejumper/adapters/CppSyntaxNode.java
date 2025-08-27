@@ -141,6 +141,12 @@ public class CppSyntaxNode extends SyntaxNode {
     }
 
     @Override
+    public boolean isMethodOrFunctionCallExpression() {
+        String typeName = getTypeName();
+        return typeName.equals("CALL_EXPRESSION");
+    }
+
+    @Override
     public boolean isCodeBlock() {
         String typeName= getTypeName();
 

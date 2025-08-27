@@ -190,14 +190,14 @@ public abstract class SyntaxNode {
         try {
             result = typeName.contains("EXPRESSION") &&
                     Objects.requireNonNull(getParent()).isExpressionList() &&
-                    Objects.requireNonNull(getParent().getParent()).isMethodCallExpression();
+                    Objects.requireNonNull(getParent().getParent()).isMethodOrFunctionCallExpression();
         } catch (NullPointerException ignored) {
         }
         return result;
     }
 
 
-    public boolean isMethodCallExpression() {
+    public boolean isMethodOrFunctionCallExpression() {
         String typeName = getTypeName();
         return typeName.equals("METHOD_CALL_EXPRESSION");
     }
@@ -337,4 +337,7 @@ public abstract class SyntaxNode {
         String typeName = getTypeName();
         return typeName.contains("_STATEMENT");
     }
+
+
+
 }
