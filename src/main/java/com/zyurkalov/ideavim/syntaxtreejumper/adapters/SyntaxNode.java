@@ -339,5 +339,12 @@ public abstract class SyntaxNode {
     }
 
 
-
+    public boolean isExpression() {
+        String typeName = getTypeName();
+        SyntaxNode parent = getParent();
+        if (parent == null) {
+            return false;
+        }
+        return typeName.endsWith("EXPRESSION") && !parent.isMethodOrFunctionCallExpression();
+    }
 }

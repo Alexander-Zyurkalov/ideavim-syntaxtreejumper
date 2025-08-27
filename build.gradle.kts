@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.zyurkalov"
-version = "1.4.9"
+version = "1.4.10"
 
 repositories {
     mavenCentral()
@@ -24,10 +24,10 @@ repositories {
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
     intellijPlatform {
-        clion("2025.1.4")
-        bundledPlugin("com.intellij.clion")
-//        create("IC", "2025.1.1")
-//        bundledPlugin("com.intellij.java")
+//        clion("2025.1.4")
+//        bundledPlugin("com.intellij.clion")
+        create("IC", "2025.1.1")
+        bundledPlugin("com.intellij.java")
         plugins("IdeaVIM:2.27.0")
         pluginVerifier()
         zipSigner()
