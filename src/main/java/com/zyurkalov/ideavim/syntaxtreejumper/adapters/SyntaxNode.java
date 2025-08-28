@@ -232,12 +232,7 @@ public abstract class SyntaxNode {
 
     public boolean isDeclarationStatement() {
         String typeName = getTypeName();
-        return typeName.equals("DECLARATION_STATEMENT") ||
-                typeName.equals("LOCAL_VARIABLE") ||
-                typeName.equals("VARIABLE_DECLARATION_STATEMENT") ||
-                typeName.equals("FIELD_DECLARATION") ||
-                typeName.equals("METHOD_DECLARATION") ||
-                typeName.equals("CLASS_DECLARATION");
+        return typeName.equals("DECLARATION_STATEMENT") || typeName.equals("ASSIGNMENT_EXPRESSION");
     }
 
     public boolean isExpressionStatement() {
