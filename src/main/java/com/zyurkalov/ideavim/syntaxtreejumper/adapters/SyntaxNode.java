@@ -342,4 +342,9 @@ public abstract class SyntaxNode {
         }
         return typeName.endsWith("EXPRESSION") && !parent.isMethodOrFunctionCallExpression();
     }
+
+    public boolean isEqualSymbol() {
+        return getTypeName().equals("EQ");
+    }
+
 }

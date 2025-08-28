@@ -153,4 +153,9 @@ public class CppSyntaxNode extends SyntaxNode {
         return typeName.equals("LAZY_BLOCK") ||
                 typeName.equals("EAGER_BLOCK");
     }
+
+    @Override
+    public boolean isEqualSymbol() {
+        return getTypeName().equals("OCPunctuator:=");
+    }
 }
