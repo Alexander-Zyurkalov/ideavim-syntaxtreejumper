@@ -134,6 +134,9 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
      */
     private Optional<SyntaxNode> expandSelection(SyntaxNode initialElement, Offsets initialOffsets) {
         SyntaxNode targetElement;
+        if (initialOffsets.rightOffset() == initialOffsets.leftOffset()) {
+            return Optional.of(initialElement);
+        }
         targetElement = initialElement;
         while (targetElement != null &&
                 ( targetElement.getTextRange().equals(initialElement.getTextRange()) ||
