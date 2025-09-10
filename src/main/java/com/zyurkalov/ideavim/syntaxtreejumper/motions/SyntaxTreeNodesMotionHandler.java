@@ -37,14 +37,6 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
         return Optional.of(new Offsets(left.leftOffset() + elementOffset, right.rightOffset() + elementOffset));
     }
 
-    // Factory methods for easier integration with your existing system
-    public static SyntaxTreeNodesMotionHandler createExpandHandler(SyntaxTreeAdapter syntaxTree) {
-        return new SyntaxTreeNodesMotionHandler(syntaxTree, MotionDirection.EXPAND);
-    }
-
-    public static SyntaxTreeNodesMotionHandler createShrinkHandler(SyntaxTreeAdapter syntaxTree) {
-        return new SyntaxTreeNodesMotionHandler(syntaxTree, MotionDirection.SHRINK);
-    }
 
     @Override
     public Optional<Offsets> findNext(Offsets initialOffsets) {
