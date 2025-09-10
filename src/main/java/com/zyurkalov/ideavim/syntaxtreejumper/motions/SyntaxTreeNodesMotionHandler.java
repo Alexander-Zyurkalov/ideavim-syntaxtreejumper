@@ -72,21 +72,21 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
                                                      boolean skipFirstStep, SyntaxNode startingPoint,
                                                      MotionDirection motionDirection
     ) {
-        SyntaxNode found = findWithingNeighbours(
+        SyntaxNode found = findWithinNeighbours(
                 currentElement, initialOffsets, skipFirstStep, startingPoint, motionDirection);
         while (shallGoDeeper() && found == null && currentElement != null) {
             currentElement = currentElement.getParent();
             if (currentElement == null || currentElement.isPsiFile()) {
                 break;
             }
-            found = findWithingNeighbours(currentElement, initialOffsets, true, startingPoint, motionDirection);
+            found = findWithinNeighbours(currentElement, initialOffsets, true, startingPoint, motionDirection);
         }
         return Optional.ofNullable(found);
     }
 
-    private @Nullable SyntaxNode findWithingNeighbours(SyntaxNode currentElement, Offsets initialOffsets,
-                                                       boolean skipFirstStep, SyntaxNode startingPoint,
-                                                       MotionDirection motionDirection
+    private @Nullable SyntaxNode findWithinNeighbours(SyntaxNode currentElement, Offsets initialOffsets,
+                                                      boolean skipFirstStep, SyntaxNode startingPoint,
+                                                      MotionDirection motionDirection
     ) {
         SyntaxNode sibling = skipFirstStep ?
                 getNextSibling(currentElement, startingPoint, motionDirection) :
@@ -96,7 +96,7 @@ public class SyntaxTreeNodesMotionHandler implements MotionHandler {
                 sibling != null && !doesTargetFollowRequirements(startingPoint, sibling, initialOffsets)
         ) {
             if (shallGoDeeper() && !sibling.getChildren().isEmpty()) {
-                var found = findWithingNeighbours(
+                var found = findWithinNeighbours(
                         getChild(sibling, motionDirection), initialOffsets, false, startingPoint, motionDirection);
                 if (found != null) {
                     sibling = found;
