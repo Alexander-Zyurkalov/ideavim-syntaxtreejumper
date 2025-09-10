@@ -121,12 +121,12 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new MotionHandlerConfig(
                         "MethodFunction",
                         new ShortcutConfig[]{
-                                new ShortcutConfig("[f", MotionDirection.BACKWARD, false),
-                                new ShortcutConfig("[F", MotionDirection.EXPAND, false),
-                                new ShortcutConfig("]f", MotionDirection.FORWARD, false),
-                                new ShortcutConfig("]F", MotionDirection.SHRINK, false),
-                                new ShortcutConfig("<C-[>f", MotionDirection.BACKWARD, true),
-                                new ShortcutConfig("<C-]>f", MotionDirection.FORWARD, true)
+                                new ShortcutConfig("[ff", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("[fF", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]ff", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("]fF", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>ff", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>ff", MotionDirection.FORWARD, true)
                         },
                         MethodFunctionMotionHandler::new
                 ),
@@ -175,12 +175,12 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new MotionHandlerConfig(
                         "FunctionCall",
                         new ShortcutConfig[]{
-                                new ShortcutConfig("[c", MotionDirection.BACKWARD, false),
-                                new ShortcutConfig("]c", MotionDirection.FORWARD, false),
-                                new ShortcutConfig("[C", MotionDirection.EXPAND, false),
-                                new ShortcutConfig("]C", MotionDirection.SHRINK, false),
-                                new ShortcutConfig("<C-[>c", MotionDirection.BACKWARD, true),
-                                new ShortcutConfig("<C-]>c", MotionDirection.FORWARD, true)
+                                new ShortcutConfig("[fc", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]fc", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[fC", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]fC", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>fc", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>fc", MotionDirection.FORWARD, true)
                         },
                         FunctionCallMotionHandler::new
                 ),
