@@ -10,7 +10,7 @@ import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
  * in accordance to the given Direction from the caret, then places the caret
  * at the found element.
  */
-public class MethodFunctionMotionHandler extends SyntaxTreeNodesMotionHandler {
+public class MethodFunctionMotionHandler extends AbstractSyntaxTreeNodesMotionHandler {
 
     public MethodFunctionMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
         super(syntaxTree, direction);

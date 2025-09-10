@@ -10,7 +10,7 @@ import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
  * in accordance to the given Direction from the caret.
  * Variables are identified by checking if they are IDENTIFIER nodes.
  */
-public class VariableMotionHandler extends SyntaxTreeNodesMotionHandler {
+public class VariableMotionHandler extends AbstractSyntaxTreeNodesMotionHandler {
 
     public VariableMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
         super(syntaxTree, direction);

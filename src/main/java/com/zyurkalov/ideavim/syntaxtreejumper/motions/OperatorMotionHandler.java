@@ -9,7 +9,7 @@ import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
  * MotionHandler that finds operator nodes within compound expressions
  * in accordance to the given Direction from the caret.
  */
-public class OperatorMotionHandler extends SyntaxTreeNodesMotionHandler {
+public class OperatorMotionHandler extends AbstractSyntaxTreeNodesMotionHandler {
 
     public OperatorMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
         super(syntaxTree, direction);
