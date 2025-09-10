@@ -61,8 +61,8 @@ public abstract class AbstractSyntaxTreeNodesMotionHandler implements MotionHand
     }
 
     protected Optional<SyntaxNode> goBackwardOrForward(SyntaxNode currentElement, Offsets initialOffsets,
-                                                     boolean skipFirstStep, SyntaxNode startingPoint,
-                                                     MotionDirection motionDirection
+                                                       boolean skipFirstStep, SyntaxNode startingPoint,
+                                                       MotionDirection motionDirection
     ) {
         SyntaxNode found = findWithinNeighbours(
                 currentElement, initialOffsets, skipFirstStep, startingPoint, motionDirection);
@@ -96,7 +96,7 @@ public abstract class AbstractSyntaxTreeNodesMotionHandler implements MotionHand
                 }
             }
             sibling = getNextSibling(sibling, startingPoint, motionDirection);
-            if (!isFirstStep && sibling!=null && sibling.areBordersEqual(initialOffsets)) {
+            if (!isFirstStep && sibling != null && sibling.areBordersEqual(initialOffsets)) {
                 break;
             }
             isFirstStep = false;
@@ -127,12 +127,14 @@ public abstract class AbstractSyntaxTreeNodesMotionHandler implements MotionHand
     protected Optional<SyntaxNode> expandSelection(SyntaxNode initialElement, Offsets initialOffsets) {
         SyntaxNode targetElement;
         targetElement = initialElement;
-        while (targetElement != null &&
-                ( targetElement.getTextRange().equals(initialElement.getTextRange()) ||
-                (!doesTargetFollowRequirements(initialElement, targetElement, initialOffsets)) )
+        if (initialElement == null) {
+            return Optional.empty();
+        }
+        while (((targetElement.getTextRange() != null && targetElement.getTextRange().equals(initialElement.getTextRange())) ||
+                (!doesTargetFollowRequirements(initialElement, targetElement, initialOffsets)))
         ) {
-            targetElement = syntaxTree.findParentThatIsNotEqualToTheNode(targetElement);
-            if (targetElement !=null && targetElement.areBordersEqual(initialOffsets)) {
+            targetElement = targetElement.getParent();
+            if (targetElement == null || targetElement.areBordersEqual(initialOffsets)) {
                 break;
             }
         }

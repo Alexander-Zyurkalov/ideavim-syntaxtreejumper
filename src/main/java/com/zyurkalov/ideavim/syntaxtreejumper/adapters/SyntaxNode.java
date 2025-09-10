@@ -88,6 +88,9 @@ public abstract class SyntaxNode {
      * Gets the specific type or category name of the node.
      */
     public @NotNull String getTypeName() {
+        if (psiElement.getNode() == null) {
+            return "";
+        }
         return psiElement.getNode().getElementType().toString();
     }
 
