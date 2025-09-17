@@ -358,4 +358,8 @@ public abstract class SyntaxNode {
     public boolean isTemplate() {
         return false;
     }
+
+    public boolean isComment() {
+        return getTypeName().endsWith("_COMMENT");
+    }
 }
