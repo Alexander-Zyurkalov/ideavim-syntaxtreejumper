@@ -155,6 +155,12 @@ public class CppSyntaxNode extends SyntaxNode {
     }
 
     @Override
+    public boolean isClassDefinition() {
+        String typeName = getTypeName();
+        return typeName.equals("STRUCT");
+    }
+
+    @Override
     public boolean isEqualSymbol() {
         return getTypeName().equals("OCPunctuator:=");
     }

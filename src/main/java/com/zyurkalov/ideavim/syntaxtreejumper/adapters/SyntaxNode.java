@@ -350,4 +350,8 @@ public abstract class SyntaxNode {
         return getTypeName().equals("EQ");
     }
 
+    public boolean isClassDefinition() {
+        String typeName = getTypeName();
+        return typeName.equals("CLASS");
+    }
 }
