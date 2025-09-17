@@ -354,4 +354,8 @@ public abstract class SyntaxNode {
         String typeName = getTypeName();
         return typeName.equals("CLASS");
     }
+
+    public boolean isTemplate() {
+        return false;
+    }
 }

@@ -161,6 +161,15 @@ public class CppSyntaxNode extends SyntaxNode {
     }
 
     @Override
+    public boolean isTemplate() {
+        SyntaxNode firstChild = getFirstChild();
+        if (firstChild == null) {
+            return false;
+        }
+        return ( getTypeName().equals("DECLARATION") || isFunctionDefinition() ) && firstChild.getTypeName().equals("OCKeyword:template");
+    }
+
+    @Override
     public boolean isEqualSymbol() {
         return getTypeName().equals("OCPunctuator:=");
     }
