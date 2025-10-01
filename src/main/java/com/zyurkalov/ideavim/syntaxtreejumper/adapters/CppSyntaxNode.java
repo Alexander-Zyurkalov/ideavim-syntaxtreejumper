@@ -173,6 +173,12 @@ public class CppSyntaxNode extends SyntaxNode {
     }
 
     @Override
+    public boolean isMacro() {
+        String typeName = getTypeName();
+        return typeName.equals("MACRO_REF") || typeName.equals("MACRO_DEFINITION");
+    }
+
+    @Override
     public boolean isEqualSymbol() {
         return getTypeName().equals("OCPunctuator:=");
     }

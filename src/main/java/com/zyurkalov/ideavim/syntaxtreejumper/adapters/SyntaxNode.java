@@ -362,4 +362,8 @@ public abstract class SyntaxNode {
     public boolean isComment() {
         return getTypeName().endsWith("_COMMENT");
     }
+
+    public boolean isMacro() {
+        return false;
+    }
 }
