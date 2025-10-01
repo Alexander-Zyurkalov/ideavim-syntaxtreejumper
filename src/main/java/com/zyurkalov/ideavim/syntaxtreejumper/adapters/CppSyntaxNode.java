@@ -106,14 +106,14 @@ public class CppSyntaxNode extends SyntaxNode {
 
     @Override
     public boolean isFunctionArgument() {
-        boolean result = false;
-        try {
-            result = getTypeName().contains("EXPRESSION") &&
-                    Objects.requireNonNull(getParent()).getTypeName().equals("ARGUMENT_LIST")/* &&
-                    Objects.requireNonNull(getParent().getParent()).getTypeName().equals("CALL_EXPRESSION")*/;
-        } catch (NullPointerException ignored) {
+        SyntaxNode parent = getParent();
+        if (parent == null) {
+            return false;
         }
-        return result;
+        return getTypeName().contains("EXPRESSION") &&
+                (parent.getTypeName().equals("ARGUMENT_LIST") ||
+                        parent.getTypeName().equals("COMPOUND_INITIALIZER")
+                );
     }
 
     @Override
