@@ -428,14 +428,14 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
 
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-[>"),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-[>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToPrevSibling),
                 true);
 
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-]>"),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-]>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToNextSibling),
                 true);
@@ -486,7 +486,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
 
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-[>"),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-[>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastLeftMotion),
                 true);
@@ -503,7 +503,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
 
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-]>"),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-]>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastRightMotion),
                 true);
@@ -520,7 +520,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
 
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-[>"),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-[>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastUpMotion),
                 true);
@@ -537,7 +537,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
 
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-]>"),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-]>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastDownMotion),
                 true);
