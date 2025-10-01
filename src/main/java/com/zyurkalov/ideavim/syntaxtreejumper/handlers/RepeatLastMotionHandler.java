@@ -20,10 +20,10 @@ public class RepeatLastMotionHandler implements ExtensionHandler {
         DIRECT, OPPOSITE, LEFT, RIGHT, UP, DOWN
     }
 
-    RepeatActionType isForOppositeMotion;
+    RepeatActionType repeatActionType;
 
-    public RepeatLastMotionHandler(RepeatActionType isForOppositeMotion) {
-        this.isForOppositeMotion = isForOppositeMotion;
+    public RepeatLastMotionHandler(RepeatActionType repeatActionType) {
+        this.repeatActionType = repeatActionType;
     }
 
     @Override
@@ -50,7 +50,7 @@ public class RepeatLastMotionHandler implements ExtensionHandler {
             operatorArguments = new OperatorArguments(
                     operatorArguments.getCount1() * lastArguments.getCount1(), operatorArguments.component3());
 
-            switch (isForOppositeMotion) {
+            switch (repeatActionType) {
                 case RepeatActionType.DIRECT:
                     handlerToRepeat.execute(vimEditor, context, operatorArguments);
                     break;
