@@ -67,7 +67,7 @@ public class CppSyntaxNode extends SyntaxNode {
 
         PsiElement firstChild = psiElement.getFirstChild();
         if (firstChild == null) {
-            return  null;
+            return null;
         }
         return new CppSyntaxNode(firstChild);
     }
@@ -76,7 +76,7 @@ public class CppSyntaxNode extends SyntaxNode {
     public SyntaxNode getLastChild() {
         PsiElement lastChild = psiElement.getLastChild();
         if (lastChild == null) {
-            return  null;
+            return null;
         }
         return new CppSyntaxNode(lastChild);
     }
@@ -123,7 +123,8 @@ public class CppSyntaxNode extends SyntaxNode {
             result = getTypeName().equals("TYPE_PARAMETER") ||
                     (getTypeName().equals("TYPE_ELEMENT") &&
                             Objects.requireNonNull(getParent()).getTypeName().equals("TEMPLATE_ARGUMENT_LIST"));
-        } catch (NullPointerException ignored) {}
+        } catch (NullPointerException ignored) {
+        }
         return result;
     }
 
@@ -137,7 +138,9 @@ public class CppSyntaxNode extends SyntaxNode {
         String typeName = getTypeName();
         return
                 typeName.equals("FUNCTION_DEFINITION") ||
-                typeName.equals("CPP_LAMBDA_EXPRESSION");
+                        typeName.equals("FUNCTION_DECLARATION") ||
+                        typeName.equals("FUNCTION_PREDEFINITION") ||
+                        typeName.equals("CPP_LAMBDA_EXPRESSION");
     }
 
     @Override
@@ -148,7 +151,7 @@ public class CppSyntaxNode extends SyntaxNode {
 
     @Override
     public boolean isCodeBlock() {
-        String typeName= getTypeName();
+        String typeName = getTypeName();
 
         return typeName.equals("LAZY_BLOCK") ||
                 typeName.equals("EAGER_BLOCK");
@@ -166,7 +169,7 @@ public class CppSyntaxNode extends SyntaxNode {
         if (firstChild == null) {
             return false;
         }
-        return ( getTypeName().equals("DECLARATION") || isFunctionDefinition() ) && firstChild.getTypeName().equals("OCKeyword:template");
+        return (getTypeName().equals("DECLARATION") || isFunctionDefinition()) && firstChild.getTypeName().equals("OCKeyword:template");
     }
 
     @Override
