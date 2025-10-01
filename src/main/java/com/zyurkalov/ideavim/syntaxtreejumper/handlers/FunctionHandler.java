@@ -54,6 +54,21 @@ public class FunctionHandler implements ExtensionHandler {
         return new FunctionHandler(oppositeDirection, navigatorFactory, addNewCaret);
     }
 
+    public FunctionHandler withRightDirection(){
+        MotionDirection rightDirection = switch (direction) {
+            case FORWARD, BACKWARD -> FORWARD;
+            case EXPAND, SHRINK -> SHRINK;
+        } ;
+        return new FunctionHandler(rightDirection, navigatorFactory, addNewCaret);
+    }
+    public FunctionHandler withLeftDirection(){
+        MotionDirection rightDirection = switch (direction) {
+            case FORWARD, BACKWARD -> BACKWARD;
+            case EXPAND, SHRINK -> EXPAND;
+        } ;
+        return new FunctionHandler(rightDirection, navigatorFactory, addNewCaret);
+    }
+
     // Static variable to track the last executed FunctionHandler
     public static Optional<FunctionHandler> lastExecutedHandler = Optional.empty();
     public static Optional<OperatorArguments> lastExecutedHandlerArguments = Optional.empty();

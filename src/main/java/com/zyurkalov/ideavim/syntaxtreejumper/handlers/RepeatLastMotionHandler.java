@@ -16,9 +16,13 @@ import static com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler.la
  * This handler does not store itself as the last executed motion to prevent infinite recursion.
  */
 public class RepeatLastMotionHandler implements ExtensionHandler {
-    boolean isForOppositeMotion;
+    public enum RepeatActionType {
+        DIRECT, OPPOSITE, LEFT, RIGHT
+    }
 
-    public RepeatLastMotionHandler(boolean isForOppositeMotion) {
+    RepeatActionType isForOppositeMotion;
+
+    public RepeatLastMotionHandler(RepeatActionType isForOppositeMotion) {
         this.isForOppositeMotion = isForOppositeMotion;
     }
 
@@ -46,10 +50,22 @@ public class RepeatLastMotionHandler implements ExtensionHandler {
             operatorArguments = new OperatorArguments(
                     operatorArguments.getCount1() * lastArguments.getCount1(), operatorArguments.component3());
 
-            if (isForOppositeMotion) {
-                handlerToRepeat.withOppositeDirection().execute(vimEditor, context, operatorArguments);
-            } else {
-                handlerToRepeat.execute(vimEditor, context, operatorArguments);
+            switch (isForOppositeMotion) {
+                case RepeatActionType.DIRECT:
+                    handlerToRepeat.execute(vimEditor, context, operatorArguments);
+                    break;
+
+                case RepeatActionType.OPPOSITE:
+                    handlerToRepeat.withOppositeDirection().execute(vimEditor, context, operatorArguments);
+                    break;
+
+                case RepeatActionType.LEFT:
+                    handlerToRepeat.withLeftDirection().execute(vimEditor, context, operatorArguments);
+                    break;
+
+                case RepeatActionType.RIGHT:
+                    handlerToRepeat.withRightDirection().execute(vimEditor, context, operatorArguments);
+                    break;
             }
 
         } finally {

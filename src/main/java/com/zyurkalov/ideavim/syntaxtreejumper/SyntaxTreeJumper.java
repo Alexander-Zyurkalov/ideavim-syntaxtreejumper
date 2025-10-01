@@ -434,7 +434,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
                 getOwner(),
-                new RepeatLastMotionHandler(false),
+                new RepeatLastMotionHandler(RepeatLastMotionHandler.RepeatActionType.DIRECT),
                 false);
 
         putKeyMappingIfMissing(
@@ -451,7 +451,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastOppositeMotion),
                 getOwner(),
-                new RepeatLastMotionHandler(true),
+                new RepeatLastMotionHandler(RepeatLastMotionHandler.RepeatActionType.OPPOSITE),
                 false);
 
         putKeyMappingIfMissing(
@@ -459,6 +459,40 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-S-r>"),
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastOppositeMotion),
+                true);
+
+        // Repeat the last motion to the left
+        String commandRepeatLastLeftMotion = "<Plug>RepeatLastLeftMotion";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastLeftMotion),
+                getOwner(),
+                new RepeatLastMotionHandler(RepeatLastMotionHandler.RepeatActionType.LEFT),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-[>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastLeftMotion),
+                true);
+
+        // Repeat the last motion to the right
+        String commandRepeatLastRightMotion = "<Plug>RepeatLastRightMotion";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastRightMotion),
+                getOwner(),
+                new RepeatLastMotionHandler(RepeatLastMotionHandler.RepeatActionType.RIGHT),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-]>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastRightMotion),
                 true);
     }
 
