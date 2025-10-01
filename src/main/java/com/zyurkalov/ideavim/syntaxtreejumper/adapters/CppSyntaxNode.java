@@ -179,6 +179,13 @@ public class CppSyntaxNode extends SyntaxNode {
     }
 
     @Override
+    public boolean isVariable() {
+        String typeName = getTypeName();
+        return typeName.equals("IDENTIFIER");
+    }
+
+
+    @Override
     public boolean isEqualSymbol() {
         return getTypeName().equals("OCPunctuator:=");
     }
