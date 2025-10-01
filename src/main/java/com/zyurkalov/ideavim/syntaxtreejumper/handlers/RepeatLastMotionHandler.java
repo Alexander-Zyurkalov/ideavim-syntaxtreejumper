@@ -17,7 +17,7 @@ import static com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler.la
  */
 public class RepeatLastMotionHandler implements ExtensionHandler {
     public enum RepeatActionType {
-        DIRECT, OPPOSITE, LEFT, RIGHT
+        DIRECT, OPPOSITE, LEFT, RIGHT, UP, DOWN
     }
 
     RepeatActionType isForOppositeMotion;
@@ -65,6 +65,13 @@ public class RepeatLastMotionHandler implements ExtensionHandler {
 
                 case RepeatActionType.RIGHT:
                     handlerToRepeat.withRightDirection().execute(vimEditor, context, operatorArguments);
+                    break;
+                case RepeatActionType.UP:
+                    handlerToRepeat.withUpDirection().execute(vimEditor, context, operatorArguments);
+                    break;
+
+                case RepeatActionType.DOWN:
+                    handlerToRepeat.withDownDirection().execute(vimEditor, context, operatorArguments);
                     break;
             }
 

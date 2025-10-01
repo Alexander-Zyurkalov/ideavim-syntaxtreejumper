@@ -44,8 +44,8 @@ public class FunctionHandler implements ExtensionHandler {
     private final BiFunction<SyntaxTreeAdapter, MotionDirection, MotionHandler> navigatorFactory;
     private final boolean addNewCaret;
 
-    public FunctionHandler withOppositeDirection(){
-        MotionDirection oppositeDirection = switch( direction ) {
+    public FunctionHandler withOppositeDirection() {
+        MotionDirection oppositeDirection = switch (direction) {
             case BACKWARD -> FORWARD;
             case FORWARD -> BACKWARD;
             case EXPAND -> SHRINK;
@@ -54,19 +54,20 @@ public class FunctionHandler implements ExtensionHandler {
         return new FunctionHandler(oppositeDirection, navigatorFactory, addNewCaret);
     }
 
-    public FunctionHandler withRightDirection(){
-        MotionDirection rightDirection = switch (direction) {
-            case FORWARD, BACKWARD -> FORWARD;
-            case EXPAND, SHRINK -> SHRINK;
-        } ;
-        return new FunctionHandler(rightDirection, navigatorFactory, addNewCaret);
+    public FunctionHandler withRightDirection() {
+        return new FunctionHandler(FORWARD, navigatorFactory, addNewCaret);
     }
-    public FunctionHandler withLeftDirection(){
-        MotionDirection rightDirection = switch (direction) {
-            case FORWARD, BACKWARD -> BACKWARD;
-            case EXPAND, SHRINK -> EXPAND;
-        } ;
-        return new FunctionHandler(rightDirection, navigatorFactory, addNewCaret);
+
+    public FunctionHandler withLeftDirection() {
+        return new FunctionHandler(BACKWARD, navigatorFactory, addNewCaret);
+    }
+
+    public FunctionHandler withUpDirection() {
+        return new FunctionHandler(EXPAND, navigatorFactory, addNewCaret);
+    }
+
+    public FunctionHandler withDownDirection() {
+        return new FunctionHandler(SHRINK, navigatorFactory, addNewCaret);
     }
 
     // Static variable to track the last executed FunctionHandler

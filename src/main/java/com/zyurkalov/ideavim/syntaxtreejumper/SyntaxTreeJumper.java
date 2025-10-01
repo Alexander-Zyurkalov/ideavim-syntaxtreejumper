@@ -494,6 +494,40 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 getOwner(),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastRightMotion),
                 true);
+
+        // Repeat the last motion up
+        String commandRepeatLastUpMotion = "<Plug>RepeatLastUpMotion";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastUpMotion),
+                getOwner(),
+                new RepeatLastMotionHandler(RepeatLastMotionHandler.RepeatActionType.UP),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-[>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastUpMotion),
+                true);
+
+        // Repeat the last motion down
+        String commandRepeatLastDownMotion = "<Plug>RepeatLastDownMotion";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastDownMotion),
+                getOwner(),
+                new RepeatLastMotionHandler(RepeatLastMotionHandler.RepeatActionType.DOWN),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-]>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastDownMotion),
+                true);
     }
 
     /**
