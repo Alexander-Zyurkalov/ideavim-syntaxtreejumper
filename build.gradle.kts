@@ -26,8 +26,9 @@ dependencies {
     intellijPlatform {
 //        clion("2025.1.4")
 //        bundledPlugin("com.intellij.clion")
-        create("IC", "2025.1.1")
-        bundledPlugin("com.intellij.java")
+        rustRover("2025.1.4")
+//        create("IC", "2025.1.1")
+//        bundledPlugin("com.intellij.java")
         plugins("IdeaVIM:2.27.0")
         pluginVerifier()
         zipSigner()
