@@ -182,4 +182,20 @@ public class RustSyntaxNode extends SyntaxNode {
                 typeName.equals("IMPL_ITEM") ||
                 typeName.equals("TRAIT_ITEM");
     }
+
+    @Override
+    public boolean isTemplate() {
+        var children = getChildren();
+        if (children.isEmpty()) {
+            return false;
+        }
+        boolean hasTypeParameters = false;
+        for (var child : children) {
+            if (child.getTypeName().equals("TYPE_PARAMETER_LIST")) {
+                hasTypeParameters = true;
+                break;
+            }
+        }
+        return hasTypeParameters && (isClassDefinition() || isFunctionDefinition());
+    }
 }
