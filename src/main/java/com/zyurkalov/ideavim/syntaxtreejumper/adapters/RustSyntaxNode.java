@@ -207,4 +207,12 @@ public class RustSyntaxNode extends SyntaxNode {
                 typeName.equals("<INNER_EOL_DOC_COMMENT>") ||
                 typeName.equals("<OUTER_EOL_DOC_COMMENT>");
     }
+
+    @Override
+    public boolean isMacro() {
+        String typeName = getTypeName();
+        return typeName.contains("MACRO") ||
+                typeName.contains("MACRO_CALL");
+
+    }
 }
