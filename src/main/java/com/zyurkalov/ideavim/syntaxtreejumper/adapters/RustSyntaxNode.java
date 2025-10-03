@@ -213,6 +213,10 @@ public class RustSyntaxNode extends SyntaxNode {
         String typeName = getTypeName();
         return typeName.contains("MACRO") ||
                 typeName.contains("MACRO_CALL");
+    }
 
+    @Override
+    public boolean isImport() {
+        return getTypeName().equals("USE_ITEM");
     }
 }
