@@ -3,13 +3,10 @@ package com.zyurkalov.ideavim.syntaxtreejumper.adapters;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * Abstract adapter class for syntax tree operations.
@@ -17,17 +14,11 @@ import java.util.function.Function;
  * particularly useful for languages like C++ where the default PSI tree might be inconvenient.
  */
 public abstract class SyntaxTreeAdapter {
-    protected static Optional<SyntaxNode> nextNeighbour(SyntaxNode node, Direction direction) {
-        return switch (direction) {
-            case Direction.FORWARD -> Optional.ofNullable(node.getNextSibling());
-            case Direction.BACKWARD -> Optional.ofNullable(node.getPreviousSibling());
-        };
-    }
 
-    protected static SyntaxNode getChild(@NotNull SyntaxNode currentNode, Direction direction) {
+    public static SyntaxNode getChild(@NotNull SyntaxNode currentNode, MotionDirection direction) {
         return switch (direction) {
-            case Direction.FORWARD -> currentNode.getFirstChild();
-            case Direction.BACKWARD -> currentNode.getLastChild();
+            case FORWARD, EXPAND -> currentNode.getFirstChild();
+            case BACKWARD, SHRINK -> currentNode.getLastChild();
         };
     }
 
@@ -70,7 +61,7 @@ public abstract class SyntaxTreeAdapter {
         return sibling;
     }
 
-    private static boolean isASymbolToSkip(SyntaxNode sibling) {
+    public static boolean isASymbolToSkip(SyntaxNode sibling) {
         if (sibling.isOperator()) {
             return true;
         }
@@ -108,7 +99,10 @@ public abstract class SyntaxTreeAdapter {
      * Finds the next non-whitespace sibling of the given node.
      */
     @Nullable
-    public SyntaxNode findNextNonWhitespaceSibling(@NotNull SyntaxNode node) {
+    public SyntaxNode findNextNonWhitespaceSibling(SyntaxNode node) {
+        if (node == null) {
+            return null;
+        }
         SyntaxNode sibling = node.getNextSibling();
         while (sibling != null && isASymbolToSkip(sibling)) {
             sibling = sibling.getNextSibling();
@@ -124,7 +118,10 @@ public abstract class SyntaxTreeAdapter {
      * @return The first non-whitespace child, or null if not found
      */
     @Nullable
-    public SyntaxNode findFirstChildOfItsParent(@NotNull SyntaxNode node) {
+    public SyntaxNode findFirstChildOfItsParent(SyntaxNode node) {
+        if (node == null) {
+            return null;
+        }
         SyntaxNode parent = node.getParent();
         if (parent == null) return null;
         SyntaxNode firstChild = parent.getFirstChild();
@@ -140,8 +137,10 @@ public abstract class SyntaxTreeAdapter {
      * @param node The node whose parent's last child to find
      * @return The last non-whitespace child, or null if not found
      */
-    @Nullable
-    public SyntaxNode findLastChildOfItsParent(@NotNull SyntaxNode node) {
+    public SyntaxNode findLastChildOfItsParent(SyntaxNode node) {
+        if (node == null) {
+            return null;
+        }
         SyntaxNode parent = node.getParent();
         if (parent == null) return null;
         SyntaxNode lastChild = parent.getLastChild();
@@ -155,9 +154,18 @@ public abstract class SyntaxTreeAdapter {
      * Helper method to replace a node with its parent if they have the same text content.
      * This is useful for handling cases where leaf nodes and their parents represent the same construct.
      */
+    @NotNull
+    public SyntaxNode replaceWithParentIfParentEqualsTheNode(@NotNull SyntaxNode node) {
+        SyntaxNode parent = node.getParent();
+        while (parent != null && parent.getText().equals(node.getText())) {
+            node = parent;
+            parent = node.getParent();
+        }
+        return node;
+    }
     @Nullable
-    public SyntaxNode replaceWithParentIfParentEqualsTheNode(@Nullable SyntaxNode node) {
-        if (node == null) {
+    public SyntaxNode findParentThatIsNotEqualToTheNode(@Nullable SyntaxNode node) {
+        if (node == null || node.isPsiFile()) {
             return null;
         }
         SyntaxNode parent = node.getParent();
@@ -165,7 +173,7 @@ public abstract class SyntaxTreeAdapter {
             node = parent;
             parent = node.getParent();
         }
-        return node;
+        return parent;
     }
 
     /**
@@ -229,74 +237,84 @@ public abstract class SyntaxTreeAdapter {
         return result;
     }
 
-    public Optional<SyntaxNode> findWithinNeighbours(
-            @NotNull SyntaxNode currentNode, Direction direction, Offsets initialSelection,
-            Function<SyntaxNode, Optional<SyntaxNode>> findNodeType,
-            boolean skipFirstNode) {
-        Optional<SyntaxNode> found = Optional.empty();
-        var next = Optional.of(currentNode);
-        if (skipFirstNode) {
-            next = nextNeighbour(currentNode, direction);
+    @NotNull
+    public SyntaxNode findParentElementIfInitialElementsAreAtEdgesOrChooseOne(
+            SyntaxNode initElementAtLeft, SyntaxNode initElementAtRight, MotionDirection direction) {
+        SyntaxNode initialElement = initElementAtLeft;
+        SyntaxNode commonParent = findCommonParent(initElementAtLeft, initElementAtRight);
+        if (commonParent == null) {
+            return initialElement;
         }
-        while (true) {
-
-            if (next.isEmpty()) {
-                break;
-            }
-            currentNode = next.get();
-            if (!currentNode.isInDirection(initialSelection, direction)) {
-                next = nextNeighbour(currentNode, direction);
-                continue;
-            }
-
-            found = findNodeType.apply(currentNode);
-            if (found.isPresent()) {
-                return found;
-            }
-            if (!currentNode.getChildren().isEmpty()) {
-                found = findWithinNeighbours(
-                        getChild(currentNode, direction), direction, initialSelection, findNodeType, false);
-                if (found.isPresent()) {
-                    return found;
-                }
-            }
-            next = nextNeighbour(currentNode, direction);
+        boolean areOurElementsAtTheEdges =
+                commonParent.getTextRange().getStartOffset() == initElementAtLeft.getTextRange().getStartOffset() &&
+                        commonParent.getTextRange().getEndOffset() == initElementAtRight.getTextRange().getEndOffset();
+        if (areOurElementsAtTheEdges) {
+            initialElement = commonParent;
+        } else {
+            initialElement = switch (direction) {
+                case BACKWARD, SHRINK -> initElementAtLeft;
+                case FORWARD -> initElementAtRight;
+                case EXPAND -> initElementAtLeft; //TODO what shall we do here?
+            };
         }
-        return found;
+        return initialElement;
     }
 
     /**
-     * Finds a PARAMETER_LIST or ARGUMENT_LIST node based on the direction from the current node.
+     * Finds the current syntax node based on the given offsets.
+     * Extracted from the original findNext method for reuse.
      *
-     * @param currentNode      The starting node
-     * @param direction        The direction to search
-     * @param initialSelection The inidial selection
-     * @return The found parameter/argument list node or null if not found
+     * @param initialOffsets
+     * @param direction
      */
-    public Optional<SyntaxNode> findParameter(SyntaxNode currentNode, Direction direction, Offsets initialSelection) {
-        Function<SyntaxNode, Optional<SyntaxNode>> functionToFindParameterNode =
-                createFunctionToFindParameterNode(direction, initialSelection);
-
-        Optional<SyntaxNode> found = findWithinNeighbours(
-                currentNode, direction, initialSelection, functionToFindParameterNode, false);
-
-        while (found.isEmpty()) {
-            currentNode = currentNode.getParent();
-            if (currentNode == null || currentNode.isPsiFile()) {
-                break;
+    @Nullable
+    public SyntaxNode findCurrentElement(Offsets initialOffsets, MotionDirection direction) {
+        boolean isOnlyCaretButNoSelection = initialOffsets.leftOffset() >= initialOffsets.rightOffset() - 1;
+        if (isOnlyCaretButNoSelection) {
+            SyntaxNode nodeAt = findNodeAt(initialOffsets.leftOffset());
+            if (nodeAt == null) {
+                return null;
             }
-            found = findWithinNeighbours(currentNode, direction, initialSelection, functionToFindParameterNode, false);
+            return replaceWithParentIfParentEqualsTheNode(nodeAt);
+        } else {
+            SyntaxNode initElementAtLeft = findNodeAt(initialOffsets.leftOffset());
+            SyntaxNode initElementAtRight = findNodeAt(initialOffsets.rightOffset() - 1);
+            if (initElementAtLeft == null || initElementAtRight == null) {
+                return null;
+            }
+            SyntaxNode target = null;
+            if (initElementAtLeft.isEquivalentTo(initElementAtRight)) {
+                target = initElementAtLeft;
+            } else {
+                target =  findParentElementIfInitialElementsAreAtEdgesOrChooseOne(initElementAtLeft, initElementAtRight, direction);
+            }
+            return replaceWithParentIfParentEqualsTheNode(target);
         }
-        return found;
     }
 
-    @NotNull
-    public Function<SyntaxNode, Optional<SyntaxNode>> createFunctionToFindParameterNode(Direction direction, Offsets initialSelection) {
-        return node -> {
-            if (node.isFunctionParameter() || node.isFunctionArgument() || node.isTypeParameter()){
-                return Optional.of(node);
-            }
-            return Optional.empty();
-        };
+    /**
+     * Public method to find the current element and its siblings based on the given offsets.
+     * This method can be reused by other classes like PsiElementHighlighter.
+     *
+     * @param initialOffsets
+     * @param direction
+     */
+    public ElementWithSiblings findElementWithSiblings(Offsets initialOffsets, MotionDirection direction) {
+        SyntaxNode currentElement = findCurrentElement(initialOffsets, direction);
+        if (currentElement == null || currentElement.isPsiFile()) {
+            return new ElementWithSiblings(null, null, null);
+        }
+
+        currentElement = replaceWithParentIfParentEqualsTheNode(currentElement);
+        if (currentElement == null) {
+            return new ElementWithSiblings(null, null, null);
+        }
+
+        SyntaxNode previousSibling = findPreviousNonWhitespaceSibling(currentElement);
+        SyntaxNode nextSibling = findNextNonWhitespaceSibling(currentElement);
+
+        return new ElementWithSiblings(currentElement, previousSibling, nextSibling);
     }
+
+
 }

@@ -13,12 +13,12 @@ import com.maddyhome.idea.vim.extension.ExtensionHandler;
 import com.maddyhome.idea.vim.newapi.IjVimEditorKt;
 import com.maddyhome.idea.vim.state.mode.Mode;
 import com.maddyhome.idea.vim.state.mode.SelectionType;
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
+import com.zyurkalov.ideavim.syntaxtreejumper.adapters.ElementWithSiblings;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapterFactory;
-import com.zyurkalov.ideavim.syntaxtreejumper.motions.SameLevelElementsMotionHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,9 +31,9 @@ import java.util.List;
  */
 public class MoveSiblingHandler implements ExtensionHandler {
 
-    private final Direction direction;
+    private final MotionDirection direction;
 
-    public MoveSiblingHandler(Direction direction) {
+    public MoveSiblingHandler(MotionDirection direction) {
         this.direction = direction;
     }
 
@@ -65,19 +65,19 @@ public class MoveSiblingHandler implements ExtensionHandler {
             Offsets currentOffsets = new Offsets(startSelectionOffset, endSelectionOffset);
 
             // Use SameLevelElementsMotionHandler to find the current element and siblings
-            SameLevelElementsMotionHandler motionHandler = new SameLevelElementsMotionHandler(syntaxTree, direction);
-            SameLevelElementsMotionHandler.ElementWithSiblings elementWithSiblings =
-                    motionHandler.findElementWithSiblings(currentOffsets);
+            ElementWithSiblings elementWithSiblings =
+                    syntaxTree.findElementWithSiblings(currentOffsets, direction);
 
             if (elementWithSiblings.currentElement() == null) {
                 caretPositions.add(caret.getLogicalPosition());
                 continue;
             }
 
-            // Get the sibling to swap with based on direction
+            // Get the sibling to swap with based on a direction
             SyntaxNode targetSibling = switch (direction) {
                 case BACKWARD -> elementWithSiblings.previousSibling();
                 case FORWARD -> elementWithSiblings.nextSibling();
+                case EXPAND, SHRINK -> null; // TODO: what shall I do here?
             };
 
             if (targetSibling == null) {
@@ -171,8 +171,9 @@ public class MoveSiblingHandler implements ExtensionHandler {
         );
 
         LogicalPosition targetPosition = switch (direction) {
-            case FORWARD -> caretPositions.get(caretPositions.size() - 1); // Last position
-            case BACKWARD -> caretPositions.get(0); // First position
+            //TODO: come up with better options for shirking and expanding
+            case FORWARD, EXPAND -> caretPositions.getLast(); // Last position
+            case BACKWARD, SHRINK -> caretPositions.getFirst(); // First position
         };
 
         editor.getScrollingModel().scrollTo(targetPosition, ScrollType.MAKE_VISIBLE);

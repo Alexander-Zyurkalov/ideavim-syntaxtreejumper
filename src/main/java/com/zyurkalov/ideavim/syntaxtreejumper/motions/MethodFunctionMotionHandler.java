@@ -6,13 +6,13 @@ import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 
 /**
- * MotionHandler that finds PsiElements of type PARAMETER_LIST or ARGUMENT_LIST
+ * MotionHandler that finds method declarations and function definitions
  * in accordance to the given Direction from the caret, then places the caret
- * at the first child of that element.
+ * at the found element.
  */
-public class ArgumentParameterListMotionHandler extends AbstractSyntaxTreeNodesMotionHandler {
+public class MethodFunctionMotionHandler extends AbstractSyntaxTreeNodesMotionHandler {
 
-    public ArgumentParameterListMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
+    public MethodFunctionMotionHandler(SyntaxTreeAdapter syntaxTree, MotionDirection direction) {
         super(syntaxTree, direction);
     }
 
@@ -23,9 +23,7 @@ public class ArgumentParameterListMotionHandler extends AbstractSyntaxTreeNodesM
 
     @Override
     protected boolean doesTargetFollowRequirements(SyntaxNode startingPoint, SyntaxNode targetElement, Offsets initialOffsets) {
-        return targetElement.isFunctionParameter() ||
-                targetElement.isFunctionArgument() ||
-                targetElement.isTypeParameter();
+        return targetElement.isMethodDefinition() || targetElement.isFunctionDefinition();
     }
 
 }

@@ -2,7 +2,7 @@ package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 
 import java.util.Optional;
@@ -10,10 +10,10 @@ import java.util.Optional;
 public class SubWordMotionHandler implements MotionHandler {
 
     private final PsiFile psiFile;
-    private final Direction direction;
+    private final MotionDirection direction;
     private final SubWordFinder navigation;
 
-    public SubWordMotionHandler(PsiFile psiFile, Direction direction) {
+    public SubWordMotionHandler(PsiFile psiFile, MotionDirection direction) {
         this.psiFile = psiFile;
         this.direction = direction;
         this.navigation = new SubWordFinder(direction);
@@ -35,8 +35,10 @@ public class SubWordMotionHandler implements MotionHandler {
         Offsets nextSubWordOffsets = findNextSubWord(initialOffsets, elementAtLeft);
         if (nextSubWordOffsets.equals(initialOffsets)) {
             int startOffset = switch (direction) {
-                case Direction.FORWARD ->  initialOffsets.rightOffset();
-                case Direction.BACKWARD -> initialOffsets.leftOffset() - 1;
+                case FORWARD ->  initialOffsets.rightOffset();
+                case BACKWARD -> initialOffsets.leftOffset() - 1;
+                case EXPAND -> 0; //TODO: come up with what shall I do here
+                case SHRINK -> 0;
             };
             return findNext(new Offsets(startOffset, startOffset ));
         }

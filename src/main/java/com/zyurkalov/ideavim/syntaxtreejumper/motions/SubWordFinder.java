@@ -1,6 +1,6 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
+import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 
 import java.util.ArrayList;
@@ -9,7 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public record SubWordFinder(Direction direction) {
+import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.BACKWARD;
+import static com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection.FORWARD;
+
+public record SubWordFinder(MotionDirection direction) {
 
     class BoundaryFinder {
         private final String str;
@@ -28,7 +31,7 @@ public record SubWordFinder(Direction direction) {
         BoundaryFinder(String str) {
             this.str = str;
             this.delimiters = new ArrayList<>();
-            if (direction == Direction.FORWARD) {
+            if (direction == FORWARD) { //TODO: what shall I do here?
                 delimiters.add(createDelimiter(
                         Character::isLowerCase,
                         Character::isUpperCase));
@@ -76,7 +79,7 @@ public record SubWordFinder(Direction direction) {
         if (elementText == null) {
             return strPosition;
         }
-        if (direction == Direction.BACKWARD) {
+        if (direction == BACKWARD) {
             elementText = new StringBuilder(elementText).reverse().toString();
             strPosition = new Offsets(
                     elementText.length() - strPosition.rightOffset(),
@@ -97,16 +100,13 @@ public record SubWordFinder(Direction direction) {
 
 
         return switch (direction) {
-            case Direction.FORWARD -> new Offsets(nextWordStart, nextWordEnd);
-            case Direction.BACKWARD -> new Offsets(
+            case FORWARD -> new Offsets(nextWordStart, nextWordEnd);
+            case BACKWARD -> new Offsets(
                     elementText.length() - nextWordEnd,
                     elementText.length() - nextWordStart);
+            case EXPAND -> null; //TODO: what shall I do here?
+            case SHRINK -> null;
         };
     }
 
-    public static boolean areThereSubwords(String elementText) {
-        var finder = new SubWordFinder(Direction.FORWARD);
-        var offsets = finder.findNext(new Offsets(0, 0), elementText);
-        return offsets.leftOffset() == 0 && offsets.rightOffset() < elementText.length();
-    }
 }

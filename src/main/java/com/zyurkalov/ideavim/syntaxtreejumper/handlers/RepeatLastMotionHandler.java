@@ -16,29 +16,65 @@ import static com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler.la
  * This handler does not store itself as the last executed motion to prevent infinite recursion.
  */
 public class RepeatLastMotionHandler implements ExtensionHandler {
-    
+    public enum RepeatActionType {
+        DIRECT, OPPOSITE, LEFT, RIGHT, UP, DOWN
+    }
+
+    RepeatActionType repeatActionType;
+
+    public RepeatLastMotionHandler(RepeatActionType repeatActionType) {
+        this.repeatActionType = repeatActionType;
+    }
+
     @Override
     public void execute(
             @NotNull VimEditor vimEditor,
             @NotNull ExecutionContext context,
-            @NotNull OperatorArguments operatorArguments) {
-        
+            @NotNull OperatorArguments operatorArguments
+    ) {
+
         // Check if there's a last executed handler to repeat
         if (lastExecutedHandler.isEmpty() || lastExecutedHandlerArguments.isEmpty()) {
             // No motion to repeat - silently return
             return;
         }
-        
+
         FunctionHandler handlerToRepeat = lastExecutedHandler.get();
         OperatorArguments lastArguments = lastExecutedHandlerArguments.get();
-        
+
         lastExecutedHandler = Optional.empty();
         lastExecutedHandlerArguments = Optional.empty();
-        
+
+
         try {
             operatorArguments = new OperatorArguments(
-            operatorArguments.getCount1() * lastArguments.getCount1(), operatorArguments.component3());
-            handlerToRepeat.execute(vimEditor, context, operatorArguments);
+                    operatorArguments.getCount1() * lastArguments.getCount1(), operatorArguments.component3());
+
+            switch (repeatActionType) {
+                case RepeatActionType.DIRECT:
+                    handlerToRepeat.execute(vimEditor, context, operatorArguments);
+                    break;
+
+                case RepeatActionType.OPPOSITE:
+                    handlerToRepeat.withOppositeDirection().execute(vimEditor, context, operatorArguments);
+                    break;
+
+                case RepeatActionType.LEFT:
+                    handlerToRepeat.withLeftDirection().execute(vimEditor, context, operatorArguments);
+                    break;
+
+                case RepeatActionType.RIGHT:
+                    handlerToRepeat.withRightDirection().execute(vimEditor, context, operatorArguments);
+                    break;
+                case RepeatActionType.UP:
+                    handlerToRepeat.withUpDirection().execute(vimEditor, context, operatorArguments);
+                    break;
+
+                case RepeatActionType.DOWN:
+                    handlerToRepeat.withDownDirection().execute(vimEditor, context, operatorArguments);
+                    break;
+            }
+
         } finally {
             // Restore the original handler as the last executed motion
             // This ensures that later repeats will still work

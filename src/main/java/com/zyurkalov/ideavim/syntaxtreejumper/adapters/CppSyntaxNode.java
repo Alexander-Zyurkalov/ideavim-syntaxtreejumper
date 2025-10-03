@@ -15,7 +15,7 @@ import java.util.Objects;
 public class CppSyntaxNode extends SyntaxNode {
 
 
-    public CppSyntaxNode(@NotNull PsiElement psiElement) {
+    public CppSyntaxNode(PsiElement psiElement) {
         super(psiElement);
     }
 
@@ -64,12 +64,21 @@ public class CppSyntaxNode extends SyntaxNode {
 
     @Override
     public SyntaxNode getFirstChild() {
-        return new CppSyntaxNode(psiElement.getFirstChild());
+
+        PsiElement firstChild = psiElement.getFirstChild();
+        if (firstChild == null) {
+            return null;
+        }
+        return new CppSyntaxNode(firstChild);
     }
 
     @Override
     public SyntaxNode getLastChild() {
-        return new CppSyntaxNode(psiElement.getLastChild());
+        PsiElement lastChild = psiElement.getLastChild();
+        if (lastChild == null) {
+            return null;
+        }
+        return new CppSyntaxNode(lastChild);
     }
 
     @Override
@@ -97,23 +106,93 @@ public class CppSyntaxNode extends SyntaxNode {
 
     @Override
     public boolean isFunctionArgument() {
-        boolean result = false;
-        try {
-            result = getTypeName().contains("EXPRESSION") &&
-                    Objects.requireNonNull(getParent()).getTypeName().equals("ARGUMENT_LIST")/* &&
-                    Objects.requireNonNull(getParent().getParent()).getTypeName().equals("CALL_EXPRESSION")*/;
-        } catch (NullPointerException ignored) {
+        SyntaxNode parent = getParent();
+        if (parent == null) {
+            return false;
         }
-        return result;
+        return getTypeName().contains("EXPRESSION") &&
+                (parent.getTypeName().equals("ARGUMENT_LIST") ||
+                        parent.getTypeName().equals("COMPOUND_INITIALIZER")
+                );
     }
 
+    @Override
     public boolean isTypeParameter() {
         boolean result = false;
         try {
             result = getTypeName().equals("TYPE_PARAMETER") ||
                     (getTypeName().equals("TYPE_ELEMENT") &&
                             Objects.requireNonNull(getParent()).getTypeName().equals("TEMPLATE_ARGUMENT_LIST"));
-        } catch (NullPointerException ignored) {}
+        } catch (NullPointerException ignored) {
+        }
         return result;
+    }
+
+    @Override
+    public boolean isMethodDefinition() {
+        return isFunctionDefinition();
+    }
+
+    @Override
+    public boolean isFunctionDefinition() {
+        String typeName = getTypeName();
+        return
+                typeName.equals("FUNCTION_DEFINITION") ||
+                        typeName.equals("FUNCTION_DECLARATION") ||
+                        typeName.equals("FUNCTION_PREDEFINITION") ||
+                        typeName.equals("CPP_LAMBDA_EXPRESSION");
+    }
+
+    @Override
+    public boolean isMethodOrFunctionCallExpression() {
+        String typeName = getTypeName();
+        return typeName.equals("CALL_EXPRESSION");
+    }
+
+    @Override
+    public boolean isCodeBlock() {
+        String typeName = getTypeName();
+
+        return typeName.equals("LAZY_BLOCK") ||
+                typeName.equals("EAGER_BLOCK");
+    }
+
+    @Override
+    public boolean isClassDefinition() {
+        String typeName = getTypeName();
+        return typeName.equals("STRUCT");
+    }
+
+    @Override
+    public boolean isTemplate() {
+        SyntaxNode firstChild = getFirstChild();
+        if (firstChild == null) {
+            return false;
+        }
+        return (getTypeName().equals("DECLARATION") || isFunctionDefinition()) && firstChild.getTypeName().equals("OCKeyword:template");
+    }
+
+    @Override
+    public boolean isMacro() {
+        String typeName = getTypeName();
+        return typeName.equals("MACRO_REF") || typeName.equals("MACRO_DEFINITION");
+    }
+
+    @Override
+    public boolean isVariable() {
+        String typeName = getTypeName();
+        return typeName.equals("IDENTIFIER");
+    }
+
+
+    @Override
+    public boolean isImport() {
+        String typeName = getTypeName();
+        return typeName.equals("IMPORT_DIRECTIVE") || typeName.equals("IMPORT_MODULE_STATEMENT");
+    }
+
+    @Override
+    public boolean isEqualSymbol() {
+        return getTypeName().equals("OCPunctuator:=");
     }
 }

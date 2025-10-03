@@ -11,6 +11,8 @@ import com.maddyhome.idea.vim.api.VimInjectorKt;
 import com.maddyhome.idea.vim.command.MappingMode;
 import com.maddyhome.idea.vim.extension.VimExtension;
 import com.maddyhome.idea.vim.newapi.IjVimEditorKt;
+import com.zyurkalov.ideavim.syntaxtreejumper.config.MotionHandlerConfig;
+import com.zyurkalov.ideavim.syntaxtreejumper.config.ShortcutConfig;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.MoveSiblingHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.RepeatLastMotionHandler;
@@ -37,101 +39,365 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
 
     @Override
     public void init() {
-        // Register the extension handlers with <Plug> mappings
-        String commandJumpToPrevElement = "<Plug>JumpToPrevElement";
-        String commandJumpToNextElement = "<Plug>JumpToNextElement";
+        registerStructuredMotionHandlers();
+        registerSpecialHandlers();
+        setupAutomaticHighlighting();
+    }
+
+    /**
+     * Registers motion handlers using the structured configuration approach.
+     */
+    private void registerStructuredMotionHandlers() {
+        MotionHandlerConfig[] motionConfigs = {
+                // Basic element navigation
+                new MotionHandlerConfig(
+                        "Element",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("<A-n>", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("<A-S-n>", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("<A-o>", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("<A-i>", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-A-n>", MotionDirection.FORWARD, true),
+                                new ShortcutConfig("<C-A-S-n>", MotionDirection.BACKWARD, true)
+                        },
+                        SyntaxTreeNodesMotionHandler::new
+                ),
+
+                // SubWord motion (special wrapper needed)
+                new MotionHandlerConfig(
+                        "SubWord",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("<A-w>", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("<A-S-w>", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("<C-A-w>", MotionDirection.FORWARD, true),
+                                new ShortcutConfig("<C-A-S-w>", MotionDirection.BACKWARD, true)
+                        },
+                        (syntaxTree, direction) -> new SubWordMotionHandler(syntaxTree.getPsiFile(), direction)
+                ),
+
+                // Argument/Parameter List navigation
+                new MotionHandlerConfig(
+                        "ArgumentList",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[a", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]a", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[A", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]A", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>a", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>a", MotionDirection.FORWARD, true)
+                        },
+                        ArgumentParameterListMotionHandler::new
+                ),
+
+                // Statement navigation
+                new MotionHandlerConfig(
+                        "Statement",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[s", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("[S", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]s", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("]S", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>s", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>s", MotionDirection.FORWARD, true)
+                        },
+                        StatementMotionHandler::new
+                ),
+
+                // Loop/Conditional navigation
+                new MotionHandlerConfig(
+                        "LoopConditional",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[l", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]l", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[L", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]L", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>l", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>l", MotionDirection.FORWARD, true)
+                        },
+                        LoopConditionalMotionHandler::new
+                ),
+
+                // Method/Function navigation
+                new MotionHandlerConfig(
+                        "MethodFunction",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[ff", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("[fF", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]ff", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("]fF", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>ff", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>ff", MotionDirection.FORWARD, true)
+                        },
+                        MethodFunctionMotionHandler::new
+                ),
+
+                // Operator navigation
+                new MotionHandlerConfig(
+                        "Operator",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[o", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]o", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[O", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]O", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>o", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>o", MotionDirection.FORWARD, true)
+                        },
+                        OperatorMotionHandler::new
+                ),
+
+                // Variable navigation (only forward/backward)
+                new MotionHandlerConfig(
+                        "Variable",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[v", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]v", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[V", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]V", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>v", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>v", MotionDirection.FORWARD, true)
+                        },
+                        VariableMotionHandler::new
+                ),
+
+                new MotionHandlerConfig(
+                        "CodeBlock",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[b", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]b", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[B", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]B", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>b", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>b", MotionDirection.FORWARD, true)
+                        },
+                        CodeBlockMotionHandler::new
+                ),
+
+                new MotionHandlerConfig(
+                        "FunctionCall",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[fc", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]fc", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[fC", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]fC", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>fc", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>fc", MotionDirection.FORWARD, true)
+                        },
+                        FunctionCallMotionHandler::new
+                ),
+
+                new MotionHandlerConfig(
+                        "Expression",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[e", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]e", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[E", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]E", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>e", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>e", MotionDirection.FORWARD, true)
+                        },
+                        ExpressionMotionHandler::new
+                ),
+
+                new MotionHandlerConfig(
+                        "DeclarationStatement",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[=", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]=", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[+", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]+", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>=", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>=", MotionDirection.FORWARD, true)
+                        },
+                        DeclarationStatementMotionHandler::new
+                ),
+
+                new MotionHandlerConfig(
+                        "ClassDefinition",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[c", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]c", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[C", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]C", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>c", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>c", MotionDirection.FORWARD, true)
+                        },
+                        ClassDefinitionMotionHandler::new
+                ),
+
+                new MotionHandlerConfig(
+                        "Comment",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[/", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]/", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[?", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]?", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>/", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>/", MotionDirection.FORWARD, true)
+                        },
+                        CommentMotionHandler::new
+                ),
+
+                new MotionHandlerConfig(
+                        "TemplateDefinition",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[t", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]t", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[T", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]T", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>t", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>t", MotionDirection.FORWARD, true)
+                        },
+                        TemplateMotionHandler::new
+                ),
+
+                new MotionHandlerConfig(
+                        "LeftEQ",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("=[", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("=]", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("+[", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("+]", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-=>[", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-=>]", MotionDirection.FORWARD, true)
+                        },
+                        RightPartOfAssignmentMotionHandler::new
+                ),
+
+                new MotionHandlerConfig(
+                        "Macro",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[m", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]m", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[M", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]M", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>m", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>m", MotionDirection.FORWARD, true)
+                        },
+                        MacroMotionHandler::new
+                ),
+
+                new MotionHandlerConfig(
+                        "Import",
+                        new ShortcutConfig[]{
+                                new ShortcutConfig("[i", MotionDirection.BACKWARD, false),
+                                new ShortcutConfig("]i", MotionDirection.FORWARD, false),
+                                new ShortcutConfig("[I", MotionDirection.EXPAND, false),
+                                new ShortcutConfig("]I", MotionDirection.SHRINK, false),
+                                new ShortcutConfig("<C-[>i", MotionDirection.BACKWARD, true),
+                                new ShortcutConfig("<C-]>i", MotionDirection.FORWARD, true)
+                        },
+                        ImportMotionHandler::new
+                ),
+
+        };
+
+        for (MotionHandlerConfig config : motionConfigs) {
+            registerMotionHandler(config);
+        }
+    }
+
+    /**
+     * Registers a single motion handler configuration.
+     */
+    private void registerMotionHandler(MotionHandlerConfig config) {
+        // Register backward handler
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElement),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getBackwardCommand()),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, SameLevelElementsMotionHandler::new),
+                new FunctionHandler(MotionDirection.BACKWARD, config.handlerFactory()),
                 false);
+
+        // Register forward handler
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElement),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getForwardCommand()),
                 getOwner(),
-                new FunctionHandler(Direction.BACKWARD, SameLevelElementsMotionHandler::new),
+                new FunctionHandler(MotionDirection.FORWARD, config.handlerFactory()),
                 false);
 
-        // Note: SubWordMotionHandler still uses PsiFile directly, so we need a wrapper
+        // Register expand handler
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-w>"),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getExpandCommand()),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) -> {
-                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
-                }),
+                new FunctionHandler(MotionDirection.EXPAND, config.handlerFactory()),
                 false);
+
+        // Register shrink handler
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-w>"),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getShrinkCommand()),
                 getOwner(),
-                new FunctionHandler(Direction.BACKWARD, (syntaxTree, direction) -> {
-                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
-                }),
+                new FunctionHandler(MotionDirection.SHRINK, config.handlerFactory()),
                 false);
 
-        // Map the default key bindings to the <Plug> mappings
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-n>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElement),
-                true);
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-n>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElement),
-                true);
-
-        // Selection expansion/shrinking handlers
-        String commandExpandSelection = "<Plug>ExpandSelection";
-        String commandShrinkSelection = "<Plug>ShrinkSelection";
-
+        // Register extend backward handler (for new caret)
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getExtendBackwardCommand()),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
-                        SyntaxNodeTreeHandler.createExpandHandler(syntaxTree)),
+                new FunctionHandler(MotionDirection.BACKWARD, config.handlerFactory(), true),
                 false);
 
+        // Register extend forward handler (for new caret)
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getExtendForwardCommand()),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
-                        SyntaxNodeTreeHandler.createShrinkHandler(syntaxTree)),
+                new FunctionHandler(MotionDirection.FORWARD, config.handlerFactory(), true),
                 false);
 
-        // Map the default key bindings (Alt-o and Alt-i like in Helix)
-        putKeyMappingIfMissing(
+        // Register extend expand handler (for new caret)
+        putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-o>"),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getExtendExpandCommand()),
                 getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandExpandSelection),
-                true);
+                new FunctionHandler(MotionDirection.EXPAND, config.handlerFactory(), true),
+                false);
 
-        putKeyMappingIfMissing(
+        // Register extend shrink handler (for new caret)
+        putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-i>"),
+                VimInjectorKt.getInjector().getParser().parseKeys(config.getExtendShrinkCommand()),
                 getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandShrinkSelection),
-                true);
+                new FunctionHandler(MotionDirection.SHRINK, config.handlerFactory(), true),
+                false);
 
-        // Smart Selection Extend Handler (A-e shortcut)
+        // Map all shortcuts to their respective commands
+        for (ShortcutConfig shortcut : config.shortcuts()) {
+            String targetCommand = switch (shortcut.direction()) {
+                case FORWARD -> shortcut.addNewCaret() ? config.getExtendForwardCommand() : config.getForwardCommand();
+                case BACKWARD ->
+                        shortcut.addNewCaret() ? config.getExtendBackwardCommand() : config.getBackwardCommand();
+                case EXPAND -> shortcut.addNewCaret() ? config.getExtendExpandCommand() : config.getExpandCommand();
+                case SHRINK -> shortcut.addNewCaret() ? config.getExtendShrinkCommand() : config.getShrinkCommand();
+            };
+
+            putKeyMappingIfMissing(
+                    EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                    VimInjectorKt.getInjector().getParser().parseKeys(shortcut.keySequence()),
+                    getOwner(),
+                    VimInjectorKt.getInjector().getParser().parseKeys(targetCommand),
+                    true);
+        }
+    }
+
+    /**
+     * Registers special handlers that don't follow the standard pattern.
+     */
+    private void registerSpecialHandlers() {
+        // Smart Selection Extend Handler
         String commandSmartSelectionExtend = "<Plug>SmartSelectionExtend";
 
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandSmartSelectionExtend),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) ->
+                new FunctionHandler(MotionDirection.FORWARD, (syntaxTree, direction) ->
                         new SmartSelectionExtendHandler(syntaxTree)),
                 false);
 
-        // Map Alt-e to smart selection extend
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-e>"),
@@ -139,7 +405,7 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandSmartSelectionExtend),
                 true);
 
-        // Highlighting toggle functionality
+        // Highlighting toggle
         String commandToggleHighlighting = "<Plug>ToggleHighlighting";
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
@@ -148,7 +414,6 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 new ToggleHighlightingHandler(),
                 false);
 
-        // Map Alt-h to toggle highlighting
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-h>"),
@@ -156,102 +421,48 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandToggleHighlighting),
                 true);
 
-        // Register sibling motion handlers
-        String commandJumpToPrevSibling = "<Plug>JumpToPrevSibling";
-        String commandJumpToNextSibling = "<Plug>JumpToNextSibling";
+        // Sibling motion handlers (special case - doesn't use BiFunction pattern)
+        String commandMoveToPrevSibling = "<Plug>MoveToPrevSibling";
+        String commandMoveToNextSibling = "<Plug>MoveToNextSibling";
 
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevSibling),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToPrevSibling),
                 getOwner(),
-                new MoveSiblingHandler(Direction.BACKWARD),
+                new MoveSiblingHandler(MotionDirection.BACKWARD),
                 false);
 
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextSibling),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToNextSibling),
                 getOwner(),
-                new MoveSiblingHandler(Direction.FORWARD),
+                new MoveSiblingHandler(MotionDirection.FORWARD),
                 false);
 
-        // Map Alt-[ and Alt-] to sibling motion handlers
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-[>"),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-[>"),
                 getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevSibling),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToPrevSibling),
                 true);
 
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-]>"),
+                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-]>"),
                 getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextSibling),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandMoveToNextSibling),
                 true);
 
-        // Selection-extending versions of motion commands
-        String commandJumpToPrevElementExtend = "<Plug>ExtendJumpToPrevElement";
-        String commandJumpToNextElementExtend = "<Plug>ExtendJumpToNextElement";
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElementExtend),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, SameLevelElementsMotionHandler::new, true),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElementExtend),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, SameLevelElementsMotionHandler::new, true),
-                false);
-
-        // Map Ctrl+Alt+N and Ctrl+Alt+Shift+N for selection extension
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-n>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToNextElementExtend),
-                true);
-
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-n>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandJumpToPrevElementExtend),
-                true);
-
-        // Selection-extending versions of subword motions
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-w>"),
-                getOwner(),
-                new FunctionHandler(Direction.FORWARD, (syntaxTree, direction) -> {
-                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
-                }, true),
-                false);
-
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<C-A-S-w>"),
-                getOwner(),
-                new FunctionHandler(Direction.BACKWARD, (syntaxTree, direction) -> {
-                    return new SubWordMotionHandler(syntaxTree.getPsiFile(), direction);
-                }, true),
-                false);
-
-        // Repeat the last motion functionality
+        // Repeat the last motion
         String commandRepeatLastMotion = "<Plug>RepeatLastMotion";
 
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
                 getOwner(),
-                new RepeatLastMotionHandler(),
+                new RepeatLastMotionHandler(RepeatLastMotionHandler.RepeatActionType.DIRECT),
                 false);
 
-        // Map A-r to repeat the last motion
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
                 VimInjectorKt.getInjector().getParser().parseKeys("<A-r>"),
@@ -259,43 +470,90 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastMotion),
                 true);
 
-
-        // Argument/Parameter List navigation functionality
-        String commandBackwardArgumentList = "<Plug>BackwardArgumentList";
-        String commandForwardArgumentList = "<Plug>ForwardArgumentList";
+        // Repeat the last motion
+        String commandRepeatLastOppositeMotion = "<Plug>RepeatLastOppositeMotion";
 
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardArgumentList),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastOppositeMotion),
                 getOwner(),
-                new FunctionHandler(Direction.BACKWARD, ArgumentParameterListMotionHandler::new),
+                new RepeatLastMotionHandler(RepeatLastMotionHandler.RepeatActionType.OPPOSITE),
                 false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-r>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastOppositeMotion),
+                true);
+
+        // Repeat the last motion to the left
+        String commandRepeatLastLeftMotion = "<Plug>RepeatLastLeftMotion";
 
         putExtensionHandlerMapping(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardArgumentList),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastLeftMotion),
                 getOwner(),
-                new FunctionHandler(Direction.FORWARD, ArgumentParameterListMotionHandler::new),
+                new RepeatLastMotionHandler(RepeatLastMotionHandler.RepeatActionType.LEFT),
                 false);
 
-        // Map [-a to backward argument/parameter list navigation
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("[a"),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-[>"),
                 getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandBackwardArgumentList),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastLeftMotion),
                 true);
 
-        // Map ]-a to forward argument/parameter list navigation
+        // Repeat the last motion to the right
+        String commandRepeatLastRightMotion = "<Plug>RepeatLastRightMotion";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastRightMotion),
+                getOwner(),
+                new RepeatLastMotionHandler(RepeatLastMotionHandler.RepeatActionType.RIGHT),
+                false);
+
         putKeyMappingIfMissing(
                 EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("]a"),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-]>"),
                 getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandForwardArgumentList),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastRightMotion),
                 true);
 
-        // Set up automatic highlighting for all editors
-        setupAutomaticHighlighting();
+        // Repeat the last motion up
+        String commandRepeatLastUpMotion = "<Plug>RepeatLastUpMotion";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastUpMotion),
+                getOwner(),
+                new RepeatLastMotionHandler(RepeatLastMotionHandler.RepeatActionType.UP),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-[>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastUpMotion),
+                true);
+
+        // Repeat the last motion down
+        String commandRepeatLastDownMotion = "<Plug>RepeatLastDownMotion";
+
+        putExtensionHandlerMapping(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastDownMotion),
+                getOwner(),
+                new RepeatLastMotionHandler(RepeatLastMotionHandler.RepeatActionType.DOWN),
+                false);
+
+        putKeyMappingIfMissing(
+                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
+                VimInjectorKt.getInjector().getParser().parseKeys("<A-S-]>"),
+                getOwner(),
+                VimInjectorKt.getInjector().getParser().parseKeys(commandRepeatLastDownMotion),
+                true);
     }
 
     /**

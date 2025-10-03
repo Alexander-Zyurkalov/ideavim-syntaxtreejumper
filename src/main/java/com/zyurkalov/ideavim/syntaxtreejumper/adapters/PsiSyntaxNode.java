@@ -15,7 +15,7 @@ import java.util.Objects;
  */
 public class PsiSyntaxNode extends SyntaxNode {
 
-    public PsiSyntaxNode(@NotNull PsiElement psiElement) {
+    public PsiSyntaxNode(PsiElement psiElement) {
         super(psiElement);
     }
 
@@ -65,17 +65,20 @@ public class PsiSyntaxNode extends SyntaxNode {
 
     @Override
     public SyntaxNode getFirstChild() {
-        return new PsiSyntaxNode(psiElement.getFirstChild());
+        PsiElement firstChild = psiElement.getFirstChild();
+        if (firstChild == null) {
+            return  null;
+        }
+        return new PsiSyntaxNode(firstChild);
     }
 
     @Override
     public SyntaxNode getLastChild() {
-        return new PsiSyntaxNode(psiElement.getLastChild());
-    }
-
-    @Override
-    public @NotNull PsiElement getPsiElement() {
-        return psiElement;
+        PsiElement lastChild = psiElement.getLastChild();
+        if (lastChild == null) {
+            return  null;
+        }
+        return new PsiSyntaxNode(lastChild);
     }
 
     @Override
@@ -95,4 +98,5 @@ public class PsiSyntaxNode extends SyntaxNode {
         return "PsiSyntaxNode{" + psiElement.getClass().getSimpleName() +
                 ", text='" + getText() + "'}";
     }
+
 }

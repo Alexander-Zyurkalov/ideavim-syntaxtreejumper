@@ -1,6 +1,5 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.motions;
 
-import com.zyurkalov.ideavim.syntaxtreejumper.Direction;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
@@ -109,7 +108,7 @@ public class SmartSelectionExtendHandler implements MotionHandler {
         if (leftNode.getTextRange().getStartOffset() >= rightNode.getTextRange().getStartOffset() &&
                 leftNode.getTextRange().getEndOffset() <= rightNode.getTextRange().getEndOffset()
         ) {
-           leftNode = rightNode;
+            leftNode = rightNode;
         }
         return leftNode;
     }
@@ -244,7 +243,8 @@ public class SmartSelectionExtendHandler implements MotionHandler {
             whiteSpace = current;
             current = nextSyntaxNode.apply(current);
         }
-        current = syntaxTree.replaceWithParentIfParentEqualsTheNode(current);
+        if (current != null)
+            current = syntaxTree.replaceWithParentIfParentEqualsTheNode(current);
         return new FindResult(whiteSpace, current, isWhiteSpaceFound, isOperatorFound);
     }
 
@@ -252,4 +252,8 @@ public class SmartSelectionExtendHandler implements MotionHandler {
         return current.isBracket() && nextSyntaxNode.apply(current) == null;
     }
 
+    public enum Direction {
+        BACKWARD,
+        FORWARD,
+    }
 }
