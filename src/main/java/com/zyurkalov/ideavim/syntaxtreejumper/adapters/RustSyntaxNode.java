@@ -115,7 +115,22 @@ public class RustSyntaxNode extends SyntaxNode {
     }
 
     @Override
+    public boolean isExpressionStatement() {
+        return getTypeName().contains("EXPR_STMT");
+    }
+
+    @Override
     public boolean isDeclarationStatement() {
         return getTypeName().equals("LET_DECL");
+    }
+
+    @Override
+    public boolean isAStatement() {
+        return false;
+    }
+
+    @Override
+    public boolean isReturnStatement() {
+        return false;
     }
 }
