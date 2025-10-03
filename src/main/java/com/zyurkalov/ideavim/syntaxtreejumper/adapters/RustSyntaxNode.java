@@ -133,4 +133,15 @@ public class RustSyntaxNode extends SyntaxNode {
     public boolean isReturnStatement() {
         return false;
     }
+
+    @Override
+    public boolean isLoopStatement() {
+        String typeName = getTypeName();
+        if (isExpressionStatement() && getChildren().size() == 1) {
+            typeName = getFirstChild().getTypeName();
+        }
+        return typeName.equals("FOR_EXPR") ||
+                typeName.equals("LOOP_EXPR") ||
+                typeName.equals("WHILE_EXPR");
+    }
 }
