@@ -164,4 +164,9 @@ public class RustSyntaxNode extends SyntaxNode {
     public boolean isCodeBlock() {
         return getTypeName().equals("BLOCK");
     }
+
+    @Override
+    public boolean isExpression() {
+        return getTypeName().endsWith("_EXPR");
+    }
 }
