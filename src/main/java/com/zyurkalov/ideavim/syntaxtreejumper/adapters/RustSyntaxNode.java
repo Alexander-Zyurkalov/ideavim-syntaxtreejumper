@@ -198,4 +198,13 @@ public class RustSyntaxNode extends SyntaxNode {
         }
         return hasTypeParameters && (isClassDefinition() || isFunctionDefinition());
     }
+
+    @Override
+    public boolean isComment() {
+        String typeName = getTypeName();
+        return typeName.equals("<EOL_COMMENT>") ||
+                typeName.equals("<BLOCK_COMMENT>") ||
+                typeName.equals("<INNER_EOL_DOC_COMMENT>") ||
+                typeName.equals("<OUTER_EOL_DOC_COMMENT>");
+    }
 }
