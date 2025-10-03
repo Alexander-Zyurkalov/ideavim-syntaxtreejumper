@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.zyurkalov"
-version = "1.6.2"
+version = "1.7.0"
 
 repositories {
     mavenCentral()
@@ -24,9 +24,9 @@ repositories {
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
     intellijPlatform {
-        clion("2025.1.4")
-        bundledPlugin("com.intellij.clion")
-//        rustRover("2025.1.4")
+//        clion("2025.1.4")
+//        bundledPlugin("com.intellij.clion")
+        rustRover("2025.1.4")
 //        create("IC", "2025.1.1")
 //        bundledPlugin("com.intellij.java")
         plugins("IdeaVIM:2.27.0")

@@ -18,7 +18,7 @@ public class SyntaxTreeAdapterFactory {
 
     /**
      * Creates a SyntaxTreeAdapter for the given editor.
-     * 
+     *
      * @param editor The editor to create an adapter for
      * @return The appropriate adapter, or null if no suitable adapter can be created
      */
@@ -44,7 +44,7 @@ public class SyntaxTreeAdapterFactory {
 
     /**
      * Creates a SyntaxTreeAdapter for the given PSI file.
-     * 
+     *
      * @param psiFile The PSI file to create an adapter for
      * @return The appropriate adapter, or null if no suitable adapter can be created
      */
@@ -55,6 +55,8 @@ public class SyntaxTreeAdapterFactory {
         // Check for C++ files first (as they might need special handling)
         if (isCppFile(language, fileType)) {
             return createCppAdapter(psiFile);
+        } else if (isRustFile(language, fileType)) {
+            return createRustAdapter(psiFile);
         }
 
         // For all other languages, use the PSI adapter
@@ -67,15 +69,28 @@ public class SyntaxTreeAdapterFactory {
     private static boolean isCppFile(@NotNull Language language, @NotNull FileType fileType) {
         String languageId = language.getID().toLowerCase();
         String fileTypeName = fileType.getName().toLowerCase();
-        
+
         // Check for C++ language identifiers
-        return languageId.contains("cpp") || 
-               languageId.contains("c++") || 
-               languageId.contains("objective-c") ||
-               fileTypeName.contains("cpp") || 
-               fileTypeName.contains("c++") ||
-               fileTypeName.contains("objectivec");
+        return languageId.contains("cpp") ||
+                languageId.contains("c++") ||
+                languageId.contains("objective-c") ||
+                fileTypeName.contains("cpp") ||
+                fileTypeName.contains("c++") ||
+                fileTypeName.contains("objectivec");
     }
+
+    /**
+     * Determines if the file is a Rust file based on language and file type.
+     */
+    private static boolean isRustFile(@NotNull Language language, @NotNull FileType fileType) {
+        String languageId = language.getID().toLowerCase();
+        String fileTypeName = fileType.getName().toLowerCase();
+
+        // Check for C++ language identifiers
+        return languageId.contains("rust") ||
+                fileTypeName.contains("rust");
+    }
+
 
     /**
      * Creates a C++-specific adapter.
@@ -91,19 +106,18 @@ public class SyntaxTreeAdapterFactory {
     }
 
     /**
-     * Creates an adapter for a specific language by language ID.
-     * This method can be extended to support additional language-specific adapters.
-     * 
-     * @param psiFile The PSI file
-     * @param languageId The language identifier
-     * @return The appropriate adapter, or null if not supported
+     * Creates a Rust-specific adapter.
+     * Falls back to the PSI adapter if a Rust adapter cannot be created.
      */
-    @Nullable
-    public static SyntaxTreeAdapter createAdapterForLanguage(@NotNull PsiFile psiFile, @NotNull String languageId) {
-        return switch (languageId.toLowerCase()) {
-            case "cpp", "c++", "objective-c", "objectivec" -> createCppAdapter(psiFile);
-            default -> new PsiSyntaxTreeAdapter(psiFile);
-        };
+    private static @NotNull SyntaxTreeAdapter createRustAdapter(@NotNull PsiFile psiFile) {
+        try {
+            return new RustSyntaxTreeAdapter(psiFile);
+        } catch (Exception e) {
+            // If the C++ adapter fails to initialise, fall back to PSI adapter
+            return new PsiSyntaxTreeAdapter(psiFile);
+        }
     }
+
+
 
 }
