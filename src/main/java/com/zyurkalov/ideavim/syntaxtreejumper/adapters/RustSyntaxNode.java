@@ -154,4 +154,14 @@ public class RustSyntaxNode extends SyntaxNode {
     public boolean isMethodDefinition() {
         return isFunctionDefinition();
     }
+
+    @Override
+    public boolean isVariable() {
+        return false;
+    }
+
+    @Override
+    public boolean isCodeBlock() {
+        return getTypeName().equals("BLOCK");
+    }
 }
