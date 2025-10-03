@@ -166,6 +166,11 @@ public class RustSyntaxNode extends SyntaxNode {
     }
 
     @Override
+    public boolean isEqualSymbol() {
+        return getTypeName().equals("=");
+    }
+
+    @Override
     public boolean isExpression() {
         return getTypeName().endsWith("_EXPR");
     }
