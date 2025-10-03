@@ -100,6 +100,11 @@ public class RustSyntaxNode extends SyntaxNode {
     }
 
     @Override
+    public boolean isMethodOrFunctionCallExpression() {
+        return getTypeName().contains("CALL_EXPR");
+    }
+
+    @Override
     public boolean isFunctionArgument() {
         SyntaxNode parent = getParent();
         if (parent == null) {
@@ -107,7 +112,6 @@ public class RustSyntaxNode extends SyntaxNode {
         }
         return parent.getTypeName().contains("VALUE_PARAMETER_LIST") &&
                 getTypeName().contains("VALUE_PARAMETER");
-
     }
 
 
