@@ -186,6 +186,12 @@ public class CppSyntaxNode extends SyntaxNode {
 
 
     @Override
+    public boolean isImport() {
+        String typeName = getTypeName();
+        return typeName.equals("IMPORT_DIRECTIVE") || typeName.equals("IMPORT_MODULE_STATEMENT");
+    }
+
+    @Override
     public boolean isEqualSymbol() {
         return getTypeName().equals("OCPunctuator:=");
     }

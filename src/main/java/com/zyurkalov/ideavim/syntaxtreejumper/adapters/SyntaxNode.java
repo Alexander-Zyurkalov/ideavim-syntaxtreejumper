@@ -366,4 +366,10 @@ public abstract class SyntaxNode {
     public boolean isMacro() {
         return false;
     }
+
+    public boolean isImport() {
+        String typeName = getTypeName();
+        return typeName.contains("IMPORT_STATEMENT");
+    }
+
 }

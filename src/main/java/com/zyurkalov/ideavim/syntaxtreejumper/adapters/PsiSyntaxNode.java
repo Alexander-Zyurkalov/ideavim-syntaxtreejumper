@@ -99,5 +99,4 @@ public class PsiSyntaxNode extends SyntaxNode {
                 ", text='" + getText() + "'}";
     }
 
-
 }
