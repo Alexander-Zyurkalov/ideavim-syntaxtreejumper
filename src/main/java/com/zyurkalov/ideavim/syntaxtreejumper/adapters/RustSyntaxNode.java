@@ -101,6 +101,14 @@ public class RustSyntaxNode extends SyntaxNode {
 
     @Override
     public boolean isFunctionArgument() {
-        return super.isFunctionArgument();
+        SyntaxNode parent = getParent();
+        if (parent == null) {
+            return false;
+        }
+        return parent.getTypeName().contains("VALUE_PARAMETER_LIST") &&
+                getTypeName().contains("VALUE_PARAMETER");
+
     }
+
+
 }
