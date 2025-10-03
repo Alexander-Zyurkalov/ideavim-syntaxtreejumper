@@ -174,4 +174,12 @@ public class RustSyntaxNode extends SyntaxNode {
     public boolean isExpression() {
         return getTypeName().endsWith("_EXPR");
     }
+
+    @Override
+    public boolean isClassDefinition() {
+        String typeName = getTypeName();
+        return typeName.equals("STRUCT_ITEM") ||
+                typeName.equals("IMPL_ITEM") ||
+                typeName.equals("TRAIT_ITEM");
+    }
 }
