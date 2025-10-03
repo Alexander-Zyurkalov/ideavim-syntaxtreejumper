@@ -144,4 +144,14 @@ public class RustSyntaxNode extends SyntaxNode {
                 typeName.equals("LOOP_EXPR") ||
                 typeName.equals("WHILE_EXPR");
     }
+
+    @Override
+    public boolean isFunctionDefinition() {
+        return getTypeName().equals("FUNCTION");
+    }
+
+    @Override
+    public boolean isMethodDefinition() {
+        return isFunctionDefinition();
+    }
 }
