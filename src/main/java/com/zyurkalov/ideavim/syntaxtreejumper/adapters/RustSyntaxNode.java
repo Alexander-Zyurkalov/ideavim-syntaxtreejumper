@@ -157,7 +157,8 @@ public class RustSyntaxNode extends SyntaxNode {
 
     @Override
     public boolean isVariable() {
-        return false;
+        String typeName = getTypeName();
+        return typeName.equals("PAT_IDENT") || typeName.equals("PAT_BINDING")  || typeName.equals("PATH_EXPR");
     }
 
     @Override
