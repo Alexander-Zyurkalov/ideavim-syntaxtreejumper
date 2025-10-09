@@ -162,7 +162,13 @@ public class RustSyntaxNode extends SyntaxNode {
 
     @Override
     public boolean isCodeBlock() {
-        return getTypeName().equals("BLOCK");
+        String typeName = getTypeName();
+        return typeName.equals("BLOCK") ||
+                typeName.equals("MEMBERS") ||
+                typeName.equals("BLOCK_FIELDS") ||
+                typeName.equals("MACRO_EXPANSION") ||
+                typeName.equals("MACRO_BODY");
+
     }
 
     @Override
