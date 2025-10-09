@@ -371,5 +371,8 @@ public abstract class SyntaxNode {
         String typeName = getTypeName();
         return typeName.contains("IMPORT_STATEMENT");
     }
+    public boolean isTypeUsage() {
+        return false;
+    }
 
 }

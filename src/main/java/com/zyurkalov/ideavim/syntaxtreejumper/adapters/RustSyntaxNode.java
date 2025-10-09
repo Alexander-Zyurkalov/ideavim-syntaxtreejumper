@@ -225,4 +225,10 @@ public class RustSyntaxNode extends SyntaxNode {
     public boolean isImport() {
         return getTypeName().equals("USE_ITEM");
     }
+
+    @Override
+    public boolean isTypeUsage() {
+        String typeName = getTypeName();
+        return typeName.equals("PATH_TYPE") || typeName.equals("TRAIT_REF");
+    }
 }
