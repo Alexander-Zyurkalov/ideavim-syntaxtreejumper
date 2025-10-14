@@ -144,6 +144,8 @@ public class RustSyntaxNode extends SyntaxNode {
                 typeName.equals("LOOP_EXPR") ||
                 typeName.equals("WHILE_EXPR") ||
                 typeName.equals("CLASSIC_MATCH_EXPR") ||
+                typeName.equals("IF_EXPR") ||
+                typeName.equals("ELSE_BRANCH") ||
                 typeName.equals("MATCH_ARM");
     }
 
@@ -180,6 +182,7 @@ public class RustSyntaxNode extends SyntaxNode {
                 typeName.equals("BLOCK_FIELDS") ||
                 typeName.equals("MACRO_EXPANSION") ||
                 typeName.equals("MATCH_BODY") ||
+                typeName.equals("BLOCK_EXPR") ||
                 typeName.equals("MACRO_BODY");
 
     }
