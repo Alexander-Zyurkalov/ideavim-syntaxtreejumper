@@ -176,7 +176,7 @@ public class RustSyntaxNode extends SyntaxNode {
         }
         String parentTypeName = parent.getTypeName();
         boolean isParentMatchesRequirement = parentTypeName.equals("NAMED_FIELD_DECL") ||
-                parentTypeName.equals("FIELD_LOOKUP");
+                parentTypeName.equals("FIELD_LOOKUP") || parentTypeName.equals("CONSTANT");
         return typeName.equals("PAT_IDENT") || typeName.equals("PAT_BINDING") || typeName.equals("PATH_EXPR") ||
                 isParentMatchesRequirement && typeName.equals("identifier");
     }
