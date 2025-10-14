@@ -158,7 +158,16 @@ public class RustSyntaxNode extends SyntaxNode {
     @Override
     public boolean isVariable() {
         String typeName = getTypeName();
-        return typeName.equals("PAT_IDENT") || typeName.equals("PAT_BINDING")  || typeName.equals("PATH_EXPR");
+        SyntaxNode parent = getParent();
+
+        if (parent == null) {
+            return false;
+        }
+        String parentTypeName = parent.getTypeName();
+        boolean isParentMatchesRequirement = parentTypeName.equals("NAMED_FIELD_DECL") ||
+                parentTypeName.equals("FIELD_LOOKUP");
+        return typeName.equals("PAT_IDENT") || typeName.equals("PAT_BINDING") || typeName.equals("PATH_EXPR") ||
+                isParentMatchesRequirement && typeName.equals("identifier");
     }
 
     @Override

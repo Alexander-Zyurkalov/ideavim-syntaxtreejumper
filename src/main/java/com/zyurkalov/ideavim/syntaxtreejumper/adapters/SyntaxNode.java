@@ -323,13 +323,12 @@ public abstract class SyntaxNode {
         if (grandParent == null) {
             return false;
         }
-        return getTypeName().equals("IDENTIFIER") && (
-                parent.getTypeName().equals("LOCAL_VARIABLE") ||
-                        parent.getTypeName().equals("FIELD") ||
-                        (parent.getTypeName().equals("REFERENCE_EXPRESSION") &&
-                                parent.getTextRange().equals(getTextRange())
-                        )
-        );
+        String parentTypeName = parent.getTypeName();
+        boolean isParentMatchesRequirement =
+                parentTypeName.equals("LOCAL_VARIABLE") ||
+                        parentTypeName.equals("FIELD") ||
+                        (parentTypeName.equals("REFERENCE_EXPRESSION") && parent.getTextRange().equals(getTextRange()));
+        return getTypeName().equals("IDENTIFIER") && isParentMatchesRequirement;
     }
 
     public boolean isCodeBlock() {
