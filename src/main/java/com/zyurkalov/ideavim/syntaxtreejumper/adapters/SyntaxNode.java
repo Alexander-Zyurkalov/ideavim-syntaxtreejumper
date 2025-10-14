@@ -211,7 +211,14 @@ public abstract class SyntaxNode {
     }
 
     public boolean isTypeParameter() {
-        return getTypeName().equals("TYPE_PARAMETER");
+        String typeName = getTypeName();
+        SyntaxNode parent = getParent();
+        if (parent == null) {
+            return false;
+        }
+        String parentTypeName = parent.getTypeName();
+        return typeName.equals("TYPE_PARAMETER") ||
+                typeName.equals("PATH_TYPE") && parentTypeName.equals("TYPE_ARGUMENT_LIST");
     }
 
     public boolean isInRightDirection(Offsets initialSelection, MotionDirection direction) {
@@ -371,6 +378,7 @@ public abstract class SyntaxNode {
         String typeName = getTypeName();
         return typeName.contains("IMPORT_STATEMENT");
     }
+
     public boolean isTypeUsage() {
         return false;
     }
