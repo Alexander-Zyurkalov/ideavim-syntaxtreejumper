@@ -113,9 +113,12 @@ public class RustSyntaxNode extends SyntaxNode {
         }
         String parentTypeName = parent.getTypeName();
         String typeName = getTypeName();
-        return (parentTypeName.equals("VALUE_PARAMETER_LIST") || parentTypeName.equals("VALUE_ARGUMENT_LIST") || parentTypeName.equals("STRUCT_LITERAL_BODY")) &&
+        return (parentTypeName.equals("VALUE_PARAMETER_LIST") || parentTypeName.equals("VALUE_ARGUMENT_LIST") ||
+                parentTypeName.equals("STRUCT_LITERAL_BODY") || parentTypeName.equals("FORMAT_MACRO_ARGUMENT"))
+                &&
                 (typeName.equals("VALUE_PARAMETER") || typeName.equals("SELF_PARAMETER") ||
-                        typeName.contains("EXPR") || typeName.equals("STRUCT_LITERAL_FIELD"));
+                        typeName.contains("EXPR") || typeName.equals("STRUCT_LITERAL_FIELD") ||
+                        typeName.equals("FORMAT_MACRO_ARG"));
     }
 
     @Override
