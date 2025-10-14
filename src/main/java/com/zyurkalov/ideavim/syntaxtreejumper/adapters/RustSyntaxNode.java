@@ -142,7 +142,9 @@ public class RustSyntaxNode extends SyntaxNode {
         }
         return typeName.equals("FOR_EXPR") ||
                 typeName.equals("LOOP_EXPR") ||
-                typeName.equals("WHILE_EXPR");
+                typeName.equals("WHILE_EXPR") ||
+                typeName.equals("CLASSIC_MATCH_EXPR") ||
+                typeName.equals("MATCH_ARM");
     }
 
     @Override
@@ -171,12 +173,13 @@ public class RustSyntaxNode extends SyntaxNode {
     }
 
     @Override
-    public boolean isCodeBlock() {
+    public boolean isBody() {
         String typeName = getTypeName();
         return typeName.equals("BLOCK") ||
                 typeName.equals("MEMBERS") ||
                 typeName.equals("BLOCK_FIELDS") ||
                 typeName.equals("MACRO_EXPANSION") ||
+                typeName.equals("MATCH_BODY") ||
                 typeName.equals("MACRO_BODY");
 
     }
