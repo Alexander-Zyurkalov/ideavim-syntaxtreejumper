@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * PSI-based implementation of SyntaxNode.
+ * Rust PSI-based implementation of SyntaxNode.
  */
 public class RustSyntaxNode extends SyntaxNode {
 

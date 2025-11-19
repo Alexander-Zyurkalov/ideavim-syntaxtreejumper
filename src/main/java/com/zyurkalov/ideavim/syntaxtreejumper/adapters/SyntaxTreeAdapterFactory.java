@@ -57,8 +57,7 @@ public class SyntaxTreeAdapterFactory {
         } else if (isRustFile(language, fileType)) {
             return createRustAdapter(psiFile);
         } else if (isLuaFile(language, fileType)) {
-            printFileStructure(psiFile);
-//            return new PsiSyntaxTreeAdapter(psiFile);
+            return createLuaAdapter(psiFile);
         }
 
         // For all other languages, use the PSI adapter
@@ -106,28 +105,30 @@ public class SyntaxTreeAdapterFactory {
     }
 
 
-    /**
-     * Creates a C++-specific adapter.
-     * Falls back to PSI adapter if a C++ adapter cannot be created.
-     */
     private static @NotNull SyntaxTreeAdapter createCppAdapter(@NotNull PsiFile psiFile) {
         try {
             return new CppSyntaxTreeAdapter(psiFile);
         } catch (Exception e) {
-            // If the C++ adapter fails to initialise, fall back to PSI adapter
+            return new PsiSyntaxTreeAdapter(psiFile);
+        }
+    }
+
+    private static @NotNull SyntaxTreeAdapter createRustAdapter(@NotNull PsiFile psiFile) {
+        try {
+            return new RustSyntaxTreeAdapter(psiFile);
+        } catch (Exception e) {
             return new PsiSyntaxTreeAdapter(psiFile);
         }
     }
 
     /**
-     * Creates a Rust-specific adapter.
-     * Falls back to the PSI adapter if a Rust adapter cannot be created.
+     * Creates a Lua-specific adapter.
+     * Falls back to the PSI adapter if a Lua adapter cannot be created.
      */
-    private static @NotNull SyntaxTreeAdapter createRustAdapter(@NotNull PsiFile psiFile) {
+    private static @NotNull SyntaxTreeAdapter createLuaAdapter(@NotNull PsiFile psiFile) {
         try {
-            return new RustSyntaxTreeAdapter(psiFile);
+            return new LuaSyntaxTreeAdapter(psiFile);
         } catch (Exception e) {
-            // If the C++ adapter fails to initialise, fall back to PSI adapter
             return new PsiSyntaxTreeAdapter(psiFile);
         }
     }

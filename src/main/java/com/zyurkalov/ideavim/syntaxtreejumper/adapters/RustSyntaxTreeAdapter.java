@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Default PSI-based implementation of SyntaxTreeAdapter.
+ * Rust PSI-based implementation of SyntaxTreeAdapter.
  * This wraps the standard IntelliJ PSI tree operations.
  */
 public class RustSyntaxTreeAdapter extends SyntaxTreeAdapter {
