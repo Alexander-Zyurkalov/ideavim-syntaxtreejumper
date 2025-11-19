@@ -150,7 +150,7 @@ public class CppSyntaxNode extends SyntaxNode {
     }
 
     @Override
-    public boolean isCodeBlock() {
+    public boolean isBody() {
         String typeName = getTypeName();
 
         return typeName.equals("LAZY_BLOCK") ||

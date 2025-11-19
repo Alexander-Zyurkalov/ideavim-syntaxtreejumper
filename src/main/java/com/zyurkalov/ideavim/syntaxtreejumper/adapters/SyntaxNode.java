@@ -211,7 +211,14 @@ public abstract class SyntaxNode {
     }
 
     public boolean isTypeParameter() {
-        return getTypeName().equals("TYPE_PARAMETER");
+        String typeName = getTypeName();
+        SyntaxNode parent = getParent();
+        if (parent == null) {
+            return false;
+        }
+        String parentTypeName = parent.getTypeName();
+        return typeName.equals("TYPE_PARAMETER") ||
+                typeName.equals("PATH_TYPE") && parentTypeName.equals("TYPE_ARGUMENT_LIST");
     }
 
     public boolean isInRightDirection(Offsets initialSelection, MotionDirection direction) {
@@ -316,16 +323,15 @@ public abstract class SyntaxNode {
         if (grandParent == null) {
             return false;
         }
-        return getTypeName().equals("IDENTIFIER") && (
-                parent.getTypeName().equals("LOCAL_VARIABLE") ||
-                        parent.getTypeName().equals("FIELD") ||
-                        (parent.getTypeName().equals("REFERENCE_EXPRESSION") &&
-                                parent.getTextRange().equals(getTextRange())
-                        )
-        );
+        String parentTypeName = parent.getTypeName();
+        boolean isParentMatchesRequirement =
+                parentTypeName.equals("LOCAL_VARIABLE") ||
+                        parentTypeName.equals("FIELD") ||
+                        (parentTypeName.equals("REFERENCE_EXPRESSION") && parent.getTextRange().equals(getTextRange()));
+        return getTypeName().equals("IDENTIFIER") && isParentMatchesRequirement;
     }
 
-    public boolean isCodeBlock() {
+    public boolean isBody() {
         String typeName = getTypeName();
         return typeName.equals("CODE_BLOCK") ||
                 typeName.equals("BLOCK_STATEMENT");
@@ -370,6 +376,10 @@ public abstract class SyntaxNode {
     public boolean isImport() {
         String typeName = getTypeName();
         return typeName.contains("IMPORT_STATEMENT");
+    }
+
+    public boolean isTypeUsage() {
+        return false;
     }
 
 }

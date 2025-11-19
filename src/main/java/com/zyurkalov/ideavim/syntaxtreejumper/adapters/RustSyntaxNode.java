@@ -101,7 +101,8 @@ public class RustSyntaxNode extends SyntaxNode {
 
     @Override
     public boolean isMethodOrFunctionCallExpression() {
-        return getTypeName().equals("CALL_EXPR");
+        String typeName = getTypeName();
+        return typeName.equals("CALL_EXPR") || typeName.equals("METHOD_CALL") || typeName.equals("STRUCT_LITERAL");
     }
 
     @Override
@@ -110,8 +111,14 @@ public class RustSyntaxNode extends SyntaxNode {
         if (parent == null) {
             return false;
         }
-        return parent.getTypeName().equals("VALUE_PARAMETER_LIST") &&
-                getTypeName().equals("VALUE_PARAMETER");
+        String parentTypeName = parent.getTypeName();
+        String typeName = getTypeName();
+        return (parentTypeName.equals("VALUE_PARAMETER_LIST") || parentTypeName.equals("VALUE_ARGUMENT_LIST") ||
+                parentTypeName.equals("STRUCT_LITERAL_BODY") || parentTypeName.equals("FORMAT_MACRO_ARGUMENT"))
+                &&
+                (typeName.equals("VALUE_PARAMETER") || typeName.equals("SELF_PARAMETER") ||
+                        typeName.contains("EXPR") || typeName.equals("STRUCT_LITERAL_FIELD") ||
+                        typeName.equals("FORMAT_MACRO_ARG"));
     }
 
     @Override
@@ -142,7 +149,11 @@ public class RustSyntaxNode extends SyntaxNode {
         }
         return typeName.equals("FOR_EXPR") ||
                 typeName.equals("LOOP_EXPR") ||
-                typeName.equals("WHILE_EXPR");
+                typeName.equals("WHILE_EXPR") ||
+                typeName.equals("CLASSIC_MATCH_EXPR") ||
+                typeName.equals("IF_EXPR") ||
+                typeName.equals("ELSE_BRANCH") ||
+                typeName.equals("MATCH_ARM");
     }
 
     @Override
@@ -157,12 +168,30 @@ public class RustSyntaxNode extends SyntaxNode {
 
     @Override
     public boolean isVariable() {
-        return false;
+        String typeName = getTypeName();
+        SyntaxNode parent = getParent();
+
+        if (parent == null) {
+            return false;
+        }
+        String parentTypeName = parent.getTypeName();
+        boolean isParentMatchesRequirement = parentTypeName.equals("NAMED_FIELD_DECL") ||
+                parentTypeName.equals("FIELD_LOOKUP") || parentTypeName.equals("CONSTANT");
+        return typeName.equals("PAT_IDENT") || typeName.equals("PAT_BINDING") || typeName.equals("PATH_EXPR") ||
+                isParentMatchesRequirement && typeName.equals("identifier");
     }
 
     @Override
-    public boolean isCodeBlock() {
-        return getTypeName().equals("BLOCK");
+    public boolean isBody() {
+        String typeName = getTypeName();
+        return typeName.equals("BLOCK") ||
+                typeName.equals("MEMBERS") ||
+                typeName.equals("BLOCK_FIELDS") ||
+                typeName.equals("MACRO_EXPANSION") ||
+                typeName.equals("MATCH_BODY") ||
+                typeName.equals("BLOCK_EXPR") ||
+                typeName.equals("MACRO_BODY");
+
     }
 
     @Override
@@ -218,5 +247,11 @@ public class RustSyntaxNode extends SyntaxNode {
     @Override
     public boolean isImport() {
         return getTypeName().equals("USE_ITEM");
+    }
+
+    @Override
+    public boolean isTypeUsage() {
+        String typeName = getTypeName();
+        return typeName.equals("PATH_TYPE") || typeName.equals("TRAIT_REF");
     }
 }
