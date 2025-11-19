@@ -205,10 +205,9 @@ public class LuaSyntaxNode extends SyntaxNode {
     }
 
     @Override
-    public boolean isBody() {
+    public boolean isBlock() {
         String typeName = getTypeName();
-        return typeName.equals("LuaBlock") ||
-               typeName.equals("FUNC_BODY");
+        return typeName.equals("LuaBlock");
     }
 
     @Override

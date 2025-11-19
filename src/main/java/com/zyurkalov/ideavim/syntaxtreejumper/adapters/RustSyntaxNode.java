@@ -182,7 +182,7 @@ public class RustSyntaxNode extends SyntaxNode {
     }
 
     @Override
-    public boolean isBody() {
+    public boolean isBlock() {
         String typeName = getTypeName();
         return typeName.equals("BLOCK") ||
                 typeName.equals("MEMBERS") ||

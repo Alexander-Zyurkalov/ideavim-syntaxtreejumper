@@ -331,7 +331,7 @@ public abstract class SyntaxNode {
         return getTypeName().equals("IDENTIFIER") && isParentMatchesRequirement;
     }
 
-    public boolean isBody() {
+    public boolean isBlock() {
         String typeName = getTypeName();
         return typeName.equals("CODE_BLOCK") ||
                 typeName.equals("BLOCK_STATEMENT");
