@@ -30,6 +30,7 @@ dependencies {
 //        create("IC", "2025.1.1")
 //        bundledPlugin("com.intellij.java")
         plugins("IdeaVIM:2.27.0")
+        plugins("com.tang:1.4.20-IDEA251")  // EmmyLua plugin
         pluginVerifier()
         zipSigner()
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Bundled)
