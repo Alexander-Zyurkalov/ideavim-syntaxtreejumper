@@ -110,10 +110,13 @@ public class LuaSyntaxNode extends SyntaxNode {
         }
         String parentTypeName = parent.getTypeName();
         String typeName = getTypeName();
-        
+        if (typeName.equals("LIST_ARGS") &&
+                getChildren().isEmpty()) {
+            return true;
+        }
         // Arguments are inside LIST_ARGS
-        return parentTypeName.equals("LIST_ARGS") && 
-               (typeName.endsWith("_EXPR") || typeName.equals("NAME_EXPR"));
+        return parentTypeName.equals("LIST_ARGS") &&
+                (typeName.endsWith("_EXPR") || typeName.equals("NAME_EXPR"));
     }
 
     @Override
@@ -143,10 +146,10 @@ public class LuaSyntaxNode extends SyntaxNode {
     public boolean isLoopStatement() {
         String typeName = getTypeName();
         return typeName.equals("WHILE_STAT") ||
-               typeName.equals("FOR_A_STAT") ||   // Numeric for loop
-               typeName.equals("FOR_B_STAT") ||   // Generic for loop
-               typeName.equals("REPEAT_STAT") ||
-               typeName.equals("IF_STAT");        // Including if as a control structure
+                typeName.equals("FOR_A_STAT") ||   // Numeric for loop
+                typeName.equals("FOR_B_STAT") ||   // Generic for loop
+                typeName.equals("REPEAT_STAT") ||
+                typeName.equals("IF_STAT");        // Including if as a control structure
     }
 
     @Override
@@ -154,8 +157,8 @@ public class LuaSyntaxNode extends SyntaxNode {
         String typeName = getTypeName();
         // "Global Function", "Class Method", and LOCAL_FUNC_DEF
         return typeName.equals("Global Function") ||
-               typeName.equals("Class Method") ||
-               typeName.equals("LOCAL_FUNC_DEF");
+                typeName.equals("Class Method") ||
+                typeName.equals("LOCAL_FUNC_DEF");
     }
 
     @Override
@@ -165,7 +168,7 @@ public class LuaSyntaxNode extends SyntaxNode {
         if (!typeName.equals("Class Method")) {
             return false;
         }
-        
+
         // Check if it has : syntax by looking for CLASS_METHOD_NAME child
         for (SyntaxNode child : getChildren()) {
             if (child.getTypeName().equals("CLASS_METHOD_NAME")) {
@@ -180,27 +183,27 @@ public class LuaSyntaxNode extends SyntaxNode {
     public boolean isVariable() {
         String typeName = getTypeName();
         SyntaxNode parent = getParent();
-        
+
         if (parent == null) {
             return false;
         }
-        
+
         String parentTypeName = parent.getTypeName();
-        
+
         // NAME_EXPR can be a variable reference
         // NAME_DEF is a variable definition
         boolean isNameType = typeName.equals("NAME_EXPR") || typeName.equals("NAME_DEF");
-        
+
         // Check if parent context makes this a variable
-        boolean isInVariableContext = 
-            parentTypeName.equals("NAME_LIST") ||      // In local/assignment declarations
-            parentTypeName.equals("VAR_LIST") ||       // In assignment left side
-            parentTypeName.equals("INDEX_EXPR") ||     // Base of field access
-            parentTypeName.equals("BINARY_EXPR") ||    // In expressions
-            parentTypeName.equals("UNARY_EXPR") ||     // In unary expressions
-            parentTypeName.equals("LIST_ARGS") ||      // As function argument
-            parentTypeName.equals("EXPR_LIST");        // In expression lists
-            
+        boolean isInVariableContext =
+                parentTypeName.equals("NAME_LIST") ||      // In local/assignment declarations
+                        parentTypeName.equals("VAR_LIST") ||       // In assignment left side
+                        parentTypeName.equals("INDEX_EXPR") ||     // Base of field access
+                        parentTypeName.equals("BINARY_EXPR") ||    // In expressions
+                        parentTypeName.equals("UNARY_EXPR") ||     // In unary expressions
+                        parentTypeName.equals("LIST_ARGS") ||      // As function argument
+                        parentTypeName.equals("EXPR_LIST");        // In expression lists
+
         return isNameType && isInVariableContext;
     }
 
@@ -228,12 +231,12 @@ public class LuaSyntaxNode extends SyntaxNode {
         // 1. Table assignment to a local/global
         // 2. Followed by __index assignment
         // 3. Or metatable operations
-        
+
         String typeName = getTypeName();
         if (!typeName.equals("LOCAL_DEF") && !typeName.equals("ASSIGN_STAT")) {
             return false;
         }
-        
+
         // Check if next sibling has __index or setmetatable
         SyntaxNode nextSibling = getNextSibling();
         if (nextSibling != null) {
@@ -242,7 +245,7 @@ public class LuaSyntaxNode extends SyntaxNode {
                 return true;
             }
         }
-        
+
         // Check if the value is an empty table (common pattern)
         String text = getText();
         return text.matches(".*=\\s*\\{\\s*\\}.*");
@@ -259,8 +262,8 @@ public class LuaSyntaxNode extends SyntaxNode {
     public boolean isComment() {
         String typeName = getTypeName();
         return typeName.equals("BLOCK_COMMENT") ||
-               typeName.equals("SHORT_COMMENT") ||
-               typeName.equals("DOC_COMMENT");
+                typeName.equals("SHORT_COMMENT") ||
+                typeName.equals("DOC_COMMENT");
     }
 
     @Override
@@ -276,11 +279,11 @@ public class LuaSyntaxNode extends SyntaxNode {
         if (!isMethodOrFunctionCallExpression()) {
             return false;
         }
-        
+
         // Check if the call is to 'require'
         for (SyntaxNode child : getChildren()) {
-            if (child.getTypeName().equals("NAME_EXPR") && 
-                child.getText().equals("require")) {
+            if (child.getTypeName().equals("NAME_EXPR") &&
+                    child.getText().equals("require")) {
                 return true;
             }
         }
@@ -292,17 +295,17 @@ public class LuaSyntaxNode extends SyntaxNode {
         // In Lua, type usage appears in doc comments
         String typeName = getTypeName();
         SyntaxNode parent = getParent();
-        
+
         if (parent == null) {
             return false;
         }
-        
+
         String parentTypeName = parent.getTypeName();
-        
+
         // Check if this is a type reference in doc comments
         return (typeName.equals("GENERAL_TY") || typeName.equals("CLASS_NAME_REF")) &&
-               (parentTypeName.equals("TAG_PARAM") || 
-                parentTypeName.equals("TAG_RETURN") ||
-                parentTypeName.equals("TYPE_LIST"));
+                (parentTypeName.equals("TAG_PARAM") ||
+                        parentTypeName.equals("TAG_RETURN") ||
+                        parentTypeName.equals("TYPE_LIST"));
     }
 }
