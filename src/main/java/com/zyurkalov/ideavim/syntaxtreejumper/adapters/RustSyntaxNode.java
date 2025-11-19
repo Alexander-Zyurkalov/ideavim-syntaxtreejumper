@@ -130,6 +130,13 @@ public class RustSyntaxNode extends SyntaxNode {
     }
 
     @Override
+    public boolean isTypeParameter() {
+        return super.isTypeParameter() ||
+                getTypeName().equals("LIFETIME_PARAMETER") ||
+                getTypeName().equals("LIFETIME");
+    }
+
+    @Override
     public boolean isExpressionStatement() {
         return getTypeName().contains("EXPR_STMT");
     }
