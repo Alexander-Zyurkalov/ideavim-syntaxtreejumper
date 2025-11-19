@@ -110,8 +110,7 @@ public class CppSyntaxNode extends SyntaxNode {
         if (parent == null) {
             return false;
         }
-        if (isArgumentList(this) &&
-                (getChildren().isEmpty() || hasOnlyWhitespaceOrBracketsChildren())) {
+        if (isArgumentList(this) && hasOnlyWhitespaceOrBracketsChildren()) {
             return true;
         }
 
@@ -128,8 +127,7 @@ public class CppSyntaxNode extends SyntaxNode {
         boolean result = false;
         String typeName = getTypeName();
         String cppTemplateParameterList = "CPP_TEMPLATE_PARAMETER_LIST";
-        if (typeName.equals(cppTemplateParameterList) &&
-                (getChildren().isEmpty() || hasOnlyWhitespaceOrBracketsChildren())) {
+        if (typeName.equals(cppTemplateParameterList) && hasOnlyWhitespaceOrBracketsChildren()) {
             return true;
         }
         try {

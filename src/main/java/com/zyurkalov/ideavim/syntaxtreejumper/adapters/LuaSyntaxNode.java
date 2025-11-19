@@ -108,13 +108,16 @@ public class LuaSyntaxNode extends SyntaxNode {
         if (parent == null) {
             return false;
         }
-        String parentTypeName = parent.getTypeName();
         String typeName = getTypeName();
-        if (typeName.equals("LIST_ARGS") &&
-                getChildren().isEmpty()) {
+        if (typeName.equals("PARAM_NAME_DEF")) {
             return true;
         }
-        // Arguments are inside LIST_ARGS
+
+        String parentTypeName = parent.getTypeName();
+        boolean isList = typeName.equals("LIST_ARGS") || typeName.equals("FUNC_BODY");
+        if (isList && hasOnlyWhitespaceOrBracketsChildren()) {
+            return true;
+        }
         return parentTypeName.equals("LIST_ARGS") &&
                 (typeName.endsWith("_EXPR") || typeName.equals("NAME_EXPR"));
     }

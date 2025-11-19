@@ -171,6 +171,18 @@ public abstract class SyntaxNode {
         return false;
     }
 
+    public boolean hasOnlyWhitespaceOrBracketsChildren() {
+        int reasonableNumberOfSymbols = 10;
+        if (getText().replaceAll(" ", "").startsWith("()")) {
+            return true;
+        }
+        List<SyntaxNode> children = getChildren().stream()
+                .filter(child -> !child.isWhitespace()).toList();
+        return children.size() == 2 && children.stream()
+                .allMatch(SyntaxNode::isBracket);
+    }
+
+
     public boolean isBracket() {
         return switch (getText()) {
             case "(", ")", "[", "]", "{", "}", ">", "<" -> true;
@@ -190,13 +202,20 @@ public abstract class SyntaxNode {
 //        REFERENCE_EXPRESSION
         String typeName = getTypeName();
         boolean result = false;
+        if (isArgumentList(this) && hasOnlyWhitespaceOrBracketsChildren()) {
+            return true;
+        }
         try {
-            result = typeName.contains("EXPRESSION") &&
-                    Objects.requireNonNull(getParent()).isExpressionList() &&
-                    Objects.requireNonNull(getParent().getParent()).isMethodOrFunctionCallExpression();
+            boolean b = isArgumentList(getParent());
+            result = typeName.contains("EXPRESSION") && b;
         } catch (NullPointerException ignored) {
         }
         return result;
+    }
+
+    private boolean isArgumentList(@Nullable SyntaxNode node) {
+        return Objects.requireNonNull(node).isExpressionList() &&
+                Objects.requireNonNull(node.getParent()).isMethodOrFunctionCallExpression();
     }
 
 
