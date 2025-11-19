@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.zyurkalov"
-version = "1.7.2"
+version = "1.8.0"
 
 repositories {
     mavenCentral()
@@ -26,9 +26,13 @@ dependencies {
     intellijPlatform {
 //        clion("2025.1.4")
 //        bundledPlugin("com.intellij.clion")
+
         rustRover("2025.1.4")
+        plugins("com.tang:1.4.20-IDEA251")  // EmmyLua plugin
+
 //        create("IC", "2025.1.1")
 //        bundledPlugin("com.intellij.java")
+
         plugins("IdeaVIM:2.27.0")
         pluginVerifier()
         zipSigner()

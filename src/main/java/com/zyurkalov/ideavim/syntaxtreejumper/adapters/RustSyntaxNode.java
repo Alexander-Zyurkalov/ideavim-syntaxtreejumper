@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * PSI-based implementation of SyntaxNode.
+ * Rust PSI-based implementation of SyntaxNode.
  */
 public class RustSyntaxNode extends SyntaxNode {
 
@@ -113,12 +113,27 @@ public class RustSyntaxNode extends SyntaxNode {
         }
         String parentTypeName = parent.getTypeName();
         String typeName = getTypeName();
-        return (parentTypeName.equals("VALUE_PARAMETER_LIST") || parentTypeName.equals("VALUE_ARGUMENT_LIST") ||
-                parentTypeName.equals("STRUCT_LITERAL_BODY") || parentTypeName.equals("FORMAT_MACRO_ARGUMENT"))
+        if (isArgumentList(typeName) && hasOnlyWhitespaceOrBracketsChildren()) {
+            return true;
+        }
+        return isArgumentList(parentTypeName)
                 &&
                 (typeName.equals("VALUE_PARAMETER") || typeName.equals("SELF_PARAMETER") ||
                         typeName.contains("EXPR") || typeName.equals("STRUCT_LITERAL_FIELD") ||
                         typeName.equals("FORMAT_MACRO_ARG"));
+    }
+
+    private static boolean isArgumentList(String typeName) {
+        return typeName.equals("VALUE_PARAMETER_LIST") || typeName.equals("VALUE_ARGUMENT_LIST") ||
+                typeName.equals("STRUCT_LITERAL_BODY") || typeName.equals("FORMAT_MACRO_ARGUMENT") ||
+                typeName.equals("VEC_MACRO_ARGUMENT");
+    }
+
+    @Override
+    public boolean isTypeParameter() {
+        return super.isTypeParameter() ||
+                getTypeName().equals("LIFETIME_PARAMETER") ||
+                getTypeName().equals("LIFETIME");
     }
 
     @Override
@@ -182,7 +197,7 @@ public class RustSyntaxNode extends SyntaxNode {
     }
 
     @Override
-    public boolean isBody() {
+    public boolean isBlock() {
         String typeName = getTypeName();
         return typeName.equals("BLOCK") ||
                 typeName.equals("MEMBERS") ||

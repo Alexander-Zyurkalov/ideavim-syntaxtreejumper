@@ -110,23 +110,35 @@ public class CppSyntaxNode extends SyntaxNode {
         if (parent == null) {
             return false;
         }
+        if (isArgumentList(this) && hasOnlyWhitespaceOrBracketsChildren()) {
+            return true;
+        }
+
         return getTypeName().contains("EXPRESSION") &&
-                (parent.getTypeName().equals("ARGUMENT_LIST") ||
-                        parent.getTypeName().equals("COMPOUND_INITIALIZER")
-                );
+                isArgumentList(parent);
+    }
+
+    private static boolean isArgumentList(SyntaxNode node) {
+        return node.getTypeName().equals("ARGUMENT_LIST") || node.getTypeName().equals("COMPOUND_INITIALIZER");
     }
 
     @Override
     public boolean isTypeParameter() {
         boolean result = false;
+        String typeName = getTypeName();
+        String cppTemplateParameterList = "CPP_TEMPLATE_PARAMETER_LIST";
+        if (typeName.equals(cppTemplateParameterList) && hasOnlyWhitespaceOrBracketsChildren()) {
+            return true;
+        }
         try {
-            result = getTypeName().equals("TYPE_PARAMETER") ||
-                    (getTypeName().equals("TYPE_ELEMENT") &&
-                            Objects.requireNonNull(getParent()).getTypeName().equals("TEMPLATE_ARGUMENT_LIST"));
+            result = typeName.equals("TYPE_PARAMETER") ||
+                    (typeName.equals("TYPE_ELEMENT") &&
+                            Objects.requireNonNull(getParent()).getTypeName().equals(cppTemplateParameterList));
         } catch (NullPointerException ignored) {
         }
         return result;
     }
+
 
     @Override
     public boolean isMethodDefinition() {
@@ -150,7 +162,7 @@ public class CppSyntaxNode extends SyntaxNode {
     }
 
     @Override
-    public boolean isBody() {
+    public boolean isBlock() {
         String typeName = getTypeName();
 
         return typeName.equals("LAZY_BLOCK") ||

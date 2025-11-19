@@ -23,7 +23,7 @@ public class CodeBlockMotionHandler extends AbstractSyntaxTreeNodesMotionHandler
 
     @Override
     protected boolean doesTargetFollowRequirements(SyntaxNode startingPoint, SyntaxNode targetElement, Offsets initialOffsets) {
-        return targetElement.isBody();
+        return targetElement.isBlock();
     }
 
 }
