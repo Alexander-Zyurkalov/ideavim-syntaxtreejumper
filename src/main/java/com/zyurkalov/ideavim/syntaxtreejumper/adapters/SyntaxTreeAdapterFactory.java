@@ -86,7 +86,7 @@ public class SyntaxTreeAdapterFactory {
         String languageId = language.getID().toLowerCase();
         String fileTypeName = fileType.getName().toLowerCase();
 
-        // Check for C++ language identifiers
+        // Check for Rust language identifiers
         return languageId.contains("rust") ||
                 fileTypeName.contains("rust");
     }
