@@ -195,7 +195,9 @@ public class LuaSyntaxNode extends SyntaxNode {
 
         // NAME_EXPR can be a variable reference
         // NAME_DEF is a variable definition
-        boolean isNameType = typeName.equals("NAME_EXPR") || typeName.equals("NAME_DEF");
+        boolean isNameType = typeName.equals("NAME_EXPR") || typeName.equals("NAME_DEF")
+                || typeName.equals("ID");
+
 
         // Check if parent context makes this a variable
         boolean isInVariableContext =
@@ -205,7 +207,9 @@ public class LuaSyntaxNode extends SyntaxNode {
                         parentTypeName.equals("BINARY_EXPR") ||    // In expressions
                         parentTypeName.equals("UNARY_EXPR") ||     // In unary expressions
                         parentTypeName.equals("LIST_ARGS") ||      // As function argument
-                        parentTypeName.equals("EXPR_LIST");        // In expression lists
+                        parentTypeName.equals("EXPR_LIST") ||       // In expression lists
+                        parentTypeName.equals("NAME_EXPR") ||       // ID in name expression
+                        parentTypeName.equals("TABLE_FIELD");        // In table field assignments
 
         return isNameType && isInVariableContext;
     }
@@ -229,18 +233,16 @@ public class LuaSyntaxNode extends SyntaxNode {
 
     @Override
     public boolean isClassDefinition() {
-        // In Lua, "classes" are typically tables with metatables
-        // This is tricky to detect, but we can look for:
-        // 1. Table assignment to a local/global
-        // 2. Followed by __index assignment
-        // 3. Or metatable operations
-
         String typeName = getTypeName();
+
+        if (typeName.equals("TABLE_EXPR")) {
+            return true;
+        }
+
         if (!typeName.equals("LOCAL_DEF") && !typeName.equals("ASSIGN_STAT")) {
             return false;
         }
 
-        // Check if next sibling has __index or setmetatable
         SyntaxNode nextSibling = getNextSibling();
         if (nextSibling != null) {
             String nextText = nextSibling.getText();
@@ -249,7 +251,6 @@ public class LuaSyntaxNode extends SyntaxNode {
             }
         }
 
-        // Check if the value is an empty table (common pattern)
         String text = getText();
         return text.matches(".*=\\s*\\{\\s*\\}.*");
     }
