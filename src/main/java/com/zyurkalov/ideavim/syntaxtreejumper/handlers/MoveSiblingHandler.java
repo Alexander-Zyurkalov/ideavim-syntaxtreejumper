@@ -52,8 +52,8 @@ public class MoveSiblingHandler implements ExtensionHandler {
         if (editor.getProject() == null) return;
         VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
         if (file == null) return;
-        PsiFile psiFile = PsiManager.getInstance(editor.getProject()).findFile(file);
-        if (psiFile == null) return;
+        PsiFile editorPsiFile = PsiManager.getInstance(editor.getProject()).findFile(file);
+        if (editorPsiFile == null) return;
 
         List<LogicalPosition> caretPositions = new ArrayList<>();
         List<Caret> carets = editor.getCaretModel().getAllCarets();
@@ -61,9 +61,11 @@ public class MoveSiblingHandler implements ExtensionHandler {
         for (Caret caret : carets) {
 
             // Check for injected language at the caret position
-            int offset = editor.getCaretModel().getOffset();
-            InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(psiFile.getProject());
+            int offset = caret.getOffset();
+            InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(editorPsiFile.getProject());
+            var psiFile = editorPsiFile;
             PsiElement injectedElement = injectedManager.findInjectedElementAt(psiFile, offset);
+
             int injectionOffset = 0;
             if (injectedElement != null) {
                 PsiLanguageInjectionHost injectionHost = injectedManager.getInjectionHost(injectedElement);

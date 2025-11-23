@@ -112,8 +112,8 @@ public class FunctionHandler implements ExtensionHandler {
         if (editor.getProject() == null) return;
         VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
         if (file == null) return;
-        PsiFile psiFile = PsiManager.getInstance(editor.getProject()).findFile(file);
-        if (psiFile == null) return;
+        PsiFile editorPsiFile = PsiManager.getInstance(editor.getProject()).findFile(file);
+        if (editorPsiFile == null) return;
 
         // Get the count from operatorArguments (defaults to 1 if no count provided)
         int count = operatorArguments.getCount1(); // This gets the count, defaulting to 1
@@ -139,8 +139,9 @@ public class FunctionHandler implements ExtensionHandler {
 
 
             // Check for injected language at the caret position
-            int offset = editor.getCaretModel().getOffset();
-            InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(psiFile.getProject());
+            int offset = caret.getOffset();
+            InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(editorPsiFile.getProject());
+            var psiFile = editorPsiFile;
             PsiElement injectedElement = injectedManager.findInjectedElementAt(psiFile, offset);
             int injectionOffset = 0;
             if (injectedElement != null) {
