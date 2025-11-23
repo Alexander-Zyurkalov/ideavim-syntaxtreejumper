@@ -5,7 +5,10 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiManager;
 import com.maddyhome.idea.vim.api.ExecutionContext;
 import com.maddyhome.idea.vim.api.VimEditor;
 import com.maddyhome.idea.vim.command.OperatorArguments;
@@ -92,11 +95,6 @@ public class MoveSiblingHandler implements ExtensionHandler {
             anyMotionExecuted = true;
 
             caretPositions.add(caret.getLogicalPosition());
-        }
-
-        // Update highlighting if any motion was executed
-        if (anyMotionExecuted) {
-            FunctionHandler.updateHighlightingForEditor(editor);
         }
 
         // Scroll to the appropriate caret position
