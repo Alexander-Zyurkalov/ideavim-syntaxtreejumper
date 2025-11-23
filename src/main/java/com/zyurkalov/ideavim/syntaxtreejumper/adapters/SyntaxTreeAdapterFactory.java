@@ -1,45 +1,14 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.adapters;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Factory class for creating appropriate SyntaxTreeAdapter instances based on file type and language.
  */
 public class SyntaxTreeAdapterFactory {
-
-    /**
-     * Creates a SyntaxTreeAdapter for the given editor.
-     *
-     * @param editor The editor to create an adapter for
-     * @return The appropriate adapter, or null if no suitable adapter can be created
-     */
-    @Nullable
-    public static SyntaxTreeAdapter createAdapter(@NotNull Editor editor) {
-        Project project = editor.getProject();
-        if (project == null) {
-            return null;
-        }
-
-        VirtualFile virtualFile = editor.getVirtualFile();
-        if (virtualFile == null) {
-            return null;
-        }
-
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-        if (psiFile == null) {
-            return null;
-        }
-
-        return createAdapter(psiFile);
-    }
 
     /**
      * Creates a SyntaxTreeAdapter for the given PSI file.

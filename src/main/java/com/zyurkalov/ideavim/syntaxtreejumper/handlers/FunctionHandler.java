@@ -1,5 +1,6 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.handlers;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -10,7 +11,9 @@ import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiManager;
 import com.maddyhome.idea.vim.api.ExecutionContext;
 import com.maddyhome.idea.vim.api.VimEditor;
@@ -123,10 +126,6 @@ public class FunctionHandler implements ExtensionHandler {
         // Get the count from operatorArguments (defaults to 1 if no count provided)
         int count = operatorArguments.getCount1(); // This gets the count, defaulting to 1
 
-        // Get or create the syntax tree adapter for this editor
-        SyntaxTreeAdapter syntaxTree = SyntaxTreeAdapterFactory.createAdapter(psiFile);
-
-        MotionHandler navigator = navigatorFactory.apply(syntaxTree, direction);
         List<LogicalPosition> caretPositionsToScrollTo = new ArrayList<>();
         List<Caret> carets = editor.getCaretModel().getAllCarets();
 
@@ -148,6 +147,25 @@ public class FunctionHandler implements ExtensionHandler {
         // Execute the motion 'count' times for each caret
         for (int caret_i = start_caret; caret_i <= end_caret; caret_i++) {
             Caret caret = carets.get(caret_i);
+
+
+            // Check for injected language at the caret position
+            int offset = editor.getCaretModel().getOffset();
+            InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(psiFile.getProject());
+            PsiElement injectedElement = injectedManager.findInjectedElementAt(psiFile, offset);
+            int injectionOffset = 0;
+            if (injectedElement != null) {
+                PsiLanguageInjectionHost injectionHost = injectedManager.getInjectionHost(injectedElement);
+                if (injectionHost != null) {
+                    injectionOffset = injectionHost.getTextOffset() + 1;
+                    psiFile = injectedElement.getContainingFile();
+                }
+            }
+
+
+            var syntaxTree = SyntaxTreeAdapterFactory.createAdapter(psiFile);
+            MotionHandler navigator = navigatorFactory.apply(syntaxTree, direction);
+
             int startSelectionOffset = caret.getOffset();
             int endSelectionOffset = caret.getOffset();
             if (caret.hasSelection()) {
@@ -155,7 +173,9 @@ public class FunctionHandler implements ExtensionHandler {
                 endSelectionOffset = caret.getSelectionEnd();
             }
 
-            var currentOffsets = new Offsets(startSelectionOffset, endSelectionOffset);
+            var currentOffsets = new Offsets(
+                    startSelectionOffset - injectionOffset,
+                    endSelectionOffset - injectionOffset);
 
             // Apply the motion 'count' times
             for (int i = 0; i < count; i++) {
@@ -169,13 +189,17 @@ public class FunctionHandler implements ExtensionHandler {
                 }
             }
 
+            startSelectionOffset = currentOffsets.leftOffset() + injectionOffset;
+            endSelectionOffset = currentOffsets.rightOffset() + injectionOffset;
+
+
             // Only update position if we moved at least once
             if (anyMotionExecuted) {
                 if (addNewCaret) {
-                    newCaretOffsets.add(currentOffsets);
+                    newCaretOffsets.add(new Offsets(startSelectionOffset, endSelectionOffset));
                 } else {
-                    caret.setSelection(currentOffsets.leftOffset(), currentOffsets.rightOffset());
-                    caret.moveToOffset(currentOffsets.leftOffset());
+                    caret.setSelection(startSelectionOffset, endSelectionOffset);
+                    caret.moveToOffset(startSelectionOffset);
                 }
             }
         }
