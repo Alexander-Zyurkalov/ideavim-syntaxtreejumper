@@ -1,5 +1,6 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.handlers;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -8,6 +9,9 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiManager;
 import com.maddyhome.idea.vim.api.ExecutionContext;
 import com.maddyhome.idea.vim.api.VimEditor;
@@ -20,7 +24,6 @@ import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.ElementWithSiblings;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxNode;
-import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapterFactory;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,18 +49,31 @@ public class MoveSiblingHandler implements ExtensionHandler {
             @NotNull ExecutionContext context,
             @NotNull OperatorArguments operatorArguments) {
         Editor editor = IjVimEditorKt.getIj(vimEditor);
-
-        // Get syntax tree adapter
-        SyntaxTreeAdapter syntaxTree = SyntaxTreeAdapterFactory.createAdapter(editor);
-        if (syntaxTree == null) {
-            return;
-        }
+        if (editor.getProject() == null) return;
+        VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+        if (file == null) return;
+        PsiFile psiFile = PsiManager.getInstance(editor.getProject()).findFile(file);
+        if (psiFile == null) return;
 
         List<LogicalPosition> caretPositions = new ArrayList<>();
         List<Caret> carets = editor.getCaretModel().getAllCarets();
-        boolean anyMotionExecuted = false;
 
         for (Caret caret : carets) {
+
+            // Check for injected language at the caret position
+            int offset = editor.getCaretModel().getOffset();
+            InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(psiFile.getProject());
+            PsiElement injectedElement = injectedManager.findInjectedElementAt(psiFile, offset);
+            int injectionOffset = 0;
+            if (injectedElement != null) {
+                PsiLanguageInjectionHost injectionHost = injectedManager.getInjectionHost(injectedElement);
+                if (injectionHost != null) {
+                    injectionOffset = injectionHost.getTextOffset() + 1;
+                    psiFile = injectedElement.getContainingFile();
+                }
+            }
+            var syntaxTree = SyntaxTreeAdapterFactory.createAdapter(psiFile);
+
             int startSelectionOffset = caret.getOffset();
             int endSelectionOffset = caret.getOffset();
             if (caret.hasSelection()) {
@@ -65,7 +81,9 @@ public class MoveSiblingHandler implements ExtensionHandler {
                 endSelectionOffset = caret.getSelectionEnd();
             }
 
-            Offsets currentOffsets = new Offsets(startSelectionOffset, endSelectionOffset);
+            var currentOffsets = new Offsets(
+                    startSelectionOffset - injectionOffset,
+                    endSelectionOffset - injectionOffset);
 
             // Use SameLevelElementsMotionHandler to find the current element and siblings
             ElementWithSiblings elementWithSiblings =
@@ -89,10 +107,19 @@ public class MoveSiblingHandler implements ExtensionHandler {
             }
 
             // Perform the swap and update the cursor position
-            Offsets newOffsets = swapElements(editor, elementWithSiblings.currentElement(), targetSibling);
-            caret.setSelection(newOffsets.leftOffset(), newOffsets.rightOffset());
-            caret.moveToOffset(newOffsets.leftOffset());
-            anyMotionExecuted = true;
+            TextRange originalElementTextRange = elementWithSiblings.currentElement().getTextRange();
+            originalElementTextRange = new TextRange(originalElementTextRange.getStartOffset() + injectionOffset,
+                    originalElementTextRange.getEndOffset() + injectionOffset);
+            TextRange targetElementTextRange = targetSibling.getTextRange();
+            targetElementTextRange = new TextRange(targetElementTextRange.getStartOffset() + injectionOffset,
+                    targetElementTextRange.getEndOffset() + injectionOffset);
+            Offsets newOffsets = swapElements(editor, originalElementTextRange, targetElementTextRange);
+
+            startSelectionOffset = newOffsets.leftOffset();
+            endSelectionOffset = newOffsets.rightOffset();
+
+            caret.setSelection(startSelectionOffset, endSelectionOffset);
+            caret.moveToOffset(startSelectionOffset);
 
             caretPositions.add(caret.getLogicalPosition());
         }
@@ -109,10 +136,8 @@ public class MoveSiblingHandler implements ExtensionHandler {
      * Returns the new offsets of the moved element, or null if swap failed.
      */
     private Offsets swapElements(@NotNull Editor editor,
-                                 @NotNull SyntaxNode originalElement,
-                                 @NotNull SyntaxNode targetElement) {
-        TextRange originalElementTextRange = originalElement.getTextRange();
-        TextRange targetElementTextRange = targetElement.getTextRange();
+                                 @NotNull TextRange originalElementTextRange,
+                                 @NotNull TextRange targetElementTextRange) {
 
         // Get the text content of both elements
         String originalElementText = editor.getDocument().getText(originalElementTextRange);
