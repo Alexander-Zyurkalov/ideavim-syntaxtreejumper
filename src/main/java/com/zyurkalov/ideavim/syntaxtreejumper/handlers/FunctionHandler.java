@@ -1,16 +1,17 @@
 package com.zyurkalov.ideavim.syntaxtreejumper.handlers;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiManager;
 import com.maddyhome.idea.vim.api.ExecutionContext;
 import com.maddyhome.idea.vim.api.VimEditor;
@@ -23,8 +24,6 @@ import com.zyurkalov.ideavim.syntaxtreejumper.MotionDirection;
 import com.zyurkalov.ideavim.syntaxtreejumper.Offsets;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapter;
 import com.zyurkalov.ideavim.syntaxtreejumper.adapters.SyntaxTreeAdapterFactory;
-import com.zyurkalov.ideavim.syntaxtreejumper.highlighting.HighlightingConfig;
-import com.zyurkalov.ideavim.syntaxtreejumper.highlighting.PsiElementHighlighter;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.MotionHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,10 +73,6 @@ public class FunctionHandler implements ExtensionHandler {
     public static Optional<FunctionHandler> lastExecutedHandler = Optional.empty();
     public static Optional<OperatorArguments> lastExecutedHandlerArguments = Optional.empty();
 
-    // Static map to track highlighters per editor to avoid conflicts
-    private static final ConcurrentHashMap<Editor, PsiElementHighlighter> editorHighlighters =
-            new ConcurrentHashMap<>();
-
     // Static map to track selection listeners per editor
     private static final ConcurrentHashMap<Editor, SelectionListener> editorSelectionListeners =
             new ConcurrentHashMap<>();
@@ -117,21 +112,14 @@ public class FunctionHandler implements ExtensionHandler {
         if (editor.getProject() == null) return;
         VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
         if (file == null) return;
-        PsiFile psiFile = PsiManager.getInstance(editor.getProject()).findFile(file);
-        if (psiFile == null) return;
+        PsiFile editorPsiFile = PsiManager.getInstance(editor.getProject()).findFile(file);
+        if (editorPsiFile == null) return;
 
         // Get the count from operatorArguments (defaults to 1 if no count provided)
         int count = operatorArguments.getCount1(); // This gets the count, defaulting to 1
 
-        // Get or create the syntax tree adapter for this editor
-        SyntaxTreeAdapter syntaxTree = SyntaxTreeAdapterFactory.createAdapter(psiFile);
-
-        MotionHandler navigator = navigatorFactory.apply(syntaxTree, direction);
         List<LogicalPosition> caretPositionsToScrollTo = new ArrayList<>();
         List<Caret> carets = editor.getCaretModel().getAllCarets();
-
-        // Ensure highlighter and listeners are set up for this editor
-        setupEditorHighlighting(editor, vimEditor);
 
         boolean anyMotionExecuted = false;
         List<Offsets> newCaretOffsets = new ArrayList<>();
@@ -148,6 +136,26 @@ public class FunctionHandler implements ExtensionHandler {
         // Execute the motion 'count' times for each caret
         for (int caret_i = start_caret; caret_i <= end_caret; caret_i++) {
             Caret caret = carets.get(caret_i);
+
+
+            // Check for injected language at the caret position
+            int offset = caret.getOffset();
+            InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(editorPsiFile.getProject());
+            var psiFile = editorPsiFile;
+            PsiElement injectedElement = injectedManager.findInjectedElementAt(psiFile, offset);
+            int injectionOffset = 0;
+            if (injectedElement != null) {
+                PsiLanguageInjectionHost injectionHost = injectedManager.getInjectionHost(injectedElement);
+                if (injectionHost != null) {
+                    injectionOffset = injectionHost.getTextOffset() + 1;
+                    psiFile = injectedElement.getContainingFile();
+                }
+            }
+
+
+            var syntaxTree = SyntaxTreeAdapterFactory.createAdapter(psiFile);
+            MotionHandler navigator = navigatorFactory.apply(syntaxTree, direction);
+
             int startSelectionOffset = caret.getOffset();
             int endSelectionOffset = caret.getOffset();
             if (caret.hasSelection()) {
@@ -155,7 +163,9 @@ public class FunctionHandler implements ExtensionHandler {
                 endSelectionOffset = caret.getSelectionEnd();
             }
 
-            var currentOffsets = new Offsets(startSelectionOffset, endSelectionOffset);
+            var currentOffsets = new Offsets(
+                    startSelectionOffset - injectionOffset,
+                    endSelectionOffset - injectionOffset);
 
             // Apply the motion 'count' times
             for (int i = 0; i < count; i++) {
@@ -169,13 +179,17 @@ public class FunctionHandler implements ExtensionHandler {
                 }
             }
 
+            startSelectionOffset = currentOffsets.leftOffset() + injectionOffset;
+            endSelectionOffset = currentOffsets.rightOffset() + injectionOffset;
+
+
             // Only update position if we moved at least once
             if (anyMotionExecuted) {
                 if (addNewCaret) {
-                    newCaretOffsets.add(currentOffsets);
+                    newCaretOffsets.add(new Offsets(startSelectionOffset, endSelectionOffset));
                 } else {
-                    caret.setSelection(currentOffsets.leftOffset(), currentOffsets.rightOffset());
-                    caret.moveToOffset(currentOffsets.leftOffset());
+                    caret.setSelection(startSelectionOffset, endSelectionOffset);
+                    caret.moveToOffset(startSelectionOffset);
                 }
             }
         }
@@ -197,11 +211,6 @@ public class FunctionHandler implements ExtensionHandler {
             caretPositionsToScrollTo.add(caret.getLogicalPosition());
         }
 
-        // Update highlighting based on new positions
-        if (anyMotionExecuted) {
-            updateHighlightingForEditor(editor);
-        }
-
         scrollToFirstOrLast(caretPositionsToScrollTo, editor);
 
         // Set mode based on whether any motion was executed
@@ -212,110 +221,6 @@ public class FunctionHandler implements ExtensionHandler {
         }
     }
 
-    /**
-     * Sets up highlighting, caret, and selection listeners for the given editor if not already present.
-     */
-    public static void setupEditorHighlighting(@NotNull Editor editor, VimEditor vimEditor) {
-        // Set up highlighter
-        editorHighlighters.computeIfAbsent(editor, PsiElementHighlighter::new);
-
-
-        // Set up a caret listener
-        editorCaretListeners.computeIfAbsent(editor, e -> {
-            CaretListener caretListener = new CaretListener() {
-                @Override
-                public void caretPositionChanged(@NotNull CaretEvent event) {
-                    var mode = vimEditor.getMode();
-                    if (mode instanceof Mode.INSERT)
-                        clearHighlightsForEditor(editor);
-                    else
-                        updateHighlightingForEditor(editor);
-                }
-            };
-            editor.getCaretModel().addCaretListener(caretListener);
-            return caretListener;
-        });
-
-
-        // Set up a selection listener
-        editorSelectionListeners.computeIfAbsent(editor, e -> {
-            SelectionListener selectionListener = new SelectionListener() {
-                @Override
-                public void selectionChanged(@NotNull SelectionEvent event) {
-                    var mode = vimEditor.getMode();
-                    if (mode instanceof Mode.INSERT)
-                        clearHighlightsForEditor(editor);
-                    else
-                        updateHighlightingForEditor(editor);
-                }
-            };
-            editor.getSelectionModel().addSelectionListener(selectionListener);
-            return selectionListener;
-        });
-
-
-        // Initial highlighting update
-        updateHighlightingForEditor(editor);
-    }
-
-    /**
-     * Updates highlighting for all carets in the given editor.
-     */
-    public static void updateHighlightingForEditor(@NotNull Editor editor) {
-        HighlightingConfig config = HighlightingConfig.getInstance();
-
-        if (!config.isHighlightingEnabled()) {
-            clearHighlightsForEditor(editor);
-            return;
-        }
-
-        if (editor.getProject() == null) return;
-        VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-        if (file == null) return;
-        PsiFile psiFile = PsiManager.getInstance(editor.getProject()).findFile(file);
-        if (psiFile == null) return;
-
-        // Get the syntax tree adapter for this editor - this will now use language detection
-        SyntaxTreeAdapter syntaxTree = SyntaxTreeAdapterFactory.createAdapter(psiFile);
-
-        PsiElementHighlighter highlighter = editorHighlighters.get(editor);
-        if (highlighter == null) return;
-
-        // Clear existing highlights
-        highlighter.clearHighlights();
-
-        // Check if there's any selection in any caret
-        boolean hasAnySelection = editor.getCaretModel().getAllCarets().stream()
-                .anyMatch(Caret::hasSelection);
-
-        Caret primaryCaret = editor.getCaretModel().getPrimaryCaret();
-        if (hasAnySelection) {
-            // If there's selection, highlight the primary caret's selection
-            if (primaryCaret.hasSelection()) {
-                highlighter.highlightElementAndSiblings(
-                        syntaxTree,
-                        primaryCaret.getSelectionStart(),
-                        primaryCaret.getSelectionEnd()
-                );
-            } else {
-                // Find the first caret with selection
-                for (Caret caret : editor.getCaretModel().getAllCarets()) {
-                    if (caret.hasSelection()) {
-                        highlighter.highlightElementAndSiblings(
-                                syntaxTree,
-                                caret.getSelectionStart(),
-                                caret.getSelectionEnd()
-                        );
-                        break;
-                    }
-                }
-            }
-        } else {
-            // If no selection, highlight based on the primary caret position
-            int offset = primaryCaret.getOffset();
-            highlighter.highlightElementAndSiblings(syntaxTree, offset, offset);
-        }
-    }
 
     private void scrollToFirstOrLast(List<LogicalPosition> caretPositions, Editor editor) {
         Function<List<LogicalPosition>, LogicalPosition> getFirstOrLast = switch (direction) {
@@ -326,38 +231,4 @@ public class FunctionHandler implements ExtensionHandler {
         editor.getScrollingModel().scrollTo(getFirstOrLast.apply(caretPositions), ScrollType.MAKE_VISIBLE);
     }
 
-    /**
-     * Manually clear highlights for a specific editor.
-     * This can be called from external code if needed.
-     */
-    public static void clearHighlightsForEditor(@NotNull Editor editor) {
-        PsiElementHighlighter highlighter = editorHighlighters.get(editor);
-        if (highlighter != null) {
-            highlighter.clearHighlights();
-        }
-    }
-
-    /**
-     * Clean up highlighter, caret listener, selection listener, and syntax tree adapter when editor is disposed.
-     * Should be called from editor disposal listeners.
-     */
-    public static void cleanupEditor(@NotNull Editor editor) {
-        // Remove and clean up highlighter
-        PsiElementHighlighter highlighter = editorHighlighters.remove(editor);
-        if (highlighter != null) {
-            highlighter.clearHighlights();
-        }
-
-        // Remove selection listener
-        SelectionListener selectionListener = editorSelectionListeners.remove(editor);
-        if (selectionListener != null) {
-            editor.getSelectionModel().removeSelectionListener(selectionListener);
-        }
-
-        // Remove caret listener
-        CaretListener caretListener = editorCaretListeners.remove(editor);
-        if (caretListener != null) {
-            editor.getCaretModel().removeCaretListener(caretListener);
-        }
-    }
 }

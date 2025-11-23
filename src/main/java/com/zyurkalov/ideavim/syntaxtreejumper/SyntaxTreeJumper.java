@@ -1,36 +1,22 @@
 package com.zyurkalov.ideavim.syntaxtreejumper;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.maddyhome.idea.vim.api.VimEditor;
-import com.maddyhome.idea.vim.api.VimEditorGroup;
 import com.maddyhome.idea.vim.api.VimInjectorKt;
 import com.maddyhome.idea.vim.command.MappingMode;
 import com.maddyhome.idea.vim.extension.VimExtension;
-import com.maddyhome.idea.vim.newapi.IjVimEditorKt;
 import com.zyurkalov.ideavim.syntaxtreejumper.config.MotionHandlerConfig;
 import com.zyurkalov.ideavim.syntaxtreejumper.config.ShortcutConfig;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.FunctionHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.MoveSiblingHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.handlers.RepeatLastMotionHandler;
-import com.zyurkalov.ideavim.syntaxtreejumper.highlighting.ToggleHighlightingHandler;
 import com.zyurkalov.ideavim.syntaxtreejumper.motions.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.EnumSet;
 
-import static com.maddyhome.idea.vim.api.VimInjectorKt.injector;
 import static com.maddyhome.idea.vim.extension.VimExtensionFacade.putExtensionHandlerMapping;
 import static com.maddyhome.idea.vim.extension.VimExtensionFacade.putKeyMappingIfMissing;
 
-public class SyntaxTreeJumper implements VimExtension, Disposable {
-
-    private EditorFactoryListener editorFactoryListener;
-    private boolean isDisposed = false;
+public class SyntaxTreeJumper implements VimExtension {
 
     @Override
     public @NotNull String getName() {
@@ -41,7 +27,6 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
     public void init() {
         registerStructuredMotionHandlers();
         registerSpecialHandlers();
-        setupAutomaticHighlighting();
     }
 
     /**
@@ -418,22 +403,6 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 VimInjectorKt.getInjector().getParser().parseKeys(commandSmartSelectionExtend),
                 true);
 
-        // Highlighting toggle
-        String commandToggleHighlighting = "<Plug>ToggleHighlighting";
-        putExtensionHandlerMapping(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandToggleHighlighting),
-                getOwner(),
-                new ToggleHighlightingHandler(),
-                false);
-
-        putKeyMappingIfMissing(
-                EnumSet.of(MappingMode.NORMAL, MappingMode.VISUAL),
-                VimInjectorKt.getInjector().getParser().parseKeys("<A-h>"),
-                getOwner(),
-                VimInjectorKt.getInjector().getParser().parseKeys(commandToggleHighlighting),
-                true);
-
         // Sibling motion handlers (special case - doesn't use BiFunction pattern)
         String commandMoveToPrevSibling = "<Plug>MoveToPrevSibling";
         String commandMoveToNextSibling = "<Plug>MoveToNextSibling";
@@ -569,64 +538,4 @@ public class SyntaxTreeJumper implements VimExtension, Disposable {
                 true);
     }
 
-    /**
-     * Sets up automatic highlighting for existing and new editors.
-     */
-    private void setupAutomaticHighlighting() {
-        if (isDisposed) {
-            return;
-        }
-
-        // Set up highlighting for all currently open editors
-        VimEditorGroup editorGroup = injector.getEditorGroup();
-        Collection<VimEditor> allEditors = editorGroup.getEditors();
-
-        for (VimEditor vimEditor : allEditors) {
-            Editor editor = IjVimEditorKt.getIj(vimEditor);
-            FunctionHandler.setupEditorHighlighting(editor, vimEditor);
-        }
-
-        // Create and store the listener reference
-        editorFactoryListener = new EditorFactoryListener() {
-            @Override
-            public void editorCreated(@NotNull EditorFactoryEvent event) {
-                if (isDisposed) {
-                    return;
-                }
-                Editor editor = event.getEditor();
-                var vimEditor = IjVimEditorKt.getVim(editor);
-                FunctionHandler.setupEditorHighlighting(editor, vimEditor);
-            }
-
-            @Override
-            public void editorReleased(@NotNull EditorFactoryEvent event) {
-                Editor editor = event.getEditor();
-                FunctionHandler.cleanupEditor(editor);
-            }
-        };
-
-        // Register the listener manually so we can control its lifecycle
-        EditorFactory.getInstance().addEditorFactoryListener(editorFactoryListener);
-    }
-
-    @Override
-    public void dispose() {
-        if (isDisposed) {
-            return;
-        }
-
-        isDisposed = true;
-
-        // Remove the editor factory listener
-        if (editorFactoryListener != null) {
-            EditorFactory.getInstance().removeEditorFactoryListener(editorFactoryListener);
-            editorFactoryListener = null;
-        }
-
-        // Clean up all remaining editors
-        Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
-        for (Editor editor : allEditors) {
-            FunctionHandler.cleanupEditor(editor);
-        }
-    }
 }
