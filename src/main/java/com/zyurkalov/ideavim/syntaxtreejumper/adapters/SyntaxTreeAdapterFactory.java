@@ -27,6 +27,8 @@ public class SyntaxTreeAdapterFactory {
             return createRustAdapter(psiFile);
         } else if (isLuaFile(language, fileType)) {
             return createLuaAdapter(psiFile);
+        } else if (isTidalMidiFile(language, fileType)) {
+            return createTidalMidiAdapter(psiFile);
         }
 
         // For all other languages, use the PSI adapter
@@ -73,6 +75,18 @@ public class SyntaxTreeAdapterFactory {
                 fileTypeName.contains("lua");
     }
 
+    /**
+     * Determines if the file is a TidalMidi file based on language and file type.
+     */
+    private static boolean isTidalMidiFile(@NotNull Language language, @NotNull FileType fileType) {
+        String languageId = language.getID().toLowerCase();
+        String fileTypeName = fileType.getName().toLowerCase();
+
+        // Check for TidalMidi language identifiers
+        return languageId.contains("tidalmini");
+
+    }
+
 
     private static @NotNull SyntaxTreeAdapter createCppAdapter(@NotNull PsiFile psiFile) {
         try {
@@ -97,6 +111,18 @@ public class SyntaxTreeAdapterFactory {
     private static @NotNull SyntaxTreeAdapter createLuaAdapter(@NotNull PsiFile psiFile) {
         try {
             return new LuaSyntaxTreeAdapter(psiFile);
+        } catch (Exception e) {
+            return new PsiSyntaxTreeAdapter(psiFile);
+        }
+    }
+
+    /**
+     * Creates a TidalMidi-specific adapter.
+     * Falls back to the PSI adapter if a TidalMidi adapter cannot be created.
+     */
+    private static @NotNull SyntaxTreeAdapter createTidalMidiAdapter(@NotNull PsiFile psiFile) {
+        try {
+            return new TidalMidiSyntaxTreeAdapter(psiFile);
         } catch (Exception e) {
             return new PsiSyntaxTreeAdapter(psiFile);
         }
