@@ -181,6 +181,36 @@ public class TidalMidiSyntaxNode extends SyntaxNode {
     }
 
     @Override
+    public boolean isBracket() {
+        return super.isBracket();
+    }
+
+    @Override
+    public boolean isExpressionList() {
+        return false;
+    }
+
+    @Override
+    public boolean isTypeParameter() {
+        return false;
+    }
+
+    @Override
+    public boolean isLoopOrConditionalStatement() {
+        return false;
+    }
+
+    @Override
+    public boolean isConditionalStatement() {
+        return false;
+    }
+
+    @Override
+    public boolean isFunctionParameter() {
+        return false;
+    }
+
+    @Override
     public boolean isBlock() {
         String typeName = getTypeName();
         // Groups act as blocks in TidalMidi
