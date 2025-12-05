@@ -101,7 +101,6 @@ public class TidalMidiSyntaxNode extends SyntaxNode {
     }
 
 
-
     @Override
     public boolean isFunctionArgument() {
         String typeName = getTypeName();
@@ -115,7 +114,7 @@ public class TidalMidiSyntaxNode extends SyntaxNode {
 
         // Parameters in operators or bjorklund params
         if (parentTypeName.equals("BJORKLUND_PARAMS")) {
-            return typeName.equals("PARAMETER") || typeName.equals("NUMBER");
+            return typeName.equals("PARAMETER") || typeName.equals("NUMBER") || typeName.equals("SINGLE");
         }
 
         return false;
@@ -166,18 +165,14 @@ public class TidalMidiSyntaxNode extends SyntaxNode {
         String typeName = getTypeName();
         SyntaxNode parent = getParent();
 
-        if (parent == null) {
+        if (parent == null || !typeName.equals("SINGLE")) {
             return false;
         }
 
-        String parentTypeName = parent.getTypeName();
-
-        // TXT tokens in target context can be considered variables
-        if (typeName.equals("TXT") || typeName.equals("TARGET_TXT")) {
-            return parentTypeName.equals("TARGET") || parentTypeName.equals("TARGET_ASSIGN");
-        }
-
-        return false;
+        List<SyntaxNode> children = getChildren();
+        return children.size() == 1 &&
+                (children.getFirst().getTypeName().equals("PITCH") ||
+                        children.getFirst().getTypeName().equals("CHORD"));
     }
 
     @Override
