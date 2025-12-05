@@ -273,7 +273,7 @@ public class TidalMidiSyntaxNode extends SyntaxNode {
         // TidalMidi operator symbols
         return switch (text) {
             case "!", "@", "?", "*", "/", ":", "%", ",", "|", ".", "'" -> true;
-            default -> super.isOperator();
+            default -> false;
         };
 
     }
